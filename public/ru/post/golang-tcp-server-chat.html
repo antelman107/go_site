@@ -1,0 +1,1238 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Создание простого TCP чата на Go | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Пример простого TCP чата на Go с объяснением логики.
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/golang-tcp-server-chat.html">
+<meta property="og:title" content="Создание простого TCP чата на Go | Golang for all">
+<meta property="og:description" content="Пример простого TCP чата на Go с объяснением логики.
+">
+<meta property="og:image" content="http://localhost:51376//gopher.png">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-03-30T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-03-30T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Tcp">
+    
+      <meta property="article:tag" content="Server">
+    
+      <meta property="article:tag" content="Chat">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/golang-tcp-server-chat.html">
+<meta name="twitter:title" content="Создание простого TCP чата на Go | Golang for all">
+<meta name="twitter:description" content="Пример простого TCP чата на Go с объяснением логики.
+">
+<meta name="twitter:image" content="http://localhost:51376//gopher.png">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/golang-tcp-server-chat.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/golang-tcp-server-chat.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Создание простого TCP чата на Go</h1>
+
+    
+    <p>
+
+
+  30 марта 2020 г.
+
+
+
+            <a href="/ru/tags/tcp/" class="badge">Tcp</a>
+            <a href="/ru/tags/server/" class="badge">Server</a>
+            <a href="/ru/tags/chat/" class="badge">Chat</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="float-right">
+        <div>
+            
+            
+        </div>
+        <div>
+        </div>
+    </div>
+    
+
+    <div id="post-content">
+    <p>Пример простого TCP чата на Go с объяснением логики.</p>
+<p>Начнём с запуска сервера:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">l</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Listen</span>(<span style="color:#e6db74">&#34;tcp&#34;</span>, <span style="color:#e6db74">&#34;localhost:9090&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">Close</span>()
+</span></span></code></pre></div><p>Сервер слушает TCP порт 9090 на localhost. Это обычная практика — запускать сервисы, привязанные к localhost.</p>
+<p>Теперь давайте принимаем подключения:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">Accept</span>()
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Пока без обработки ошибок. На этом остановимся позже.</p>
+<p>В чате нам нужно читать сообщения, отправляемые клиентами.</p>
+<p>Количество клиентов обычно больше одного, а чтение — это блокирующая операция. Один поток программы не позволяет нам читать из всех подключений. Исправим это, добавив горутину для каждого подключённого клиента:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">l</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Listen</span>(<span style="color:#e6db74">&#34;tcp&#34;</span>, <span style="color:#e6db74">&#34;localhost:9090&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">Accept</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">handleUserConnection</span>(<span style="color:#a6e22e">conn</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">handleUserConnection</span>(<span style="color:#a6e22e">c</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Conn</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">userInput</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bufio</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#a6e22e">c</span>).<span style="color:#a6e22e">ReadString</span>(<span style="color:#e6db74">&#39;\n&#39;</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Здесь мы возвращаемся из функции обработки при ошибке чтения, что произойдёт при отключении клиента. После возврата из функции мы также закрываем подключение. Здесь помогает defer — независимо от того, как завершается функция — defer вызывается после return.</p>
+<p>Нам не нужно обрабатывать ошибки закрытия подключения, потому что ошибки здесь не меняют поток выполнения программы.</p>
+<p>Теперь у нас есть работающий сервер, но нет логики, кроме чтения данных от клиентов. Добавим логику чата. Самый простой чат будет отправлять любое сообщение всем клиентам. Это можно назвать паттерном &ldquo;fan out&rdquo; (веерная рассылка), он проиллюстрирован ниже:</p>
+<p>Чтобы реализовать &ldquo;fan out&rdquo;, нам нужно перебрать все подключения клиентов и записать в них сообщения.</p>
+<p>Для этого нам нужно каким-то образом хранить подключения, чтобы мы могли их перебирать. Я выбрал <code>sync.Map</code> здесь, потому что он решает все проблемы конкурентного доступа.</p>
+<p>Для нашей задачи хватило бы среза. Но в нашей конкурентной программе нам пришлось бы добавлять/удалять данные из этого среза, и это было бы невозможно без <code>sync.Lock</code>. Поскольку мы пишем простой TCP чат, давайте просто используем предопределённый тип, который решает проблемы конкурентности.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// Используем sync.Map, чтобы не иметь дело с проблемами конкурентности срезов/карт</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">connMap</span> = <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">Map</span>{}
+</span></span></code></pre></div><p>Важно работать с указателем на <code>sync.Map</code>, а не со значением.</p>
+<p><code>sync.Map</code> — это структура, которая содержит <code>sync.Lock</code>. Есть известная проблема под названием &ldquo;блокировки, передаваемые по значению&rdquo;.</p>
+<p>Для нашей карты нам нужны ключи. Я использую UUID здесь, потому что он гарантирует, что ключи будут разными. (Крайне низкая вероятность того, что UUID сгенерирует два одинаковых значения).</p>
+<p>Когда клиент отключается, нам нужно удалить этого клиента из карты. Давайте передадим ID клиента в функцию обработки:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">id</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">uuid</span>.<span style="color:#a6e22e">New</span>().<span style="color:#a6e22e">String</span>()
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">connMap</span>.<span style="color:#a6e22e">Store</span>(<span style="color:#a6e22e">id</span>, <span style="color:#a6e22e">conn</span>)
+</span></span></code></pre></div><p>Наконец, давайте реализуем паттерн веерной рассылки сообщений:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">userInput</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bufio</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#a6e22e">c</span>).<span style="color:#a6e22e">ReadString</span>(<span style="color:#e6db74">&#39;\n&#39;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">connMap</span>.<span style="color:#a6e22e">Range</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">key</span>, <span style="color:#a6e22e">value</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">value</span>.(<span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Conn</span>); <span style="color:#a6e22e">ok</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">Write</span>([]byte(<span style="color:#a6e22e">userInput</span>))
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>	})
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Мы можем остановить перебор карты, если вернём false из функции range.</p>
+<p>Наконец, я добавил обработку ошибок и использование логгера zap. Следующий код — это полное решение. Полный исходный код также доступен на GitHub.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;bufio&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;net&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;sync&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;github.com/google/uuid&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;go.uber.org/zap&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">loggerConfig</span> = <span style="color:#a6e22e">zap</span>.<span style="color:#a6e22e">NewProductionConfig</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">loggerConfig</span>.<span style="color:#a6e22e">Level</span>.<span style="color:#a6e22e">SetLevel</span>(<span style="color:#a6e22e">zap</span>.<span style="color:#a6e22e">DebugLevel</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">logger</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">loggerConfig</span>.<span style="color:#a6e22e">Build</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">l</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Listen</span>(<span style="color:#e6db74">&#34;tcp&#34;</span>, <span style="color:#e6db74">&#34;localhost:9090&#34;</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// Используем sync.Map, чтобы не иметь дело с проблемами конкурентности срезов/карт</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">connMap</span> = <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">Map</span>{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">Accept</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#e6db74">&#34;error accepting connection&#34;</span>, <span style="color:#a6e22e">zap</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#a6e22e">err</span>))
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">id</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">uuid</span>.<span style="color:#a6e22e">New</span>().<span style="color:#a6e22e">String</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">connMap</span>.<span style="color:#a6e22e">Store</span>(<span style="color:#a6e22e">id</span>, <span style="color:#a6e22e">conn</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">handleUserConnection</span>(<span style="color:#a6e22e">id</span>, <span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">connMap</span>, <span style="color:#a6e22e">logger</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">handleUserConnection</span>(<span style="color:#a6e22e">id</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">c</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Conn</span>, <span style="color:#a6e22e">connMap</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">Map</span>, <span style="color:#a6e22e">logger</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">zap</span>.<span style="color:#a6e22e">Logger</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">connMap</span>.<span style="color:#a6e22e">Delete</span>(<span style="color:#a6e22e">id</span>)
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">userInput</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bufio</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#a6e22e">c</span>).<span style="color:#a6e22e">ReadString</span>(<span style="color:#e6db74">&#39;\n&#39;</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#e6db74">&#34;error reading from client&#34;</span>, <span style="color:#a6e22e">zap</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#a6e22e">err</span>))
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">connMap</span>.<span style="color:#a6e22e">Range</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">key</span>, <span style="color:#a6e22e">value</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">value</span>.(<span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Conn</span>); <span style="color:#a6e22e">ok</span> {
+</span></span><span style="display:flex;"><span>				<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">Write</span>([]byte(<span style="color:#a6e22e">userInput</span>)); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>					<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#e6db74">&#34;error on writing to connection&#34;</span>, <span style="color:#a6e22e">zap</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#a6e22e">err</span>))
+</span></span><span style="display:flex;"><span>				}
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>		})
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/tcp/">Tcp</a></li>
+        <li><a href="/ru/tags/server/">Server</a></li>
+        <li><a href="/ru/tags/chat/">Chat</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Чтение из подключений — это блокирующая операция&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Горутины делают код быстрее&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;TCP требует горутины&#34;}],&#34;question&#34;:&#34;Почему нам нужны горутины для обработки нескольких клиентских подключений в TCP чат-сервере?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;sync.Map&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Обычная карта с мьютексом&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Срез&#34;}],&#34;question&#34;:&#34;Какая структура данных рекомендуется для хранения клиентских подключений в конкурентном TCP чате?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Паттерн веерной рассылки (fan out)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Паттерн round-robin&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Паттерн broadcast&#34;}],&#34;question&#34;:&#34;Какой паттерн используется при отправке сообщения всем клиентам в чате?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;sync.Map содержит блокировки, которые не должны копироваться&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Указатели быстрее&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;sync.Map работает только с указателями&#34;}],&#34;question&#34;:&#34;Почему важно работать с указателем на sync.Map, а не со значением?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;net.Listen&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;net.Server&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;net.TCPListen&#34;}],&#34;question&#34;:&#34;Какая функция используется для создания TCP сервера в Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Accept&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Connect&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Receive&#34;}],&#34;question&#34;:&#34;Какой метод используется для принятия новых подключений?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;bufio&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;io&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;strings&#34;}],&#34;question&#34;:&#34;Какой пакет используется для чтения строк из подключения?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Гарантирует уникальность ключей с крайне низкой вероятностью коллизий&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;UUID быстрее других идентификаторов&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;UUID обязателен для TCP&#34;}],&#34;question&#34;:&#34;Почему используется UUID для идентификации клиентов?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Range&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Iterate&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;ForEach&#34;}],&#34;question&#34;:&#34;Какой метод sync.Map используется для перебора всех элементов?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Перебор карты останавливается&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Возникает ошибка&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Ничего не происходит&#34;}],&#34;question&#34;:&#34;Что происходит при возврате false из функции в Range?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;При ошибке чтения функция возвращается&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Клиент удаляется из connMap через Delete&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Подключение закрывается через defer&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Клиент остаётся в карте&#34;}],&#34;question&#34;:&#34;Как обрабатывается отключение клиента в чате?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;defer вызывается при любом завершении функции, гарантируя закрытие&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;defer быстрее обычного закрытия&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;defer обязателен для TCP&#34;}],&#34;question&#34;:&#34;Почему используется defer для закрытия подключения?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Перебор всех подключений через Range и запись в каждое&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Отправка только первому клиенту&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Использование канала для всех клиентов&#34;}],&#34;question&#34;:&#34;Какой паттерн используется для отправки сообщения всем подключённым клиентам?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Ошибка логируется, но рассылка продолжается другим клиентам&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Рассылка останавливается&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Программа завершается&#34;}],&#34;question&#34;:&#34;Что происходит при ошибке записи в одно из подключений при рассылке?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Чтобы обрабатывать множественные сообщения от клиента&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Чтобы увеличить производительность&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Это требование TCP&#34;}],&#34;question&#34;:&#34;Почему чтение из подключения выполняется в бесконечном цикле?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Почему нам нужны горутины для обработки нескольких клиентских подключений в TCP чат-сервере?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            Чтение из подключений — это блокирующая операция
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            Горутины делают код быстрее
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            TCP требует горутины
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Какая структура данных рекомендуется для хранения клиентских подключений в конкурентном TCP чате?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            sync.Map
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Обычная карта с мьютексом
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Срез
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Какой паттерн используется при отправке сообщения всем клиентам в чате?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Паттерн веерной рассылки (fan out)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Паттерн round-robin
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Паттерн broadcast
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Почему важно работать с указателем на sync.Map, а не со значением?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            sync.Map содержит блокировки, которые не должны копироваться
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Указатели быстрее
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            sync.Map работает только с указателями
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. Какая функция используется для создания TCP сервера в Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            net.Listen
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            net.Server
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            net.TCPListen
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="5">
+      <h5 class="mb-3">6. Какой метод используется для принятия новых подключений?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="0"
+                 id="q5-a0">
+          <label class="form-check-label" for="q5-a0">
+            Accept
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="1"
+                 id="q5-a1">
+          <label class="form-check-label" for="q5-a1">
+            Connect
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="2"
+                 id="q5-a2">
+          <label class="form-check-label" for="q5-a2">
+            Receive
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="6">
+      <h5 class="mb-3">7. Какой пакет используется для чтения строк из подключения?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="0"
+                 id="q6-a0">
+          <label class="form-check-label" for="q6-a0">
+            bufio
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="1"
+                 id="q6-a1">
+          <label class="form-check-label" for="q6-a1">
+            io
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="2"
+                 id="q6-a2">
+          <label class="form-check-label" for="q6-a2">
+            strings
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="7">
+      <h5 class="mb-3">8. Почему используется UUID для идентификации клиентов?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="0"
+                 id="q7-a0">
+          <label class="form-check-label" for="q7-a0">
+            Гарантирует уникальность ключей с крайне низкой вероятностью коллизий
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="1"
+                 id="q7-a1">
+          <label class="form-check-label" for="q7-a1">
+            UUID быстрее других идентификаторов
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="2"
+                 id="q7-a2">
+          <label class="form-check-label" for="q7-a2">
+            UUID обязателен для TCP
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="8">
+      <h5 class="mb-3">9. Какой метод sync.Map используется для перебора всех элементов?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="0"
+                 id="q8-a0">
+          <label class="form-check-label" for="q8-a0">
+            Range
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="1"
+                 id="q8-a1">
+          <label class="form-check-label" for="q8-a1">
+            Iterate
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="2"
+                 id="q8-a2">
+          <label class="form-check-label" for="q8-a2">
+            ForEach
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="9">
+      <h5 class="mb-3">10. Что происходит при возврате false из функции в Range?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="0"
+                 id="q9-a0">
+          <label class="form-check-label" for="q9-a0">
+            Перебор карты останавливается
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="1"
+                 id="q9-a1">
+          <label class="form-check-label" for="q9-a1">
+            Возникает ошибка
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="2"
+                 id="q9-a2">
+          <label class="form-check-label" for="q9-a2">
+            Ничего не происходит
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="10">
+      <h5 class="mb-3">11. Как обрабатывается отключение клиента в чате?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="0"
+                 id="q10-a0">
+          <label class="form-check-label" for="q10-a0">
+            При ошибке чтения функция возвращается
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="1"
+                 id="q10-a1">
+          <label class="form-check-label" for="q10-a1">
+            Клиент удаляется из connMap через Delete
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="2"
+                 id="q10-a2">
+          <label class="form-check-label" for="q10-a2">
+            Подключение закрывается через defer
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="3"
+                 id="q10-a3">
+          <label class="form-check-label" for="q10-a3">
+            Клиент остаётся в карте
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="11">
+      <h5 class="mb-3">12. Почему используется defer для закрытия подключения?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="0"
+                 id="q11-a0">
+          <label class="form-check-label" for="q11-a0">
+            defer вызывается при любом завершении функции, гарантируя закрытие
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="1"
+                 id="q11-a1">
+          <label class="form-check-label" for="q11-a1">
+            defer быстрее обычного закрытия
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="2"
+                 id="q11-a2">
+          <label class="form-check-label" for="q11-a2">
+            defer обязателен для TCP
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="12">
+      <h5 class="mb-3">13. Какой паттерн используется для отправки сообщения всем подключённым клиентам?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="0"
+                 id="q12-a0">
+          <label class="form-check-label" for="q12-a0">
+            Перебор всех подключений через Range и запись в каждое
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="1"
+                 id="q12-a1">
+          <label class="form-check-label" for="q12-a1">
+            Отправка только первому клиенту
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="2"
+                 id="q12-a2">
+          <label class="form-check-label" for="q12-a2">
+            Использование канала для всех клиентов
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="13">
+      <h5 class="mb-3">14. Что происходит при ошибке записи в одно из подключений при рассылке?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="0"
+                 id="q13-a0">
+          <label class="form-check-label" for="q13-a0">
+            Ошибка логируется, но рассылка продолжается другим клиентам
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="1"
+                 id="q13-a1">
+          <label class="form-check-label" for="q13-a1">
+            Рассылка останавливается
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="2"
+                 id="q13-a2">
+          <label class="form-check-label" for="q13-a2">
+            Программа завершается
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="14">
+      <h5 class="mb-3">15. Почему чтение из подключения выполняется в бесконечном цикле?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="0"
+                 id="q14-a0">
+          <label class="form-check-label" for="q14-a0">
+            Чтобы обрабатывать множественные сообщения от клиента
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="1"
+                 id="q14-a1">
+          <label class="form-check-label" for="q14-a1">
+            Чтобы увеличить производительность
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="2"
+                 id="q14-a2">
+          <label class="form-check-label" for="q14-a2">
+            Это требование TCP
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  30 июня 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/net-wait-go.html" style="text-decoration: none; color: inherit;">Утилита и библиотека net-wait-go</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/net-wait-go.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/net-wait-go/tube2.svg"
+                   style="max-height: 200px;"
+                   alt="Утилита и библиотека net-wait-go"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Утилита и пакет Go для ожидания открытия портов (TCP, UDP).</p></p>
+            
+            <a href="/ru/post/net-wait-go.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/tcp/" class="badge">Tcp</a>
+                  <a href="/ru/tags/udp/" class="badge">Udp</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  2 мая 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/http.html" style="text-decoration: none; color: inherit;">HTTP</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Все примеры из статьи находятся в репозитории на github.</p>
+<p>Давайте рассмотрим инструменты HTTP в GO.</p></p>
+            
+            <a href="/ru/post/http.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/http/" class="badge">Http</a>
+                  <a href="/ru/tags/client/" class="badge">Client</a>
+                  <a href="/ru/tags/server/" class="badge">Server</a>
+                  <a href="/ru/tags/middleware/" class="badge">Middleware</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/golang-tcp-server-chat.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

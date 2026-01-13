@@ -1,0 +1,1340 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Deploying Telegram Bot to AWS Lambda with Function URL | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="This article is a continuation of &ldquo;Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda&rdquo; and contains detailed instructions for setting …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/en/post/go-telegram-bot-aws-lambda-deploy.html">
+<meta property="og:title" content="Deploying Telegram Bot to AWS Lambda with Function URL | Golang for all">
+<meta property="og:description" content="This article is a continuation of &ldquo;Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda&rdquo; and contains detailed instructions for setting …">
+<meta property="og:image" content="http://localhost:51376//gopher.png">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2024-12-20T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2024-12-20T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Go">
+    
+      <meta property="article:tag" content="Telegram">
+    
+      <meta property="article:tag" content="Aws">
+    
+      <meta property="article:tag" content="Lambda">
+    
+      <meta property="article:tag" content="Deploy">
+    
+      <meta property="article:tag" content="Function-Url">
+    
+      <meta property="article:tag" content="Cli">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/en/post/go-telegram-bot-aws-lambda-deploy.html">
+<meta name="twitter:title" content="Deploying Telegram Bot to AWS Lambda with Function URL | Golang for all">
+<meta name="twitter:description" content="This article is a continuation of &ldquo;Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda&rdquo; and contains detailed instructions for setting …">
+<meta name="twitter:image" content="http://localhost:51376//gopher.png">
+
+
+
+<link rel="canonical" href="http://localhost:51376/en/post/go-telegram-bot-aws-lambda-deploy.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="http://localhost:51376/ru/post/go-telegram-bot-aws-lambda-deploy.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+</script>
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Deploying Telegram Bot to AWS Lambda with Function URL</h1>
+
+    
+    <p>
+
+
+  December 20, 2024
+
+
+
+            <a href="/tags/go/" class="badge">Go</a>
+            <a href="/tags/telegram/" class="badge">Telegram</a>
+            <a href="/tags/aws/" class="badge">Aws</a>
+            <a href="/tags/lambda/" class="badge">Lambda</a>
+            <a href="/tags/deploy/" class="badge">Deploy</a>
+            <a href="/tags/function-url/" class="badge">Function-Url</a>
+            <a href="/tags/cli/" class="badge">Cli</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="float-right">
+        <div>
+            
+            
+            <nav id="toc">
+                <h5>Contents</h5>
+                <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#setup-aws-cli-and-authentication">Setup: AWS CLI and Authentication</a>
+      <ul>
+        <li><a href="#installing-aws-cli">Installing AWS CLI</a></li>
+        <li><a href="#configuring-authentication">Configuring Authentication</a></li>
+        <li><a href="#verify-connection">Verify Connection</a></li>
+        <li><a href="#working-with-multiple-profiles">Working with Multiple Profiles</a></li>
+      </ul>
+    </li>
+    <li><a href="#request-processing-architecture">Request Processing Architecture</a></li>
+    <li><a href="#preparing-code-for-lambda">Preparing Code for Lambda</a></li>
+    <li><a href="#creating-lambda-function-via-aws-cli">Creating Lambda Function via AWS CLI</a>
+      <ul>
+        <li><a href="#step-1-create-iam-role-for-lambda">Step 1: Create IAM Role for Lambda</a></li>
+        <li><a href="#step-2-create-s3-bucket-for-conversations-optional">Step 2: Create S3 Bucket for Conversations (optional)</a></li>
+        <li><a href="#step-3-build-go-application">Step 3: Build Go Application</a></li>
+        <li><a href="#step-4-create-lambda-function">Step 4: Create Lambda Function</a></li>
+      </ul>
+    </li>
+    <li><a href="#creating-lambda-function-url">Creating Lambda Function URL</a></li>
+    <li><a href="#configure-telegram-webhook">Configure Telegram Webhook</a></li>
+    <li><a href="#updating-function-code-deployment">Updating Function Code (Deployment)</a></li>
+    <li><a href="#monitoring-and-logging">Monitoring and Logging</a></li>
+    <li><a href="#deployment-automation-makefile">Deployment Automation (Makefile)</a></li>
+    <li><a href="#function-url-vs-api-gateway-benefits">Function URL vs API Gateway Benefits</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
+            </nav>
+            
+        </div>
+        <div>
+        </div>
+    </div>
+    
+
+    <div id="post-content">
+    <p>This article is a continuation of <a href="/en/post/go-telegram-gemini-ai-bot.html">&ldquo;Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda&rdquo;</a> and contains detailed instructions for setting up and deploying a Telegram bot to AWS Lambda using Function URL.</p>
+<h2 id="introduction">Introduction</h2>
+<p>In the previous article, we explored the architecture of a Telegram bot with an AI router and Gemini API integration. Now we&rsquo;ll dive deep into the deployment process of this bot to AWS Lambda, including AWS CLI setup, Lambda function creation, Function URL configuration, and deployment automation.</p>
+<h2 id="setup-aws-cli-and-authentication">Setup: AWS CLI and Authentication</h2>
+<p>Before working with AWS Lambda, you need to install and configure AWS CLI. AWS CLI is a unified command-line tool for managing AWS services.</p>
+<h3 id="installing-aws-cli">Installing AWS CLI</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># macOS</span>
+</span></span><span style="display:flex;"><span>brew install awscli
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Linux</span>
+</span></span><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip&#34;</span> -o <span style="color:#e6db74">&#34;awscliv2.zip&#34;</span>
+</span></span><span style="display:flex;"><span>unzip awscliv2.zip
+</span></span><span style="display:flex;"><span>sudo ./aws/install
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Verify installation</span>
+</span></span><span style="display:flex;"><span>aws --version
+</span></span></code></pre></div><h3 id="configuring-authentication">Configuring Authentication</h3>
+<p>AWS CLI uses several authentication methods. The simplest and most secure way to get started is using AWS IAM Identity Center (formerly AWS SSO) or direct IAM credentials.</p>
+<p><strong>Method 1: AWS IAM Identity Center (recommended for organizations)</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Configure SSO profile</span>
+</span></span><span style="display:flex;"><span>aws configure sso
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># You&#39;ll be prompted for:</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># - SSO start URL: https://your-company.awsapps.com/start</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># - SSO region: us-east-1 (or your region)</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># - SSO account ID: 123456789012</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># - SSO role name: AdministratorAccess (or another role)</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># - CLI default region: us-east-1</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># - CLI default output format: json</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Login to SSO</span>
+</span></span><span style="display:flex;"><span>aws sso login --profile your-profile-name
+</span></span></code></pre></div><p><strong>Method 2: Direct IAM Credentials (for personal projects)</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Configure credentials</span>
+</span></span><span style="display:flex;"><span>aws configure
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># You&#39;ll be prompted to enter:</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># AWS Access Key ID: AKIAIOSFODNN7EXAMPLE</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># AWS Secret Access Key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Default region name: us-east-1</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Default output format: json</span>
+</span></span></code></pre></div><h3 id="verify-connection">Verify Connection</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Check current user/role</span>
+</span></span><span style="display:flex;"><span>aws sts get-caller-identity
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Should return something like:</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># {</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#     &#34;UserId&#34;: &#34;AIDAIOSFODNN7EXAMPLE&#34;,</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#     &#34;Account&#34;: &#34;123456789012&#34;,</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#     &#34;Arn&#34;: &#34;arn:aws:iam::123456789012:user/your-username&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># }</span>
+</span></span></code></pre></div><h3 id="working-with-multiple-profiles">Working with Multiple Profiles</h3>
+<p>If you have multiple AWS accounts, you can use profiles:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Create a profile</span>
+</span></span><span style="display:flex;"><span>aws configure --profile production
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Use a profile</span>
+</span></span><span style="display:flex;"><span>aws lambda list-functions --profile production
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Or set environment variable</span>
+</span></span><span style="display:flex;"><span>export AWS_PROFILE<span style="color:#f92672">=</span>production
+</span></span></code></pre></div><h2 id="request-processing-architecture">Request Processing Architecture</h2>
+<p>Before diving into creating the Lambda function, let&rsquo;s understand how AWS processes requests from Telegram:</p>
+<pre class="mermaid">
+  sequenceDiagram
+    participant User as Telegram User
+    participant TG as Telegram API
+    participant FunctionURL as Lambda Function URL
+    participant Lambda as Lambda Function
+    participant S3 as AWS S3
+    participant Gemini as Google Gemini API
+    participant CloudWatch as CloudWatch Logs
+
+    User-&gt;&gt;TG: Sends message to bot
+    TG-&gt;&gt;FunctionURL: POST webhook (JSON update)
+    FunctionURL-&gt;&gt;Lambda: Invokes function
+    Lambda-&gt;&gt;CloudWatch: Logs execution start
+    
+    Lambda-&gt;&gt;S3: Loads conversation history (chatID)
+    S3--&gt;&gt;Lambda: Returns history (JSON)
+    
+    Lambda-&gt;&gt;Lambda: Router determines request type
+    alt Text Request
+        Lambda-&gt;&gt;Gemini: Chat API request with context
+        Gemini--&gt;&gt;Lambda: Text response
+    else Image Generation
+        Lambda-&gt;&gt;Gemini: Image Generation API
+        Gemini--&gt;&gt;Lambda: Image
+    end
+    
+    Lambda-&gt;&gt;TG: Sends response to user
+    Lambda-&gt;&gt;S3: Saves updated history
+    Lambda-&gt;&gt;CloudWatch: Logs completion
+    
+    Lambda--&gt;&gt;FunctionURL: HTTP 200 OK
+    FunctionURL--&gt;&gt;TG: Acknowledgment
+    TG--&gt;&gt;User: Shows bot response
+</pre>
+<h2 id="preparing-code-for-lambda">Preparing Code for Lambda</h2>
+<p>To work with Lambda Function URL, we need to adapt our code. Function URL uses standard HTTP format, not API Gateway format. Here&rsquo;s the adapted handler:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;context&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;encoding/json&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;net/http&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;os&#34;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;github.com/aws/aws-lambda-go/events&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;github.com/aws/aws-lambda-go/lambda&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;github.com/aws/aws-sdk-go-v2/aws&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;github.com/aws/aws-sdk-go-v2/config&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;github.com/aws/aws-sdk-go-v2/service/s3&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">tgbotapi</span> <span style="color:#e6db74">&#34;github.com/go-telegram-bot-api/telegram-bot-api/v5&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;google.golang.org/api/option&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;google.golang.org/api/generativeai&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bot</span>    <span style="color:#f92672">*</span><span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">BotAPI</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">gemini</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">generativeai</span>.<span style="color:#a6e22e">Client</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">s3Client</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">s3</span>.<span style="color:#a6e22e">Client</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">init</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Initialize on Lambda cold start</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">cfg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">loadConfig</span>()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bot</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">NewBotAPI</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">TelegramToken</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        panic(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#e6db74">&#34;Failed to create bot: %v&#34;</span>, <span style="color:#a6e22e">err</span>))
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">gemini</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">generativeai</span>.<span style="color:#a6e22e">NewClient</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>(),
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">option</span>.<span style="color:#a6e22e">WithAPIKey</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">GeminiAPIKey</span>))
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        panic(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#e6db74">&#34;Failed to create Gemini client: %v&#34;</span>, <span style="color:#a6e22e">err</span>))
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Initialize S3 client</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">awsCfg</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">config</span>.<span style="color:#a6e22e">LoadDefaultConfig</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>())
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        panic(<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#e6db74">&#34;Failed to load AWS config: %v&#34;</span>, <span style="color:#a6e22e">err</span>))
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">s3Client</span> = <span style="color:#a6e22e">s3</span>.<span style="color:#a6e22e">NewFromConfig</span>(<span style="color:#a6e22e">awsCfg</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Handler</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">request</span> <span style="color:#a6e22e">events</span>.<span style="color:#a6e22e">LambdaFunctionURLRequest</span>) 
+</span></span><span style="display:flex;"><span>    (<span style="color:#a6e22e">events</span>.<span style="color:#a6e22e">LambdaFunctionURLResponse</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Parse Telegram webhook update</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">update</span> <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">Update</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Unmarshal</span>([]byte(<span style="color:#a6e22e">request</span>.<span style="color:#a6e22e">Body</span>), <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">update</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">events</span>.<span style="color:#a6e22e">LambdaFunctionURLResponse</span>{
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">StatusCode</span>: <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">StatusBadRequest</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">Body</span>:       <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#e6db74">&#34;Invalid request: %v&#34;</span>, <span style="color:#a6e22e">err</span>),
+</span></span><span style="display:flex;"><span>        }, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Process update asynchronously</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">go</span> <span style="color:#a6e22e">handleMessage</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">update</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Immediately return response to Telegram</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">events</span>.<span style="color:#a6e22e">LambdaFunctionURLResponse</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">StatusCode</span>: <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">StatusOK</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Body</span>:       <span style="color:#e6db74">&#34;OK&#34;</span>,
+</span></span><span style="display:flex;"><span>    }, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">lambda</span>.<span style="color:#a6e22e">Start</span>(<span style="color:#a6e22e">Handler</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="creating-lambda-function-via-aws-cli">Creating Lambda Function via AWS CLI</h2>
+<p>Now let&rsquo;s create the Lambda function using modern AWS CLI v2:</p>
+<h3 id="step-1-create-iam-role-for-lambda">Step 1: Create IAM Role for Lambda</h3>
+<p>First, let&rsquo;s create a role that the Lambda function will use:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Create trust policy for Lambda</span>
+</span></span><span style="display:flex;"><span>cat &gt; trust-policy.json <span style="color:#e6db74">&lt;&lt;EOF
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;Version&#34;: &#34;2012-10-17&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;Statement&#34;: [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;Effect&#34;: &#34;Allow&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;Principal&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;Service&#34;: &#34;lambda.amazonaws.com&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      },
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;Action&#34;: &#34;sts:AssumeRole&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  ]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Create role</span>
+</span></span><span style="display:flex;"><span>aws iam create-role <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --role-name telegram-bot-lambda-role <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --assume-role-policy-document file://trust-policy.json
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Attach basic execution policy for Lambda</span>
+</span></span><span style="display:flex;"><span>aws iam attach-role-policy <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --role-name telegram-bot-lambda-role <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Create policy for S3 access</span>
+</span></span><span style="display:flex;"><span>cat &gt; s3-policy.json <span style="color:#e6db74">&lt;&lt;EOF
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;Version&#34;: &#34;2012-10-17&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#34;Statement&#34;: [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;Effect&#34;: &#34;Allow&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;Action&#34;: [
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;s3:GetObject&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;s3:PutObject&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      ],
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;Resource&#34;: &#34;arn:aws:s3:::bot-conversations/*&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  ]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">}
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>aws iam put-role-policy <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --role-name telegram-bot-lambda-role <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --policy-name S3AccessPolicy <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --policy-document file://s3-policy.json
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Get role ARN (needed for function creation)</span>
+</span></span><span style="display:flex;"><span>ROLE_ARN<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>aws iam get-role <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --role-name telegram-bot-lambda-role <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --query <span style="color:#e6db74">&#39;Role.Arn&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --output text<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;Role ARN: </span>$ROLE_ARN<span style="color:#e6db74">&#34;</span>
+</span></span></code></pre></div><h3 id="step-2-create-s3-bucket-for-conversations-optional">Step 2: Create S3 Bucket for Conversations (optional)</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Create bucket (bucket names must be globally unique)</span>
+</span></span><span style="display:flex;"><span>BUCKET_NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;telegram-bot-conversations-</span><span style="color:#66d9ef">$(</span>date +%s<span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>aws s3 mb s3://$BUCKET_NAME --region us-east-1
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Save bucket name for later use</span>
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;BUCKET_NAME=</span>$BUCKET_NAME<span style="color:#e6db74">&#34;</span> &gt; .env.bucket
+</span></span></code></pre></div><h3 id="step-3-build-go-application">Step 3: Build Go Application</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Build for Linux (required for Lambda)</span>
+</span></span><span style="display:flex;"><span>GOOS<span style="color:#f92672">=</span>linux GOARCH<span style="color:#f92672">=</span>amd64 CGO_ENABLED<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span> go build -o bootstrap
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Create ZIP archive (Lambda requires bootstrap as executable name)</span>
+</span></span><span style="display:flex;"><span>zip <span style="color:#66d9ef">function</span>.zip bootstrap
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Check size (Lambda has deployment package size limits)</span>
+</span></span><span style="display:flex;"><span>ls -lh <span style="color:#66d9ef">function</span>.zip
+</span></span></code></pre></div><h3 id="step-4-create-lambda-function">Step 4: Create Lambda Function</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Create function (replace $ROLE_ARN with value from previous step)</span>
+</span></span><span style="display:flex;"><span>aws lambda create-function <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --function-name telegram-bot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --runtime provided.al2023 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --role $ROLE_ARN <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --handler bootstrap <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --zip-file fileb://function.zip <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --timeout <span style="color:#ae81ff">30</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --memory-size <span style="color:#ae81ff">512</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --architectures arm64 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --environment Variables<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    TELEGRAM_TOKEN=your-telegram-token,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    GEMINI_API_KEY=your-gemini-api-key,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    S3_BUCKET=</span>$BUCKET_NAME<span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --description <span style="color:#e6db74">&#34;Telegram bot with Gemini AI integration&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Verify function creation</span>
+</span></span><span style="display:flex;"><span>aws lambda get-function --function-name telegram-bot
+</span></span></code></pre></div><p><strong>Important Parameters:</strong></p>
+<ul>
+<li><code>--runtime provided.al2023</code>: Uses Amazon Linux 2023 runtime for Go</li>
+<li><code>--architectures arm64</code>: Uses ARM64 architecture (cheaper and faster)</li>
+<li><code>--timeout 30</code>: Maximum execution time (seconds)</li>
+<li><code>--memory-size 512</code>: Allocated memory (MB). More memory = more CPU</li>
+</ul>
+<h2 id="creating-lambda-function-url">Creating Lambda Function URL</h2>
+<p>Lambda Function URL is a simple way to provide an HTTP(S) endpoint for a Lambda function without needing to set up API Gateway. This is perfect for Telegram webhooks:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Create Function URL with CORS (if needed)</span>
+</span></span><span style="display:flex;"><span>aws lambda create-function-url-config <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --function-name telegram-bot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --auth-type NONE <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --cors <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;AllowOrigins&#34;: [&#34;*&#34;],
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;AllowMethods&#34;: [&#34;POST&#34;],
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;AllowHeaders&#34;: [&#34;content-type&#34;],
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;MaxAge&#34;: 300
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Get function URL</span>
+</span></span><span style="display:flex;"><span>FUNCTION_URL<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>aws lambda get-function-url-config <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --function-name telegram-bot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --query <span style="color:#e6db74">&#39;FunctionUrl&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --output text<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;Function URL: </span>$FUNCTION_URL<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Add permission for public access</span>
+</span></span><span style="display:flex;"><span>aws lambda add-permission <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --function-name telegram-bot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --statement-id FunctionURLAllowPublicAccess <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --action lambda:InvokeFunctionUrl <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --principal <span style="color:#e6db74">&#34;*&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --function-url-auth-type NONE
+</span></span></code></pre></div><p><strong>Function URL Authentication Types:</strong></p>
+<ul>
+<li><code>NONE</code>: Public access (suitable for Telegram webhook)</li>
+<li><code>AWS_IAM</code>: Requires AWS Signature Version 4 signing</li>
+</ul>
+<h2 id="configure-telegram-webhook">Configure Telegram Webhook</h2>
+<p>Now let&rsquo;s configure Telegram to send updates to our Function URL:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Set webhook</span>
+</span></span><span style="display:flex;"><span>TELEGRAM_TOKEN<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-telegram-bot-token&#34;</span>
+</span></span><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://api.telegram.org/bot</span><span style="color:#e6db74">${</span>TELEGRAM_TOKEN<span style="color:#e6db74">}</span><span style="color:#e6db74">/setWebhook&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#34;{\&#34;url\&#34;: \&#34;</span><span style="color:#e6db74">${</span>FUNCTION_URL<span style="color:#e6db74">}</span><span style="color:#e6db74">\&#34;}&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Check webhook status</span>
+</span></span><span style="display:flex;"><span>curl <span style="color:#e6db74">&#34;https://api.telegram.org/bot</span><span style="color:#e6db74">${</span>TELEGRAM_TOKEN<span style="color:#e6db74">}</span><span style="color:#e6db74">/getWebhookInfo&#34;</span>
+</span></span></code></pre></div><h2 id="updating-function-code-deployment">Updating Function Code (Deployment)</h2>
+<p>When you need to update the function code:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Rebuild</span>
+</span></span><span style="display:flex;"><span>GOOS<span style="color:#f92672">=</span>linux GOARCH<span style="color:#f92672">=</span>arm64 CGO_ENABLED<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span> go build -o bootstrap
+</span></span><span style="display:flex;"><span>zip <span style="color:#66d9ef">function</span>.zip bootstrap
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Update function code</span>
+</span></span><span style="display:flex;"><span>aws lambda update-function-code <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --function-name telegram-bot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --zip-file fileb://function.zip <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --architectures arm64
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Update environment variables (if needed)</span>
+</span></span><span style="display:flex;"><span>aws lambda update-function-configuration <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --function-name telegram-bot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --environment Variables<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    TELEGRAM_TOKEN=your-new-token,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    GEMINI_API_KEY=your-new-key,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    S3_BUCKET=</span>$BUCKET_NAME<span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Wait for update to complete</span>
+</span></span><span style="display:flex;"><span>aws lambda wait <span style="color:#66d9ef">function</span>-updated --function-name telegram-bot
+</span></span></code></pre></div><h2 id="monitoring-and-logging">Monitoring and Logging</h2>
+<p>AWS Lambda automatically sends logs to CloudWatch:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># View recent logs</span>
+</span></span><span style="display:flex;"><span>aws logs tail /aws/lambda/telegram-bot --follow
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># View function metrics</span>
+</span></span><span style="display:flex;"><span>aws cloudwatch get-metric-statistics <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --namespace AWS/Lambda <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --metric-name Invocations <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --dimensions Name<span style="color:#f92672">=</span>FunctionName,Value<span style="color:#f92672">=</span>telegram-bot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --start-time <span style="color:#66d9ef">$(</span>date -u -d <span style="color:#e6db74">&#39;1 hour ago&#39;</span> +%Y-%m-%dT%H:%M:%S<span style="color:#66d9ef">)</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --end-time <span style="color:#66d9ef">$(</span>date -u +%Y-%m-%dT%H:%M:%S<span style="color:#66d9ef">)</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --period <span style="color:#ae81ff">300</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --statistics Sum
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># View function information</span>
+</span></span><span style="display:flex;"><span>aws lambda get-function <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --function-name telegram-bot <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --query <span style="color:#e6db74">&#39;Configuration.[FunctionName,Runtime,LastModified,MemorySize,Timeout]&#39;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  --output table
+</span></span></code></pre></div><h2 id="deployment-automation-makefile">Deployment Automation (Makefile)</h2>
+<p>To simplify the deployment process, you can create a Makefile:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-makefile" data-lang="makefile"><span style="display:flex;"><span><span style="color:#a6e22e">.PHONY</span><span style="color:#f92672">:</span> build deploy update logs clean
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>FUNCTION_NAME<span style="color:#f92672">=</span>telegram-bot
+</span></span><span style="display:flex;"><span>REGION<span style="color:#f92672">=</span>us-east-1
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">build</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	@echo <span style="color:#e6db74">&#34;Building for Lambda...&#34;</span>
+</span></span><span style="display:flex;"><span>	GOOS<span style="color:#f92672">=</span>linux GOARCH<span style="color:#f92672">=</span>arm64 CGO_ENABLED<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span> go build -o bootstrap
+</span></span><span style="display:flex;"><span>	zip <span style="color:#66d9ef">function</span>.zip bootstrap
+</span></span><span style="display:flex;"><span>	@echo <span style="color:#e6db74">&#34;Build complete. Size:&#34;</span>
+</span></span><span style="display:flex;"><span>	@ls -lh <span style="color:#66d9ef">function</span>.zip
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">deploy</span><span style="color:#f92672">:</span> build
+</span></span><span style="display:flex;"><span>	@echo <span style="color:#e6db74">&#34;Deploying to Lambda...&#34;</span>
+</span></span><span style="display:flex;"><span>	aws lambda update-function-code <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>		--function-name <span style="color:#66d9ef">$(</span>FUNCTION_NAME<span style="color:#66d9ef">)</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>		--zip-file fileb://function.zip <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>		--region <span style="color:#66d9ef">$(</span>REGION<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>	@echo <span style="color:#e6db74">&#34;Waiting for update to complete...&#34;</span>
+</span></span><span style="display:flex;"><span>	aws lambda wait <span style="color:#66d9ef">function</span>-updated <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>		--function-name <span style="color:#66d9ef">$(</span>FUNCTION_NAME<span style="color:#66d9ef">)</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>		--region <span style="color:#66d9ef">$(</span>REGION<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>	@echo <span style="color:#e6db74">&#34;Deployment complete!&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">update-env</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	@echo <span style="color:#e6db74">&#34;Updating environment variables...&#34;</span>
+</span></span><span style="display:flex;"><span>	aws lambda update-function-configuration <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>		--function-name <span style="color:#66d9ef">$(</span>FUNCTION_NAME<span style="color:#66d9ef">)</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>		--environment Variables<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;{TELEGRAM_TOKEN=</span><span style="color:#66d9ef">$(</span>TELEGRAM_TOKEN<span style="color:#66d9ef">)</span><span style="color:#e6db74">,GEMINI_API_KEY=</span><span style="color:#66d9ef">$(</span>GEMINI_API_KEY<span style="color:#66d9ef">)</span><span style="color:#e6db74">,S3_BUCKET=</span><span style="color:#66d9ef">$(</span>S3_BUCKET<span style="color:#66d9ef">)</span><span style="color:#e6db74">}&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>		--region <span style="color:#66d9ef">$(</span>REGION<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">logs</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	@echo <span style="color:#e6db74">&#34;Tailing logs...&#34;</span>
+</span></span><span style="display:flex;"><span>	aws logs tail /aws/lambda/<span style="color:#66d9ef">$(</span>FUNCTION_NAME<span style="color:#66d9ef">)</span> --follow --region <span style="color:#66d9ef">$(</span>REGION<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">clean</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>	rm -f bootstrap <span style="color:#66d9ef">function</span>.zip
+</span></span><span style="display:flex;"><span>	@echo <span style="color:#e6db74">&#34;Clean complete&#34;</span>
+</span></span></code></pre></div><p>Usage:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># Set environment variables</span>
+</span></span><span style="display:flex;"><span>export TELEGRAM_TOKEN<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-token&#34;</span>
+</span></span><span style="display:flex;"><span>export GEMINI_API_KEY<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-key&#34;</span>
+</span></span><span style="display:flex;"><span>export S3_BUCKET<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;your-bucket-name&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Build and deploy</span>
+</span></span><span style="display:flex;"><span>make deploy
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># View logs</span>
+</span></span><span style="display:flex;"><span>make logs
+</span></span></code></pre></div><h2 id="function-url-vs-api-gateway-benefits">Function URL vs API Gateway Benefits</h2>
+<p><strong>Lambda Function URL:</strong></p>
+<ul>
+<li>✅ Simpler to set up (single AWS CLI call)</li>
+<li>✅ Lower latency (no intermediate layer)</li>
+<li>✅ Cheaper (no API Gateway charges)</li>
+<li>✅ Perfect for simple webhooks</li>
+</ul>
+<p><strong>API Gateway:</strong></p>
+<ul>
+<li>✅ More features (rate limiting, API keys, caching)</li>
+<li>✅ REST and WebSocket support</li>
+<li>✅ Integration with other AWS services</li>
+<li>✅ Better for public APIs</li>
+</ul>
+<p>For a Telegram bot, Function URL is the optimal choice due to simplicity and cost-effectiveness.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this article, we explored the detailed process of deploying a Telegram bot to AWS Lambda using Function URL. We set up AWS CLI, created IAM roles, deployed the Lambda function, and configured webhook integration with Telegram. Using Function URL simplifies the process compared to API Gateway and makes deployment more cost-effective for simple webhook scenarios.</p>
+<p>For more information about creating the bot itself and its architecture, refer to the previous article: <a href="/en/post/go-telegram-gemini-ai-bot.html">&ldquo;Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda&rdquo;</a>.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/go/">Go</a></li>
+        <li><a href="/tags/telegram/">Telegram</a></li>
+        <li><a href="/tags/aws/">Aws</a></li>
+        <li><a href="/tags/lambda/">Lambda</a></li>
+        <li><a href="/tags/deploy/">Deploy</a></li>
+        <li><a href="/tags/function-url/">Function-Url</a></li>
+        <li><a href="/tags/cli/">Cli</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;provided.al2023&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;go1.x&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;go1.21&#34;}],&#34;question&#34;:&#34;What runtime is used for Go functions in AWS Lambda?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;arm64 (cheaper and faster)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;x86_64&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Doesn&#39;t matter&#34;}],&#34;question&#34;:&#34;Which architecture is preferred for Lambda functions on Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;NONE (public access)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;AWS_IAM&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;OAuth&#34;}],&#34;question&#34;:&#34;What Function URL authentication type is used for Telegram webhook?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;bootstrap&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;main&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;handler&#34;}],&#34;question&#34;:&#34;What executable name is required for Lambda function on Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Simpler to set up&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Lower latency&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Cheaper&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;More rate limiting features&#34;}],&#34;question&#34;:&#34;What advantages does Lambda Function URL have over API Gateway?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;aws sts get-caller-identity&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;aws configure list&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;aws login&#34;}],&#34;question&#34;:&#34;How to verify AWS connection after CLI setup?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;AWS CloudWatch Logs&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;S3&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;DynamoDB&#34;}],&#34;question&#34;:&#34;Where are Lambda function logs stored?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;AWS IAM Identity Center (SSO)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Direct IAM credentials&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;SSH keys&#34;}],&#34;question&#34;:&#34;Which AWS CLI authentication method is recommended for organizations?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. What runtime is used for Go functions in AWS Lambda?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            provided.al2023
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            go1.x
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            go1.21
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Which architecture is preferred for Lambda functions on Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            arm64 (cheaper and faster)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            x86_64
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Doesn&#39;t matter
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. What Function URL authentication type is used for Telegram webhook?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            NONE (public access)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            AWS_IAM
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            OAuth
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. What executable name is required for Lambda function on Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            bootstrap
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            main
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            handler
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. What advantages does Lambda Function URL have over API Gateway?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            Simpler to set up
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            Lower latency
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            Cheaper
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-4" 
+                 value="3"
+                 id="q4-a3">
+          <label class="form-check-label" for="q4-a3">
+            More rate limiting features
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="5">
+      <h5 class="mb-3">6. How to verify AWS connection after CLI setup?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="0"
+                 id="q5-a0">
+          <label class="form-check-label" for="q5-a0">
+            aws sts get-caller-identity
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="1"
+                 id="q5-a1">
+          <label class="form-check-label" for="q5-a1">
+            aws configure list
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="2"
+                 id="q5-a2">
+          <label class="form-check-label" for="q5-a2">
+            aws login
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="6">
+      <h5 class="mb-3">7. Where are Lambda function logs stored?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="0"
+                 id="q6-a0">
+          <label class="form-check-label" for="q6-a0">
+            AWS CloudWatch Logs
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="1"
+                 id="q6-a1">
+          <label class="form-check-label" for="q6-a1">
+            S3
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="2"
+                 id="q6-a2">
+          <label class="form-check-label" for="q6-a2">
+            DynamoDB
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="7">
+      <h5 class="mb-3">8. Which AWS CLI authentication method is recommended for organizations?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="0"
+                 id="q7-a0">
+          <label class="form-check-label" for="q7-a0">
+            AWS IAM Identity Center (SSO)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="1"
+                 id="q7-a1">
+          <label class="form-check-label" for="q7-a1">
+            Direct IAM credentials
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="2"
+                 id="q7-a2">
+          <label class="form-check-label" for="q7-a2">
+            SSH keys
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  December 19, 2024
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-telegram-gemini-ai-bot.html" style="text-decoration: none; color: inherit;">Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>In this article, we&rsquo;ll explore how to build an intelligent Telegram bot using Go that acts as a proxy between users and Google&rsquo;s Gemini API. The bot will handle two primary functions: answering user messages and generating images. While this mechanism can be significantly extended with additional capabilities like voice and video generation, we&rsquo;ll focus on these two request types for simplicity.</p></p>
+            
+            <a href="/en/post/go-telegram-gemini-ai-bot.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/go/" class="badge">Go</a>
+                  <a href="/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/tags/gemini/" class="badge">Gemini</a>
+                  <a href="/tags/ai/" class="badge">Ai</a>
+                  <a href="/tags/aws/" class="badge">Aws</a>
+                  <a href="/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/tags/bot/" class="badge">Bot</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  July 1, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/deploy-docker-swarm-gitlab.html" style="text-decoration: none; color: inherit;">Deploy docker swarm from Gitlab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/deploy-docker-swarm-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/deploy-docker-swarm-gitlab/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Deploy docker swarm from Gitlab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Docker container deployment has many advantages over binary deployment. Let&rsquo;s dive into advantages and see how we can implement docker container deployment from Gitlab CI.
+Let&rsquo;s talk about how standard docker can help us. Any docker orchestration tools (Kubernetes, for example) will be observed in future articles.</p></p>
+            
+            <a href="/en/post/deploy-docker-swarm-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/docker/" class="badge">Docker</a>
+                  <a href="/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  May 8, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-build-and-deploy-ssh-gitlab.html" style="text-decoration: none; color: inherit;">Compilation and deploy via SSH in Gitlab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/go-build-and-deploy-ssh-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/go-build-and-deploy-ssh-gitlab/gitlab_logo.svg"
+                   style="max-height: 200px;"
+                   alt="Compilation and deploy via SSH in Gitlab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Let&rsquo;s take a look at how Go compilation works and how to use GitLab CI for that.</p></p>
+            
+            <a href="/en/post/go-build-and-deploy-ssh-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/tags/compilation/" class="badge">Compilation</a>
+                  <a href="/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/tags/ssh/" class="badge">Ssh</a>
+                  <a href="/tags/modules/" class="badge">Modules</a>
+                  <a href="/tags/vendor/" class="badge">Vendor</a>
+                  <a href="/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/post/go-telegram-bot-aws-lambda-deploy.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

@@ -1,0 +1,874 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Деплой docker swarm из Gitlab CI | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер
+Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/deploy-docker-swarm-gitlab.html">
+<meta property="og:title" content="Деплой docker swarm из Gitlab CI | Golang for all">
+<meta property="og:description" content="Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер
+Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.
+">
+<meta property="og:image" content="http://localhost:51376/en/post/deploy-docker-swarm-gitlab/docker.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-07-01T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-07-01T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Docker">
+    
+      <meta property="article:tag" content="Deploy">
+    
+      <meta property="article:tag" content="Gitlab">
+    
+      <meta property="article:tag" content="Ci/Cd">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/deploy-docker-swarm-gitlab.html">
+<meta name="twitter:title" content="Деплой docker swarm из Gitlab CI | Golang for all">
+<meta name="twitter:description" content="Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер
+Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.
+">
+<meta name="twitter:image" content="http://localhost:51376/en/post/deploy-docker-swarm-gitlab/docker.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/deploy-docker-swarm-gitlab.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/deploy-docker-swarm-gitlab.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Деплой docker swarm из Gitlab CI</h1>
+
+    
+    <p>
+
+
+  1 июля 2020 г.
+
+
+
+            <a href="/ru/tags/docker/" class="badge">Docker</a>
+            <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+            <a href="/ru/tags/gitlab/" class="badge">Gitlab</a>
+            <a href="/ru/tags/ci/cd/" class="badge">Ci/Cd</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/deploy-docker-swarm-gitlab/docker.svg"
+                     alt="Деплой docker swarm из Gitlab CI"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Содержание</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#плюсы-docker">Плюсы Docker</a></li>
+    <li><a href="#сборка-образа">Сборка образа</a>
+      <ul>
+        <li><a href="#деплой">Деплой</a></li>
+        <li><a href="#docker-swarm">Docker swarm</a></li>
+      </ul>
+    </li>
+    <li><a href="#подготовка-сервера">Подготовка сервера</a></li>
+    <li><a href="#подготовка-gitlab-ciyml">Подготовка .gitlab-ci.yml</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер</p>
+<p>Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.</p>
+<h2 id="плюсы-docker">Плюсы Docker</h2>
+<p>При использовании Docker существует множество плюсов сравнительно с деплоем бинарного файла:</p>
+<ul>
+<li>Для запуска/перезапуска в случае падения сервиса не потребуется ПО, кроме утилиты docker. В то время, как для запуска бинарного файла потребуется программы типа systemd или supervisor.</li>
+<li>Нет необходимости устанавливать или обновлять на сервере, где запускается docker-контейнер. Все необходимые дополнительные программы могут быть установлены внутрь контейнера нашей программы.</li>
+<li>Ограниченный срок жизни контейнера позволяет нам легко менять этот контейнер — добавлять или убирать софт, менять базовую ОС. При этом нам нет необходимости поддерживать старый вариант контейнера - мы меняем процедуру сборки и выкатываем новый контейнер вместо старого.</li>
+<li>Упрощенный деплой на сторонний хостинг — множество современных хостингов (AWS, Microsoft Azure, Google Cloud) работают с docker-контейнерами.</li>
+<li>В docker существуют механизмы healthcheck для оценивания работоспособности и перезапуска контейнеров; горизонтальное и вертикальное масштабирование; балансирование нагрузки между контейнерами; DNS (сервисы могут обращаться друг к другу по простым, заранее известным именам).</li>
+</ul>
+<h2 id="сборка-образа">Сборка образа</h2>
+<p>Ранее мы рассмотрели сборку минимально возможного образа с программой GO. Для сборки образа далее будем использовать данный подход.</p>
+<h3 id="деплой">Деплой</h3>
+<p>Будем пользоваться только базовыми возможностями консольной команды docker, намеренно не будем применять никакие оркестраторы вроде kubernetes,nomad; не будем использовать облачные хостинги вроде Google Cloud — все это потребует очень много дополнительных объяснений и будет рассмотрено отдельно.</p>
+<h3 id="docker-swarm">Docker swarm</h3>
+<p>Для деплоя будем использовать docker swarm, который входит в базовую функциональность docker.
+Swarm позволяет управлять запуском docker-контейнеров на удаленном сервере, на котором заранее была выполнена команда docker swarm init (создание нового swarm) или docker swarm join (подключение к существующему swarm). После выполнения этих команд docker на текущем сервере переходит в swarm-режим.</p>
+<p>Для деплоя в docker swarm нам не требуется SSH-доступ на сервер. Команда docker stack deploy позволяет выполнить обновление docker-контейнеров на сервере по конфигурационному файлу в формате docker-compose, так что даже дополнительную утилиту docker-compose устанавливать не требуется.</p>
+<p>Также именно при вызове docker stack deploy мы можем указать не только список контейнеров, но также объединить несколько контейнеры в сервисы с масштабированием нагрузки по контейнерам внутри сервиса; можем указать политику обновления контейнеров, те обеспечить production-ready деплой с резервированием и без простоев. Данный способ деплоя является наилучшей альтернативой при использовании лишь утилиты docker.</p>
+<h2 id="подготовка-сервера">Подготовка сервера</h2>
+<p>Необходимо зайти по SSH по сервер, на котором предполагается запуск контейнеров, и перевести docker-сервер в swarm режим:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>docker swarm init
+</span></span></code></pre></div><p>Данная команда также выведет токены для подключения других серверов к данному swarm с помощью команды docker swarm join &ndash;token xxx Однако, для такой работы нам потребуются другие серверы. Мы же будем работать всего с одним сервером. Мы не будем использовать docker swarm join.</p>
+<p>Изменим запуск docker-сервиса таким образом, чтобы сервер был доступен удаленно (не только с localhost). Создадим или изменим файл службы docker для systemd:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>sudo -s
+</span></span><span style="display:flex;"><span>mkdir -p /etc/systemd/system/docker.service.d
+</span></span><span style="display:flex;"><span>touch /etc/systemd/system/docker.service.d/startup_options.conf
+</span></span></code></pre></div><p>Содержимое файла <code>startup_options.conf</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-ini" data-lang="ini"><span style="display:flex;"><span><span style="color:#66d9ef">[Service]</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ExecStart</span><span style="color:#f92672">=</span><span style="color:#e6db74">/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2376</span>
+</span></span></code></pre></div><p>Перезапустим службу:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>systemctl daemon-reload
+</span></span></code></pre></div><p>Теперь Docker-сервис на данном сервере может принимать удаленные подключения.</p>
+<h2 id="подготовка-gitlab-ciyml">Подготовка .gitlab-ci.yml</h2>
+<p>Для деплоя docker стэка на удаленный сервер, работающий в swarm режиме, мы реализовали следующий шаг в .gitlab-ci.yml:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">deploy_docker_stage</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">environment</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">name</span>: <span style="color:#ae81ff">stage</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">url</span>: <span style="color:#ae81ff">https://someurl</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">image</span>: <span style="color:#ae81ff">docker:19.03.1</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">services</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">docker:19.03.1-dind</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">stage</span>: <span style="color:#ae81ff">deploy</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">variables</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">DOCKER_HOST</span>: <span style="color:#e6db74">&#34;tcp://${DOCKER_HOST}:2376&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">before_script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">apk add jq</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">docker login -u $USER -p $PASSWORD $DOCKER_REPO</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">export CONFIG=$(echo $CONFIG1_STAGE | jq -c) &amp;&amp; docker stack deploy --with-registry-auth -c ./docker/stage/app.yml app</span>
+</span></span></code></pre></div><p>Переопределяем переменную DOCKER_HOST для того, чтобы команда docker в Gitlab CI взаимодействовала с удаленным сервером, который мы настроили в предыдущем параграфе.</p>
+<p>Наш образ хранится в приватном репозитории, для доступа к которому используем docker login. Чтобы наша команда docker stack deploy использовала полученную авторизации в репозитории, указываем параметр <code>--with-registry-auth</code>.</p>
+<p>YAML-файл конфигурации <code>./docker/stage/app.yml</code>, имеет следующий вид:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">version</span>: <span style="color:#e6db74">&#39;3.8&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">services</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">app</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">image</span>: <span style="color:#ae81ff">${DOCKER_REPO}/${DOCKER_IMAGE}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">environment</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#ae81ff">CONFIG</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#e6db74">&#34;9091:9091&#34;</span>
+</span></span><span style="display:flex;"><span>      - <span style="color:#e6db74">&#34;8444:8444&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">depends_on</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#ae81ff">postgres</span>
+</span></span><span style="display:flex;"><span>      - <span style="color:#ae81ff">redis</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">deploy</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">replicas</span>: <span style="color:#ae81ff">3</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">update_config</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">parallelism</span>: <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">delay</span>: <span style="color:#ae81ff">3s</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">order</span>: <span style="color:#ae81ff">start-first</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">failure_action</span>: <span style="color:#ae81ff">rollback</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">monitor</span>: <span style="color:#ae81ff">1m</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">restart_policy</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">max_attempts</span>: <span style="color:#ae81ff">3</span>
+</span></span></code></pre></div><p><code>docker stack deploy</code> использует переменные окружения для формирования окончательного вида конфигурации. Поэтому в файле используются переменные <code>${DOCKER_REPO}</code>, <code>${DOCKER_IMAGE}</code> и <code>CONFIG</code>.</p>
+<p>Вся структура deploy в yaml файле указывает на то, как выполняется деплой:</p>
+<ul>
+<li><code>order: start-first</code> отвечает за то, чтобы сначала запустился контейнер новой версии контейнера, а затем уже остановился старый — та самая бесперебойность.</li>
+<li><code>parallelism: 2</code> определяет сколько пар контейнеров могут быть одновременно обновлены. Чем больше данный параметр, тем больше будет нагрузка на сервер во время деплоя.</li>
+<li><code>monitor: 1m</code> указывает сколько времени после создания контейнера docker-сервис следит за его состоянием, чтобы понять, был ли деплой успешен.</li>
+<li><code>failure_action: rollback</code> определяет что делать с деплоем в случае проблемы и в данном случае выбран откат до предыдущей версии.</li>
+</ul>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/docker/">Docker</a></li>
+        <li><a href="/ru/tags/deploy/">Deploy</a></li>
+        <li><a href="/ru/tags/gitlab/">Gitlab</a></li>
+        <li><a href="/ru/tags/ci/cd/">Ci/Cd</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;docker swarm init&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;docker swarm start&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;docker init swarm&#34;}],&#34;question&#34;:&#34;Какая команда инициализирует Docker Swarm?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Не требуется systemd или supervisor&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Не нужно устанавливать ПО на сервер&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Упрощенный деплой на хостинг&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Быстрее компиляция&#34;}],&#34;question&#34;:&#34;Каковы преимущества Docker перед деплоем бинарного файла?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;docker stack deploy&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;docker deploy stack&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;docker swarm deploy&#34;}],&#34;question&#34;:&#34;Какая команда используется для деплоя стека в Docker Swarm?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Формат docker-compose&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Формат YAML&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Формат JSON&#34;}],&#34;question&#34;:&#34;Какой формат использует docker stack deploy для конфигурации?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Какая команда инициализирует Docker Swarm?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            docker swarm init
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            docker swarm start
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            docker init swarm
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Каковы преимущества Docker перед деплоем бинарного файла?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Не требуется systemd или supervisor
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Не нужно устанавливать ПО на сервер
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Упрощенный деплой на хостинг
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-1" 
+                 value="3"
+                 id="q1-a3">
+          <label class="form-check-label" for="q1-a3">
+            Быстрее компиляция
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Какая команда используется для деплоя стека в Docker Swarm?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            docker stack deploy
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            docker deploy stack
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            docker swarm deploy
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Какой формат использует docker stack deploy для конфигурации?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Формат docker-compose
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Формат YAML
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Формат JSON
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  20 декабря 2024 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-telegram-bot-aws-lambda-deploy.html" style="text-decoration: none; color: inherit;">Деплой Telegram бота на AWS Lambda с Function URL</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Эта статья является продолжением статьи <a href="/ru/post/go-telegram-gemini-ai-bot.html">&ldquo;Создание AI-телеграм бота на Go с Gemini API и AWS Lambda&rdquo;</a> и содержит детальные инструкции по настройке и деплою Telegram бота на AWS Lambda с использованием Function URL.</p></p>
+            
+            <a href="/ru/post/go-telegram-bot-aws-lambda-deploy.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/go/" class="badge">Go</a>
+                  <a href="/ru/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/ru/tags/aws/" class="badge">Aws</a>
+                  <a href="/ru/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/ru/tags/function-url/" class="badge">Function-Url</a>
+                  <a href="/ru/tags/cli/" class="badge">Cli</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  1 июля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-docker-delve-remote-debug.html" style="text-decoration: none; color: inherit;">Удалённая отладка с Delve</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Ранее мы обсуждали локальную отладку с помощью IDE GoLand. Теперь мы обсудим, как удалённо отлаживать программу, работающую внутри Docker-контейнера, используя Visual Studio Code и GoLand IDE.</p></p>
+            
+            <a href="/ru/post/go-docker-delve-remote-debug.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/debugger/" class="badge">Debugger</a>
+                  <a href="/ru/tags/delve/" class="badge">Delve</a>
+                  <a href="/ru/tags/vscode/" class="badge">Vscode</a>
+                  <a href="/ru/tags/goland/" class="badge">Goland</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  30 июня 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/net-wait-go.html" style="text-decoration: none; color: inherit;">Утилита и библиотека net-wait-go</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/net-wait-go.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/net-wait-go/tube2.svg"
+                   style="max-height: 200px;"
+                   alt="Утилита и библиотека net-wait-go"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Утилита и пакет Go для ожидания открытия портов (TCP, UDP).</p></p>
+            
+            <a href="/ru/post/net-wait-go.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/tcp/" class="badge">Tcp</a>
+                  <a href="/ru/tags/udp/" class="badge">Udp</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  29 июня 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-minimum-docker-image.html" style="text-decoration: none; color: inherit;">Создание минимального Docker образа для Go приложений</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/go-minimum-docker-image.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/ru/post/go-minimum-docker-image/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Создание минимального Docker образа для Go приложений"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Давайте обсудим, как создать минимальный Docker образ для Go программы.</p></p>
+            
+            <a href="/en/post/go-minimum-docker-image.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/compilation/" class="badge">Compilation</a>
+                  <a href="/ru/tags/upx/" class="badge">Upx</a>
+                  <a href="/ru/tags/ldflags/" class="badge">Ldflags</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  8 мая 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-build-and-deploy-ssh-gitlab.html" style="text-decoration: none; color: inherit;">Компиляция и деплой через SSH в GitLab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/go-build-and-deploy-ssh-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/go-build-and-deploy-ssh-gitlab/gitlab_logo.svg"
+                   style="max-height: 200px;"
+                   alt="Компиляция и деплой через SSH в GitLab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Давайте рассмотрим, как работает компиляция Go и как использовать GitLab CI для этого.</p></p>
+            
+            <a href="/ru/post/go-build-and-deploy-ssh-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/ru/tags/compilation/" class="badge">Compilation</a>
+                  <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/ru/tags/ssh/" class="badge">Ssh</a>
+                  <a href="/ru/tags/modules/" class="badge">Modules</a>
+                  <a href="/ru/tags/vendor/" class="badge">Vendor</a>
+                  <a href="/ru/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/deploy-docker-swarm-gitlab.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Http on Golang for all</title>
+    <link>http://localhost:51376/tags/http/</link>
+    <description>Recent content in Http on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 02 May 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/http/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTTP</title>
+      <link>http://localhost:51376/en/post/http.html</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/http.html</guid>
+      <description>&lt;p&gt;All examples from the article are located in the github repository.&lt;/p&gt;&#xA;&lt;p&gt;Let&amp;rsquo;s take a look at HTTP tools in GO.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

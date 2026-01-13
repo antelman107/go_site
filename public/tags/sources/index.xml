@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sources on Golang for all</title>
+    <link>http://localhost:51376/tags/sources/</link>
+    <description>Recent content in Sources on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 09 Apr 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/sources/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GO Templates: Principles and Usage</title>
+      <link>http://localhost:51376/en/post/templates.html</link>
+      <pubDate>Thu, 09 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/templates.html</guid>
+      <description>&lt;p&gt;Packages &lt;code&gt;text/template&lt;/code&gt; and &lt;code&gt;html/template&lt;/code&gt; are part of the Go standard library. Go templates are used in many Go-programmed software — Docker, Kubernetes, Helm. Many third-party libraries are integrated with Go templates, for example Echo. Knowing Go template syntax is very useful.&lt;/p&gt;&#xA;&lt;p&gt;This article consists of &lt;code&gt;text/template&lt;/code&gt; package documentation and a couple of author&amp;rsquo;s solutions. After describing Go template syntax, we&amp;rsquo;ll dive into &lt;code&gt;text/template&lt;/code&gt; and &lt;code&gt;html/template&lt;/code&gt; sources.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Principles of slice type in GO</title>
+      <link>http://localhost:51376/en/post/golang-slice.html</link>
+      <pubDate>Sat, 04 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/golang-slice.html</guid>
+      <description>&lt;p&gt;The Go blog describes how to use slices. Let&amp;rsquo;s take a look at slice internals.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Data handling in concurrent programs</title>
+      <link>http://localhost:51376/en/post/golang-data-handling-concurrent-programs.html</link>
+      <pubDate>Thu, 02 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/golang-data-handling-concurrent-programs.html</guid>
+      <description>&lt;p&gt;In Go, we have goroutines functionality out of the box. We can run code in parallel. However, in our parallel running code we can work with shared variables, and it is not clear how exactly Go handles such situations.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Principles of map type in GO</title>
+      <link>http://localhost:51376/en/post/map-principles-golang.html</link>
+      <pubDate>Thu, 02 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/map-principles-golang.html</guid>
+      <description>&lt;p&gt;The map programming interface in Go is described in the Go blog. We just need to recall that a map is a key-value storage and it should retrieve values by key as fast as possible.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang regexp: matching newline</title>
+      <link>http://localhost:51376/en/post/golang-regexp-matching-newline.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/golang-regexp-matching-newline.html</guid>
+      <description>&lt;p&gt;Why regular expressions with dot (&amp;quot;.&amp;quot;) work differently in Go compared to PHP and JavaScript.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

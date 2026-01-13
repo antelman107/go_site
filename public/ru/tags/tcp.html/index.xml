@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tcp on Golang for all</title>
+    <link>http://localhost:51048/ru/tags/tcp.html.html</link>
+    <description>Recent content in Tcp on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Tue, 30 Jun 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51048/ru/tags/tcp.html/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Утилита и библиотека net-wait-go</title>
+      <link>http://localhost:51048/ru/post/net-wait-go.html</link>
+      <pubDate>Tue, 30 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/net-wait-go.html</guid>
+      <description>&lt;p&gt;Утилита и пакет Go для ожидания открытия портов (TCP, UDP).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Создание простого TCP чата на Go</title>
+      <link>http://localhost:51048/ru/post/golang-tcp-server-chat.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/golang-tcp-server-chat.html</guid>
+      <description>&lt;p&gt;Пример простого TCP чата на Go с объяснением логики.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

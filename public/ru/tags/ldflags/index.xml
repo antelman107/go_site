@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ldflags on Golang for all</title>
+    <link>http://localhost:51376/ru/tags/ldflags/</link>
+    <description>Recent content in Ldflags on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Mon, 29 Jun 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/ru/tags/ldflags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Создание минимального Docker образа для Go приложений</title>
+      <link>http://localhost:51376/en/post/go-minimum-docker-image.html</link>
+      <pubDate>Mon, 29 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/go-minimum-docker-image.html</guid>
+      <description>&lt;p&gt;Давайте обсудим, как создать минимальный Docker образ для Go программы.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

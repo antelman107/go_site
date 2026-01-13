@@ -1,0 +1,1 @@
+hugo --minify && rsync -e "ssh -i ~/.ssh/useast1.pem" -avz --delete public/ ec2-user@golangforall.com:/var/www/blog/public/

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Golang for all</title>
+    <link>http://localhost:51376/ru/posts/</link>
+    <description>Recent content in Posts on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Fri, 20 Dec 2024 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/ru/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Деплой Telegram бота на AWS Lambda с Function URL</title>
+      <link>http://localhost:51376/ru/post/go-telegram-bot-aws-lambda-deploy.html</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/go-telegram-bot-aws-lambda-deploy.html</guid>
+      <description>&lt;p&gt;Эта статья является продолжением статьи &lt;a href=&#34;http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html&#34;&gt;&amp;ldquo;Создание AI-телеграм бота на Go с Gemini API и AWS Lambda&amp;rdquo;&lt;/a&gt; и содержит детальные инструкции по настройке и деплою Telegram бота на AWS Lambda с использованием Function URL.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Создание AI-телеграм бота на Go с Gemini API и AWS Lambda</title>
+      <link>http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html</link>
+      <pubDate>Thu, 19 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html</guid>
+      <description>&lt;p&gt;В этой статье мы рассмотрим, как создать интеллектуального Telegram бота на Go, который выступает в роли прокси между пользователями и API Google Gemini. Бот будет выполнять две основные функции: отвечать на сообщения пользователей и генерировать изображения. Хотя этот механизм может быть существенно расширен дополнительными возможностями, такими как генерация голоса и видео, мы сосредоточимся на этих двух типах запросов для простоты.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Удалённая отладка с Delve</title>
+      <link>http://localhost:51376/ru/post/go-docker-delve-remote-debug.html</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 -0700</pubDate>
+      <guid>http://localhost:51376/ru/post/go-docker-delve-remote-debug.html</guid>
+      <description>&lt;p&gt;Ранее мы обсуждали локальную отладку с помощью IDE GoLand. Теперь мы обсудим, как удалённо отлаживать программу, работающую внутри Docker-контейнера, используя Visual Studio Code и GoLand IDE.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Деплой docker swarm из Gitlab CI</title>
+      <link>http://localhost:51376/ru/post/deploy-docker-swarm-gitlab.html</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/deploy-docker-swarm-gitlab.html</guid>
+      <description>&lt;p&gt;Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер&lt;/p&gt;&#xA;&lt;p&gt;Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Утилита и библиотека net-wait-go</title>
+      <link>http://localhost:51376/ru/post/net-wait-go.html</link>
+      <pubDate>Tue, 30 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/net-wait-go.html</guid>
+      <description>&lt;p&gt;Утилита и пакет Go для ожидания открытия портов (TCP, UDP).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Создание минимального Docker образа для Go приложений</title>
+      <link>http://localhost:51376/en/post/go-minimum-docker-image.html</link>
+      <pubDate>Mon, 29 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/go-minimum-docker-image.html</guid>
+      <description>&lt;p&gt;Давайте обсудим, как создать минимальный Docker образ для Go программы.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Компиляция и деплой через SSH в GitLab CI</title>
+      <link>http://localhost:51376/ru/post/go-build-and-deploy-ssh-gitlab.html</link>
+      <pubDate>Fri, 08 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/go-build-and-deploy-ssh-gitlab.html</guid>
+      <description>&lt;p&gt;Давайте рассмотрим, как работает компиляция Go и как использовать GitLab CI для этого.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>HTTP</title>
+      <link>http://localhost:51376/ru/post/http.html</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/http.html</guid>
+      <description>&lt;p&gt;Все примеры из статьи находятся в репозитории на github.&lt;/p&gt;&#xA;&lt;p&gt;Давайте рассмотрим инструменты HTTP в GO.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>sync.Map</title>
+      <link>http://localhost:51376/ru/post/sync-map.html</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/sync-map.html</guid>
+      <description>&lt;p&gt;Давайте рассмотрим использование &lt;code&gt;sync.Map&lt;/code&gt; и его исходный код.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Профилирование Go: основы и практика</title>
+      <link>http://localhost:51376/ru/post/profiling.html</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/profiling.html</guid>
+      <description>&lt;p&gt;Go имеет богатые инструменты профилирования с самого начала — пакет &lt;code&gt;pprof&lt;/code&gt; и &lt;code&gt;go tool pprof&lt;/code&gt;. Давайте обсудим, почему профилирование полезно, как с ним работать и что нового в этой области.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Внедрение зависимостей в GO</title>
+      <link>http://localhost:51376/ru/post/dependency-injection.html</link>
+      <pubDate>Tue, 21 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/dependency-injection.html</guid>
+      <description>&lt;p&gt;Давайте поговорим о паттерне внедрения зависимостей и управлении зависимостями в больших программах.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Шаблоны GO: принципы и использование</title>
+      <link>http://localhost:51376/ru/post/templates.html</link>
+      <pubDate>Thu, 09 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/templates.html</guid>
+      <description>&lt;p&gt;Пакеты &lt;code&gt;text/template&lt;/code&gt; и &lt;code&gt;html/template&lt;/code&gt; являются частью стандартной библиотеки Go. Шаблоны Go используются во многих программах, написанных на Go — Docker, Kubernetes, Helm. Многие сторонние библиотеки интегрированы с шаблонами Go, например Echo. Знание синтаксиса шаблонов Go очень полезно.&lt;/p&gt;&#xA;&lt;p&gt;Эта статья состоит из документации пакета &lt;code&gt;text/template&lt;/code&gt; и нескольких решений автора. После описания синтаксиса шаблонов Go мы погрузимся в исходники &lt;code&gt;text/template&lt;/code&gt; и &lt;code&gt;html/template&lt;/code&gt;.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Фильтрация по списку значений с помощью GORM</title>
+      <link>http://localhost:51376/ru/post/gorm-filter-by-list-of-values.html</link>
+      <pubDate>Tue, 07 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/gorm-filter-by-list-of-values.html</guid>
+      <description>&lt;p&gt;Когда необходимо отфильтровать данные по списку значений (например, по ID: 1, 2, 3), следует использовать оператор &lt;code&gt;ANY&lt;/code&gt; в сочетании с &lt;code&gt;pq.Array&lt;/code&gt; из драйвера PostgreSQL.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Принципы работы типа slice в GO</title>
+      <link>http://localhost:51376/ru/post/golang-slice.html</link>
+      <pubDate>Sat, 04 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/golang-slice.html</guid>
+      <description>&lt;p&gt;В блоге Go описывается, как использовать срезы. Давайте посмотрим на внутреннее устройство срезов.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Обработка данных в конкурентных программах</title>
+      <link>http://localhost:51376/ru/post/golang-data-handling-concurrent-programs.html</link>
+      <pubDate>Thu, 02 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/golang-data-handling-concurrent-programs.html</guid>
+      <description>&lt;p&gt;В Go у нас есть функциональность горутин из коробки. Мы можем запускать код параллельно. Однако в нашем параллельно выполняющемся коде мы можем работать с общими переменными, и не совсем понятно, как именно Go обрабатывает такие ситуации.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Принципы работы типа map в GO</title>
+      <link>http://localhost:51376/ru/post/map-principles-golang.html</link>
+      <pubDate>Thu, 02 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/map-principles-golang.html</guid>
+      <description>&lt;p&gt;Программный интерфейс map в Go описан в блоге Go. Нам просто нужно вспомнить, что map — это хранилище ключ-значение, и оно должно извлекать значения по ключу как можно быстрее.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang regexp: сопоставление символа новой строки</title>
+      <link>http://localhost:51376/ru/post/golang-regexp-matching-newline.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/golang-regexp-matching-newline.html</guid>
+      <description>&lt;p&gt;Почему регулярные выражения с точкой (&amp;quot;.&amp;quot;) работают по-другому в Go по сравнению с PHP и JavaScript.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>GORM: фильтрация сущности по связанной сущности</title>
+      <link>http://localhost:51376/ru/post/gorm-filter-entity-by-linked-entity.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/gorm-filter-entity-by-linked-entity.html</guid>
+      <description>&lt;p&gt;Эта задача не так проста, особенно с GORM.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Создание простого TCP чата на Go</title>
+      <link>http://localhost:51376/ru/post/golang-tcp-server-chat.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/golang-tcp-server-chat.html</guid>
+      <description>&lt;p&gt;Пример простого TCP чата на Go с объяснением логики.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Как и зачем использовать дебаггер с GO</title>
+      <link>http://localhost:51376/ru/post/goland-debugger.html</link>
+      <pubDate>Tue, 24 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/goland-debugger.html</guid>
+      <description>&lt;p&gt;Отладчик — это очень полезный и мощный инструмент. Он может помочь вам точно понять, что происходит в вашем коде, изучить новые проекты и избежать ненужных изменений отладочного кода.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

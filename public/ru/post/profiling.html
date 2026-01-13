@@ -1,0 +1,1338 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Профилирование Go: основы и практика | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Go имеет богатые инструменты профилирования с самого начала — пакет pprof и go tool pprof. Давайте обсудим, почему профилирование полезно, как с ним работать и …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/profiling.html">
+<meta property="og:title" content="Профилирование Go: основы и практика | Golang for all">
+<meta property="og:description" content="Go имеет богатые инструменты профилирования с самого начала — пакет pprof и go tool pprof. Давайте обсудим, почему профилирование полезно, как с ним работать и …">
+<meta property="og:image" content="http://localhost:51376/en/post/profiling/goph.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-04-23T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-04-23T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Profiling">
+    
+      <meta property="article:tag" content="Pprof">
+    
+      <meta property="article:tag" content="Benchmark">
+    
+      <meta property="article:tag" content="Ab">
+    
+      <meta property="article:tag" content="Cpu">
+    
+      <meta property="article:tag" content="Allocation">
+    
+      <meta property="article:tag" content="Remote">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/profiling.html">
+<meta name="twitter:title" content="Профилирование Go: основы и практика | Golang for all">
+<meta name="twitter:description" content="Go имеет богатые инструменты профилирования с самого начала — пакет pprof и go tool pprof. Давайте обсудим, почему профилирование полезно, как с ним работать и …">
+<meta name="twitter:image" content="http://localhost:51376/en/post/profiling/goph.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/profiling.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/profiling.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Профилирование Go: основы и практика</h1>
+
+    
+    <p>
+
+
+  23 апреля 2020 г.
+
+
+
+            <a href="/ru/tags/profiling/" class="badge">Profiling</a>
+            <a href="/ru/tags/pprof/" class="badge">Pprof</a>
+            <a href="/ru/tags/benchmark/" class="badge">Benchmark</a>
+            <a href="/ru/tags/ab/" class="badge">Ab</a>
+            <a href="/ru/tags/cpu/" class="badge">Cpu</a>
+            <a href="/ru/tags/allocation/" class="badge">Allocation</a>
+            <a href="/ru/tags/remote/" class="badge">Remote</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/profiling/goph.svg"
+                     alt="Профилирование Go: основы и практика"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Содержание</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#почему-профилирование-полезно">Почему профилирование полезно</a></li>
+    <li><a href="#какой-инструмент-подходит-для-профилирования">Какой инструмент подходит для профилирования</a></li>
+    <li><a href="#как-профилировать">Как профилировать</a></li>
+    <li><a href="#пример-профилирования">Пример профилирования</a>
+      <ul>
+        <li><a href="#получение-данных-профиля">Получение данных профиля</a></li>
+        <li><a href="#анализ-профиля-cpu">Анализ профиля CPU</a></li>
+      </ul>
+    </li>
+    <li><a href="#заключение">Заключение</a></li>
+    <li><a href="#удалённое-профилирование">Удалённое профилирование</a></li>
+    <li><a href="#что-нового-в-теме-профилирования">Что нового в теме профилирования</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Go имеет богатые инструменты профилирования с самого начала — пакет <code>pprof</code> и <code>go tool pprof</code>. Давайте обсудим, почему профилирование полезно, как с ним работать и что нового в этой области.</p>
+<h2 id="почему-профилирование-полезно">Почему профилирование полезно</h2>
+<p>При использовании отладчика можно найти логические ошибки. Это базовая отладка.</p>
+<p>Программа может работать логически правильно, но могут появиться следующие побочные эффекты:</p>
+<ul>
+<li>долгое выполнение в некоторых случаях;</li>
+<li>высокое потребление памяти;</li>
+<li>высокая нагрузка на процессор;</li>
+</ul>
+<p>Всё вышеперечисленное не является ошибкой, пока программа продолжает функционировать. Однако высокое потребление ресурсов дорого обходится владельцам сервисов — для поддержки таких сервисов время от времени требуются новые аппаратные ресурсы.</p>
+<p>Если внешняя нагрузка на сервис увеличивается, все эти &ldquo;слабые места&rdquo; могут стать причиной неожиданных сбоев — если у сервиса закончится память, он просто завершит работу; если не хватает CPU, сервер станет недоступен даже для SSH-подключений.</p>
+<p>Профилировщик чрезвычайно полезен для проверки программы с целью найти такие проблемы.</p>
+<h2 id="какой-инструмент-подходит-для-профилирования">Какой инструмент подходит для профилирования</h2>
+<p>Стандартный инструмент профилировщика Go — <code>pprof</code> — отличный. Давайте использовать <code>pprof</code>.</p>
+<h2 id="как-профилировать">Как профилировать</h2>
+<p>Профилирование состоит из двух действий:</p>
+<ol>
+<li>сбор данных профилирования из сервиса;</li>
+<li>визуализация и анализ данных;</li>
+</ol>
+<p>Для сбора данных профилирования следует:</p>
+<ul>
+<li>реализовать ручной сбор метрик и экспорт с помощью пакета <code>pprof</code>, или</li>
+<li>запустить endpoint <code>net/http/pprof</code>, который предоставляет экспорт данных профилирования;</li>
+</ul>
+<p>Для начинающих проще использовать вариант 2.</p>
+<p>Чтобы запустить endpoint профилирования, следует:</p>
+<ul>
+<li>добавить <code>import _ &quot;net/http/pprof&quot;</code> в код программы;</li>
+<li>если в программе уже запущен сервер <code>net/http</code> — больше ничего не требуется;</li>
+<li>если нет, следует добавить код запуска сервера:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">ListenAndServe</span>(<span style="color:#e6db74">&#34;localhost:6060&#34;</span>, <span style="color:#66d9ef">nil</span>))
+</span></span><span style="display:flex;"><span>}()
+</span></span></code></pre></div><p>Согласно исходному коду <code>net/http/pprof</code>, становится очевидным, что делает этот импорт:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">init</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/&#34;</span>, <span style="color:#a6e22e">Index</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/cmdline&#34;</span>, <span style="color:#a6e22e">Cmdline</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/profile&#34;</span>, <span style="color:#a6e22e">Profile</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/symbol&#34;</span>, <span style="color:#a6e22e">Symbol</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/trace&#34;</span>, <span style="color:#a6e22e">Trace</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="пример-профилирования">Пример профилирования</h2>
+<p>Я собираюсь профилировать веб-сервис, запущенный на <code>localhost:8090</code>.</p>
+<p>Я импортировал <code>net/http/pprof</code> и добавил запуск HTTP-сервера.</p>
+<h3 id="получение-данных-профиля">Получение данных профиля</h3>
+<p>Сначала я собираюсь нагрузить мой сервис с помощью инструмента Apache Benchmark (<code>ab</code>):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>ab -n <span style="color:#ae81ff">1000</span> -c10 http://localhost:8090/
+</span></span></code></pre></div><p><code>ab</code> выводит свою собственную статистику о времени запросов, но сейчас она мне не нужна. Я собираюсь анализировать данные профилирования.</p>
+<p>Пока сервис под нагрузкой, я запрашиваю данные профилирования CPU на следующие 5 секунд:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl http://localhost:6060/debug/pprof/profile?seconds<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span> &gt; ./profile
+</span></span></code></pre></div><p>В результате файл профиля загружается. Это всё для получения данных профилирования. Давайте проанализируем их.</p>
+<h3 id="анализ-профиля-cpu">Анализ профиля CPU</h3>
+<p>Давайте откроем данные профилирования, которые я только что загрузил, с помощью <code>go tool pprof</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>go tool pprof ./profile
+</span></span></code></pre></div><pre tabindex="0"><code>Type: cpu
+Time: Apr 19, 2020 at 9:28pm (+03)
+Duration: 5.40s, Total samples = 400ms ( 7.41%)
+Entering interactive mode (type &#34;help&#34; for commands, &#34;o&#34; for options)
+</code></pre><p>Мы можем вывести данные в виде изображения:</p>
+<pre tabindex="0"><code>(pprof) web
+</code></pre><p>Это требует установки инструмента Graphviz.</p>
+<p>В результате я получил схему функций, где самые долго работающие функции больше других.</p>
+<p><img src="/en/post/profiling/img.png" alt="img.png"></p>
+<p>Как мы видим, больше всего времени тратится на вызовы пакета <code>html/template</code>, что вовлекает нас в исходники Go. Это стандартное поведение профилировщика — неважно, из кода приложения функция или из исходников Go.</p>
+<p>Давайте вернёмся к терминалу pprof и выведем топ-15 функций по времени работы:</p>
+<pre tabindex="0"><code>(pprof) top15
+</code></pre><pre tabindex="0"><code>Showing nodes accounting for 0, 0% of 400ms total
+Showing top 15 nodes out of 147
+      flat  flat%   sum%        cum   cum%
+         0     0%     0%      260ms 65.00%  net/http.(*conn).serve
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo.(*Echo).ServeHTTP
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo.(*Echo).ServeHTTP.func1
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo.(*Echo).add.func1
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo.(*context).Render
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo/middleware.AddTrailingSlashWithConfig.func1.1
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo/middleware.CORSWithConfig.func1.1
+         0     0%     0%      240ms 60.00%  net/http.serverHandler.ServeHTTP
+         0     0%     0%      220ms 55.00%  html/template.(*Template).Execute
+         0     0%     0%      220ms 55.00%  text/template.(*Template).Execute
+         0     0%     0%      220ms 55.00%  text/template.(*Template).execute
+         0     0%     0%      220ms 55.00%  text/template.(*state).walk
+         0     0%     0%      220ms 55.00%  text/template.(*state).walkTemplate
+</code></pre><p>Рендеринг шаблонов также в топе.</p>
+<p>Мы можем вывести исходный код любой функции, чтобы увидеть, какая часть занимает какое время:</p>
+<pre tabindex="0"><code>(pprof) list text/template.\(\*state\).walk$
+</code></pre><pre tabindex="0"><code>Total: 400ms
+ROUTINE ======================== text/template.(*state).walk in /usr/local/Cellar/go/1.14/libexec/src/text/template/exec.go
+         0      830ms (flat, cum) 207.50% of Total
+         .          .    250:	s.at(node)
+         .          .    251:	switch node := node.(type) {
+         .          .    252:	case *parse.ActionNode:
+         .          .    253:		// Do not pop variables so they persist until next end.
+         .          .    254:		// Also, if the action declares variables, don&#39;t print the result.
+    160ms    160ms    255:		val := s.evalPipeline(dot, node.Pipe)
+         .          .    256:		if len(node.Pipe.Decl) == 0 {
+     20ms     20ms    257:			s.printValue(node, val)
+         .          .    258:		}
+         .          .    259:	case *parse.IfNode:
+     40ms     40ms    260:		s.walkIfOrWith(parse.NodeIf, dot, node.Pipe, node.List, node.ElseList)
+         .          .    261:	case *parse.ListNode:
+         .          .    262:		for _, node := range node.Nodes {
+    220ms    220ms    263:			s.walk(dot, node)
+         .          .    264:		}
+         .          .    265:	case *parse.RangeNode:
+    170ms    170ms    266:		s.walkRange(dot, node)
+         .          .    267:	case *parse.TemplateNode:
+    220ms    220ms    268:		s.walkTemplate(dot, node)
+         .          .    269:	case *parse.TextNode:
+         .          .    270:		if _, err := s.wr.Write(node.Text); err != nil {
+         .          .    271:			s.writeError(err)
+         .          .    272:		}
+         .          .    273:	case *parse.WithNode:
+</code></pre><p>Выводы:</p>
+<ul>
+<li>здесь есть рекурсия (строка 263);</li>
+<li>есть вызовы пакета <code>reflect</code>, которые считаются &ldquo;тяжёлыми&rdquo;;</li>
+<li>я не могу изменить исходный код Go.</li>
+</ul>
+<p>Но я могу изменить код моего сервиса, который вызывает стандартные пакеты Go. В настоящее время в моём сервисе есть вызов шаблона при каждом запросе клиента. Однако шаблоны статичны и постоянны. Результат вызова шаблона зависит от данных запроса.</p>
+<p>Я собираюсь кэшировать результат вызова шаблона — рендеринг будет вызываться один раз для каждой комбинации данных запроса. При первом запросе в кэше нет данных. В этом случае выполняется вызов шаблона. Результат вызова шаблона сохраняется в кэш с ключом, сгенерированным из данных запроса. При каждом запросе сервис проверяет, есть ли данные в кэше по определённому ключу. И сервис использует кэшированные данные, если они есть.</p>
+<p>Я изменил код сервиса и снова запустил профилирование. Результаты ниже:</p>
+<pre tabindex="0"><code>(pprof) top15
+</code></pre><pre tabindex="0"><code>Showing nodes accounting for 90ms, 50.00% of 180ms total
+Showing top 15 nodes out of 78
+      flat  flat%   sum%        cum   cum%
+         0     0%     0%      100ms 55.56%  net/http.(*conn).serve
+     90ms 50.00% 50.00%       90ms 50.00%  syscall.syscall
+         0     0% 50.00%       60ms 33.33%  bufio.(*Writer).Flush
+         0     0% 50.00%       60ms 33.33%  internal/poll.(*FD).Write
+         0     0% 50.00%       60ms 33.33%  net.(*conn).Write
+         0     0% 50.00%       60ms 33.33%  net.(*netFD).Write
+         0     0% 50.00%       60ms 33.33%  net/http.(*response).finishRequest
+         0     0% 50.00%       60ms 33.33%  net/http.checkConnErrorWriter.Write
+         0     0% 50.00%       60ms 33.33%  syscall.Write
+         0     0% 50.00%       60ms 33.33%  syscall.write
+         0     0% 50.00%       40ms 22.22%  runtime.findrunnable
+         0     0% 50.00%       40ms 22.22%  runtime.mcall
+         0     0% 50.00%       40ms 22.22%  runtime.schedule
+         0     0% 50.00%       30ms 16.67%  github.com/labstack/echo.(*Echo).Start
+</code></pre><p>Как мы видим, теперь в топе есть вызовы <code>syscall.Write</code>. И вызовы шаблонов больше не в топе.</p>
+<p>Это отлично! Потому что цель наших изменений — сделать поведение приложения как можно быстрее, чтобы базовые операции ОС — чтение и отправка данных по сети — оказались наверху.</p>
+<p>Теперь давайте сравним результаты <code>ab</code> — строку &ldquo;Requests per second&rdquo;:</p>
+<ul>
+<li><strong>До:</strong> Requests per second: 14.13 [#/sec] (mean)</li>
+<li><strong>После:</strong> Requests per second: 638.38 [#/sec] (mean)</li>
+</ul>
+<p>Как мы видим, сервис теперь работает намного быстрее.</p>
+<h2 id="заключение">Заключение</h2>
+<p>Можно открыть endpoint <code>net/http/pprof</code> в браузере. Это тот же endpoint, который мы использовали через <code>curl</code> для получения данных профилирования. Страница выглядит следующим образом:</p>
+<p><code>/debug/pprof/</code></p>
+<p>Доступные типы профилей:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Count</th>
+          <th>Profile</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>9</td>
+          <td>allocs</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>block</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>cmdline</td>
+      </tr>
+      <tr>
+          <td>9</td>
+          <td>goroutine</td>
+      </tr>
+      <tr>
+          <td>9</td>
+          <td>heap</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>mutex</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>profile</td>
+      </tr>
+      <tr>
+          <td>18</td>
+          <td>threadcreate</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>trace</td>
+      </tr>
+  </tbody>
+</table>
+<p>Мы можем получить другие метрики:</p>
+<ul>
+<li>о выделении памяти в каждой функции;</li>
+<li>о вызовах <code>sync.Mutex</code>;</li>
+<li>о создании новых потоков;</li>
+<li>и многие другие.</li>
+</ul>
+<p>Наиболее полезными здесь являются профилирование CPU и памяти.</p>
+<h2 id="удалённое-профилирование">Удалённое профилирование</h2>
+<p>Endpoint профилирования <code>pprof</code>, который мы включили выше, может быть доступен из внешней сети:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// сервер слушает на всех сетевых интерфейсах (не только localhost), порт 6060</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">ListenAndServe</span>(<span style="color:#e6db74">&#34;:6060&#34;</span>, <span style="color:#66d9ef">nil</span>))
+</span></span></code></pre></div><p>Но следует быть осторожным и ограничить доступ только для разработчиков!</p>
+<p>Очень полезно профилировать продакшн-сервисы, но endpoint профилирования, доступный для внешних клиентских запросов, является уязвимостью — вызовы профилировщика замедляют сервис.</p>
+<h2 id="что-нового-в-теме-профилирования">Что нового в теме профилирования</h2>
+<p>Подход предоставления данных профилирования покрывает любую ситуацию и не будет изменяться.</p>
+<p>Однако анализ данных здесь можно улучшить. Было выпущено много инструментов визуализации.</p>
+<p>Для меня наиболее полезным является flamegraph.</p>
+<p>В IDE GoLand есть возможности отображения данных профилирования Go. Но <code>go tool pprof</code> также предоставляет богатую функциональность фильтрации и сортировки. В этой статье такая функциональность не рассматривается, но есть примеры в блоге Go.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/profiling/">Profiling</a></li>
+        <li><a href="/ru/tags/pprof/">Pprof</a></li>
+        <li><a href="/ru/tags/benchmark/">Benchmark</a></li>
+        <li><a href="/ru/tags/ab/">Ab</a></li>
+        <li><a href="/ru/tags/cpu/">Cpu</a></li>
+        <li><a href="/ru/tags/allocation/">Allocation</a></li>
+        <li><a href="/ru/tags/remote/">Remote</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Найти долгое время выполнения&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Найти логические ошибки&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Найти высокое потребление памяти&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Найти высокую нагрузку на процессор&#34;}],&#34;question&#34;:&#34;Каковы основные причины использования профилирования?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Импортировать `net/http/pprof` и запустить HTTP-сервер&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Использовать go tool pprof напрямую&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Добавить код профилирования вручную&#34;}],&#34;question&#34;:&#34;Какой самый простой способ включить профилирование в программе Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;go tool pprof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;go prof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;pprof analyze&#34;}],&#34;question&#34;:&#34;Какая команда используется для анализа данных профилирования?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Профилирование CPU&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Профилирование памяти&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Профилирование сети&#34;}],&#34;question&#34;:&#34;Какие типы профилирования наиболее полезны?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;/debug/pprof/profile&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;/debug/pprof/cpu&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;/debug/pprof/performance&#34;}],&#34;question&#34;:&#34;Какой endpoint используется для получения профиля CPU?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;heap (память)&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;goroutine&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;mutex&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;network&#34;}],&#34;question&#34;:&#34;Какие типы профилей доступны через net/http/pprof?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;top&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;list&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;show&#34;}],&#34;question&#34;:&#34;Какая команда в pprof используется для вывода топ функций по времени выполнения?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;list&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;source&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;code&#34;}],&#34;question&#34;:&#34;Какая команда в pprof используется для просмотра исходного кода функции с указанием времени выполнения?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Выводит схему функций в виде изображения&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Открывает веб-браузер&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Запускает веб-сервер&#34;}],&#34;question&#34;:&#34;Что делает команда &#39;web&#39; в pprof?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Apache Benchmark (ab)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;curl&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;wget&#34;}],&#34;question&#34;:&#34;Какой инструмент используется для нагрузки на сервис в примере профилирования?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Вызовы профилировщика замедляют сервис&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Endpoint профилирования может быть уязвимостью&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Профилирование требует много памяти&#34;}],&#34;question&#34;:&#34;Почему важно быть осторожным при удалённом профилировании?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Инструмент визуализации данных профилирования&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Тип профиля в pprof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Команда go tool pprof&#34;}],&#34;question&#34;:&#34;Что такое flamegraph?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;net/http/pprof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;runtime/pprof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;go/pprof&#34;}],&#34;question&#34;:&#34;Какой пакет используется для автоматического предоставления endpoint&#39;ов профилирования?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Автоматически регистрируются HTTP handlers для профилирования&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Начинается автоматическое профилирование&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Создаётся файл профиля&#34;}],&#34;question&#34;:&#34;Что происходит при импорте net/http/pprof?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;seconds&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;duration&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;time&#34;}],&#34;question&#34;:&#34;Какой параметр используется в запросе профиля CPU для указания длительности сбора данных?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Каковы основные причины использования профилирования?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            Найти долгое время выполнения
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            Найти логические ошибки
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            Найти высокое потребление памяти
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="3"
+                 id="q0-a3">
+          <label class="form-check-label" for="q0-a3">
+            Найти высокую нагрузку на процессор
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Какой самый простой способ включить профилирование в программе Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Импортировать `net/http/pprof` и запустить HTTP-сервер
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Использовать go tool pprof напрямую
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Добавить код профилирования вручную
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Какая команда используется для анализа данных профилирования?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            go tool pprof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            go prof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            pprof analyze
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Какие типы профилирования наиболее полезны?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Профилирование CPU
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Профилирование памяти
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Профилирование сети
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. Какой endpoint используется для получения профиля CPU?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            /debug/pprof/profile
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            /debug/pprof/cpu
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            /debug/pprof/performance
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="5">
+      <h5 class="mb-3">6. Какие типы профилей доступны через net/http/pprof?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="0"
+                 id="q5-a0">
+          <label class="form-check-label" for="q5-a0">
+            heap (память)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="1"
+                 id="q5-a1">
+          <label class="form-check-label" for="q5-a1">
+            goroutine
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="2"
+                 id="q5-a2">
+          <label class="form-check-label" for="q5-a2">
+            mutex
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="3"
+                 id="q5-a3">
+          <label class="form-check-label" for="q5-a3">
+            network
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="6">
+      <h5 class="mb-3">7. Какая команда в pprof используется для вывода топ функций по времени выполнения?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="0"
+                 id="q6-a0">
+          <label class="form-check-label" for="q6-a0">
+            top
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="1"
+                 id="q6-a1">
+          <label class="form-check-label" for="q6-a1">
+            list
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="2"
+                 id="q6-a2">
+          <label class="form-check-label" for="q6-a2">
+            show
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="7">
+      <h5 class="mb-3">8. Какая команда в pprof используется для просмотра исходного кода функции с указанием времени выполнения?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="0"
+                 id="q7-a0">
+          <label class="form-check-label" for="q7-a0">
+            list
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="1"
+                 id="q7-a1">
+          <label class="form-check-label" for="q7-a1">
+            source
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="2"
+                 id="q7-a2">
+          <label class="form-check-label" for="q7-a2">
+            code
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="8">
+      <h5 class="mb-3">9. Что делает команда &#39;web&#39; в pprof?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="0"
+                 id="q8-a0">
+          <label class="form-check-label" for="q8-a0">
+            Выводит схему функций в виде изображения
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="1"
+                 id="q8-a1">
+          <label class="form-check-label" for="q8-a1">
+            Открывает веб-браузер
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="2"
+                 id="q8-a2">
+          <label class="form-check-label" for="q8-a2">
+            Запускает веб-сервер
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="9">
+      <h5 class="mb-3">10. Какой инструмент используется для нагрузки на сервис в примере профилирования?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="0"
+                 id="q9-a0">
+          <label class="form-check-label" for="q9-a0">
+            Apache Benchmark (ab)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="1"
+                 id="q9-a1">
+          <label class="form-check-label" for="q9-a1">
+            curl
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="2"
+                 id="q9-a2">
+          <label class="form-check-label" for="q9-a2">
+            wget
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="10">
+      <h5 class="mb-3">11. Почему важно быть осторожным при удалённом профилировании?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="0"
+                 id="q10-a0">
+          <label class="form-check-label" for="q10-a0">
+            Вызовы профилировщика замедляют сервис
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="1"
+                 id="q10-a1">
+          <label class="form-check-label" for="q10-a1">
+            Endpoint профилирования может быть уязвимостью
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="2"
+                 id="q10-a2">
+          <label class="form-check-label" for="q10-a2">
+            Профилирование требует много памяти
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="11">
+      <h5 class="mb-3">12. Что такое flamegraph?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="0"
+                 id="q11-a0">
+          <label class="form-check-label" for="q11-a0">
+            Инструмент визуализации данных профилирования
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="1"
+                 id="q11-a1">
+          <label class="form-check-label" for="q11-a1">
+            Тип профиля в pprof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="2"
+                 id="q11-a2">
+          <label class="form-check-label" for="q11-a2">
+            Команда go tool pprof
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="12">
+      <h5 class="mb-3">13. Какой пакет используется для автоматического предоставления endpoint&#39;ов профилирования?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="0"
+                 id="q12-a0">
+          <label class="form-check-label" for="q12-a0">
+            net/http/pprof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="1"
+                 id="q12-a1">
+          <label class="form-check-label" for="q12-a1">
+            runtime/pprof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="2"
+                 id="q12-a2">
+          <label class="form-check-label" for="q12-a2">
+            go/pprof
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="13">
+      <h5 class="mb-3">14. Что происходит при импорте net/http/pprof?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="0"
+                 id="q13-a0">
+          <label class="form-check-label" for="q13-a0">
+            Автоматически регистрируются HTTP handlers для профилирования
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="1"
+                 id="q13-a1">
+          <label class="form-check-label" for="q13-a1">
+            Начинается автоматическое профилирование
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="2"
+                 id="q13-a2">
+          <label class="form-check-label" for="q13-a2">
+            Создаётся файл профиля
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="14">
+      <h5 class="mb-3">15. Какой параметр используется в запросе профиля CPU для указания длительности сбора данных?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="0"
+                 id="q14-a0">
+          <label class="form-check-label" for="q14-a0">
+            seconds
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="1"
+                 id="q14-a1">
+          <label class="form-check-label" for="q14-a1">
+            duration
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="2"
+                 id="q14-a2">
+          <label class="form-check-label" for="q14-a2">
+            time
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  4 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/golang-slice.html" style="text-decoration: none; color: inherit;">Принципы работы типа slice в GO</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/golang-slice.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-slice/gophslice.svg"
+                   style="max-height: 200px;"
+                   alt="Принципы работы типа slice в GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>В блоге Go описывается, как использовать срезы. Давайте посмотрим на внутреннее устройство срезов.</p></p>
+            
+            <a href="/ru/post/golang-slice.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/slice/" class="badge">Slice</a>
+                  <a href="/ru/tags/allocation/" class="badge">Allocation</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/profiling.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

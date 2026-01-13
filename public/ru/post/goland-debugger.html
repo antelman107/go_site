@@ -1,0 +1,628 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Как и зачем использовать дебаггер с GO | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Отладчик — это очень полезный и мощный инструмент. Он может помочь вам точно понять, что происходит в вашем коде, изучить новые проекты и избежать ненужных …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/goland-debugger.html">
+<meta property="og:title" content="Как и зачем использовать дебаггер с GO | Golang for all">
+<meta property="og:description" content="Отладчик — это очень полезный и мощный инструмент. Он может помочь вам точно понять, что происходит в вашем коде, изучить новые проекты и избежать ненужных …">
+<meta property="og:image" content="http://localhost:51376//gopher.png">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-03-24T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-03-24T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Debugger">
+    
+      <meta property="article:tag" content="Goland">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/goland-debugger.html">
+<meta name="twitter:title" content="Как и зачем использовать дебаггер с GO | Golang for all">
+<meta name="twitter:description" content="Отладчик — это очень полезный и мощный инструмент. Он может помочь вам точно понять, что происходит в вашем коде, изучить новые проекты и избежать ненужных …">
+<meta name="twitter:image" content="http://localhost:51376//gopher.png">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/goland-debugger.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/goland-debugger.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Как и зачем использовать дебаггер с GO</h1>
+
+    
+    <p>
+
+
+  24 марта 2020 г.
+
+
+
+            <a href="/ru/tags/debugger/" class="badge">Debugger</a>
+            <a href="/ru/tags/goland/" class="badge">Goland</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="float-right">
+        <div>
+            
+            
+            <nav id="toc">
+                <h5>Содержание</h5>
+                <nav id="TableOfContents">
+  <ul>
+    <li><a href="#что-такое-отладчик">Что такое отладчик?</a></li>
+    <li><a href="#зачем-использовать-отладчик">Зачем использовать отладчик?</a>
+      <ul>
+        <li><a href="#1-без-изменений-кода">1. Без изменений кода</a></li>
+        <li><a href="#2-простой-способ-изучить-переменные-любого-типа">2. Простой способ изучить переменные любого типа</a></li>
+      </ul>
+    </li>
+    <li><a href="#недостатки">Недостатки</a></li>
+  </ul>
+</nav>
+            </nav>
+            
+        </div>
+        <div>
+        </div>
+    </div>
+    
+
+    <div id="post-content">
+    <p>Отладчик — это очень полезный и мощный инструмент. Он может помочь вам точно понять, что происходит в вашем коде, изучить новые проекты и избежать ненужных изменений отладочного кода.</p>
+<p>Время, необходимое для исправления любой проблемы, зависит от этапа, на котором она обнаружена:</p>
+<p><img src="/en/post/goland-debugger/img.png" alt="img.png"></p>
+<p>Лучший способ исправить любую проблему — исправить её до написания кода (на этапе планирования).
+Но если у нас уже есть ошибка в коде, лучше разобраться с ней на этапе разработки.</p>
+<p>Таким образом, чем раньше мы исправляем ошибки, тем эффективнее мы как разработчики и как команда.</p>
+<p>Отладчик здесь чрезвычайно полезен.
+Это очень распространённый инструмент во многих языках программирования, но мне кажется, что Go-разработчики его не используют.
+Я опишу, почему он полезен и почему рекомендую использовать его на примерах в IDE GoLand.</p>
+<h2 id="что-такое-отладчик">Что такое отладчик?</h2>
+<p>Отладчик — это всё о точках останова.
+Вы устанавливаете точки, где хотите, чтобы ваша программа остановилась, чтобы вы могли отслеживать состояние программы.</p>
+<p>Сначала вы устанавливаете точку останова:</p>
+<p><img src="/en/post/goland-debugger/img_1.png" alt="img_1.png"></p>
+<p>Программа остановится <em>перед</em> выбранной вами строкой.</p>
+<p>Затем вы запускаете свою программу или тест, и она останавливается:</p>
+<p><img src="/en/post/goland-debugger/img_2.png" alt="img_2.png"></p>
+<p>С левой стороны панели отладки вы можете видеть стек вызовов (все функции, вызванные до достижения точки останова).
+Этот след очень информативен, если вы изучаете новый репозиторий и хотите понять, выполняется ли определённый код и какие другие инструкции задействованы. Да, в GoLand есть инструменты использования функций. Вы можете увидеть все случаи использования любой функции, но это может занять время, потому что вам нужно будет проверить множество использований функций, пока вы не найдёте main.go.
+Отладчик просто показывает вам полный след.
+С правой стороны вы можете видеть любые переменные, доступные в области видимости точки останова.
+На левой панели инструментов есть кнопки для перемещения между точками останова.</p>
+<h2 id="зачем-использовать-отладчик">Зачем использовать отладчик?</h2>
+<h3 id="1-без-изменений-кода">1. Без изменений кода</h3>
+<p>Чтобы увидеть, что происходит в программе, вам не нужно добавлять какой-либо отладочный код (<code>fmt.Print</code> и т.д.).
+Если вы решите добавить отладочный код, этот код будет находиться в тех же файлах, которые вы хотите отладить, поэтому он может быть во всех возможных файлах проекта. Нет способа отделить, какой код предназначен для отладки, а какой — для продакшена. Вам придётся вручную проверять все внесённые изменения перед коммитом, чтобы найти и удалить отладочный код. И даже после этого высока вероятность отправить отладочный код в репозиторий (это ошибка, которую вы не хотите допустить).</p>
+<h3 id="2-простой-способ-изучить-переменные-любого-типа">2. Простой способ изучить переменные любого типа</h3>
+<p>Представление переменных в отладчике также намного более удобно для пользователя, чем любой вывод, который вы можете запрограммировать для перечисления переменных.
+Например, посмотрите, как просто просмотреть любые сложные структуры или списки:</p>
+<p><img src="/en/post/goland-debugger/img_3.png" alt="img_3.png"></p>
+<p>Вы можете видеть массив байтов, созданный из строки, а также можете увидеть его как текст, нажав на ссылку &ldquo;View&rdquo;.
+Сколько времени вы потратите, пытаясь отобразить эти данные? Это не будет одна строка кода, и этот код зависит от типа переменной, которую вы хотите изучить. Отладчик элегантно отображает любую переменную.</p>
+<h2 id="недостатки">Недостатки</h2>
+<p>Отладчик изменяет поведение программы.
+Go известен своими паттернами конкурентности, поэтому у вас, вероятно, много горутин в вашей программе. Точка останова устанавливается в коде, который относится к одной или некоторым из всех горутин, но то, что происходит в других горутинах, — это ответственность отладчика. В GoLand все горутины останавливаются. Но могут быть ситуации, когда вы хотите собрать отладочные данные, но не хотите, чтобы программа останавливалась. В этом случае вам всё равно придётся получить эту отладочную информацию без отладчика.</p>
+<p>Это в основном всё по текущей теме.
+Не стесняйтесь комментировать этот пост здесь на сайте или присоединяйтесь к нашей телеграм-группе.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/debugger/">Debugger</a></li>
+        <li><a href="/ru/tags/goland/">Goland</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Инструмент для отладки кода, который позволяет устанавливать точки останова и отслеживать состояние программы&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Язык программирования&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Система управления базами данных&#34;}],&#34;question&#34;:&#34;Что такое отладчик?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Вы можете отлаживать код без его изменения&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Он делает ваш код быстрее&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Он автоматически исправляет ошибки&#34;}],&#34;question&#34;:&#34;Какое главное преимущество использования отладчика?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Программа останавливается в этой точке&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Вы можете видеть стек вызовов&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Вы можете просматривать переменные&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Все горутины продолжают выполняться&#34;}],&#34;question&#34;:&#34;Что происходит, когда достигается точка останова в GoLand?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Что такое отладчик?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            Инструмент для отладки кода, который позволяет устанавливать точки останова и отслеживать состояние программы
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            Язык программирования
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            Система управления базами данных
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Какое главное преимущество использования отладчика?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Вы можете отлаживать код без его изменения
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Он делает ваш код быстрее
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Он автоматически исправляет ошибки
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Что происходит, когда достигается точка останова в GoLand?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Программа останавливается в этой точке
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Вы можете видеть стек вызовов
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Вы можете просматривать переменные
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="3"
+                 id="q2-a3">
+          <label class="form-check-label" for="q2-a3">
+            Все горутины продолжают выполняться
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  1 июля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-docker-delve-remote-debug.html" style="text-decoration: none; color: inherit;">Удалённая отладка с Delve</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Ранее мы обсуждали локальную отладку с помощью IDE GoLand. Теперь мы обсудим, как удалённо отлаживать программу, работающую внутри Docker-контейнера, используя Visual Studio Code и GoLand IDE.</p></p>
+            
+            <a href="/ru/post/go-docker-delve-remote-debug.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/debugger/" class="badge">Debugger</a>
+                  <a href="/ru/tags/delve/" class="badge">Delve</a>
+                  <a href="/ru/tags/vscode/" class="badge">Vscode</a>
+                  <a href="/ru/tags/goland/" class="badge">Goland</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/goland-debugger.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

@@ -1,0 +1,1436 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Data handling in concurrent programs | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="In Go, we have goroutines functionality out of the box. We can run code in parallel. However, in our parallel running code we can work with shared variables, …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/en/post/golang-data-handling-concurrent-programs.html">
+<meta property="og:title" content="Data handling in concurrent programs | Golang for all">
+<meta property="og:description" content="In Go, we have goroutines functionality out of the box. We can run code in parallel. However, in our parallel running code we can work with shared variables, …">
+<meta property="og:image" content="http://localhost:51376/en/post/golang-data-handling-concurrent-programs/kanat.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2020-04-02T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-04-02T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Map">
+    
+      <meta property="article:tag" content="Sources">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/en/post/golang-data-handling-concurrent-programs.html">
+<meta name="twitter:title" content="Data handling in concurrent programs | Golang for all">
+<meta name="twitter:description" content="In Go, we have goroutines functionality out of the box. We can run code in parallel. However, in our parallel running code we can work with shared variables, …">
+<meta name="twitter:image" content="http://localhost:51376/en/post/golang-data-handling-concurrent-programs/kanat.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/en/post/golang-data-handling-concurrent-programs.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="http://localhost:51376/ru/post/golang-data-handling-concurrent-programs.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+</script>
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Data handling in concurrent programs</h1>
+
+    
+    <p>
+
+
+  April 2, 2020
+
+
+
+            <a href="/tags/map/" class="badge">Map</a>
+            <a href="/tags/sources/" class="badge">Sources</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/golang-data-handling-concurrent-programs/kanat.svg"
+                     alt="Data handling in concurrent programs"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Contents</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#race-detection">Race detection</a></li>
+    <li><a href="#the-solution">The solution</a>
+      <ul>
+        <li><a href="#syncmutexsyncrwmutex-solution"><code>sync.Mutex</code>/<code>sync.RWMutex</code> solution</a></li>
+        <li><a href="#channels-solution">Channels solution</a></li>
+        <li><a href="#atomic-package-solution">Atomic package solution</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>In Go, we have goroutines functionality out of the box. We can run code in parallel. However, in our parallel running code we can work with shared variables, and it is not clear how exactly Go handles such situations.</p>
+<p>Let&rsquo;s start with the &ldquo;counter task&rdquo; — we&rsquo;ll try to increment a counter variable 200 times in multiple goroutines.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">200</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">n</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">n</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Done</span>()
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Wait</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">c</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 194</span>
+</span></span></code></pre></div><p>The resulting counter value differs from time to time and in most cases is not equal to 200. So, this code is not thread-safe and doesn&rsquo;t work as planned even if we don&rsquo;t have any compiler or runtime errors.</p>
+<p>Next case — we&rsquo;ll try to insert 200 values into a slice in parallel and check if there are exactly 200 values.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> []<span style="color:#66d9ef">int</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">200</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">n</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">n</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span> = append(<span style="color:#a6e22e">c</span>, <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Done</span>()
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Wait</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(len(<span style="color:#a6e22e">c</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 129</span>
+</span></span></code></pre></div><p>The number of values in the slice is even farther from 200 than it was in the counter task. This code is also not thread-safe.</p>
+<p>Let&rsquo;s try to insert 200 values into a map in parallel:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">int</span>]<span style="color:#66d9ef">int</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">200</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">n</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">n</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">i</span> <span style="color:#66d9ef">int</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span>[<span style="color:#a6e22e">i</span>] = <span style="color:#a6e22e">i</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Done</span>()
+</span></span><span style="display:flex;"><span>	}(<span style="color:#a6e22e">i</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Wait</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(len(<span style="color:#a6e22e">c</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// panic: concurrent map writes</span>
+</span></span></code></pre></div><p>We can&rsquo;t check the result because of the panic.</p>
+<p>In all 3 tasks we have non-working code, but only with maps there is an error message about concurrent map writes, implemented by Go developers.</p>
+<h2 id="race-detection">Race detection</h2>
+<p>Go has a tool to detect such situations called race detection.</p>
+<p>One can run any test case above with the race flag — <code>go test -race ./test.go</code>. As a result, Go displays data race goroutines:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>go test -race ./test.go
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">==================</span>
+</span></span><span style="display:flex;"><span>WARNING: DATA RACE
+</span></span><span style="display:flex;"><span>Read at 0x00c0000a6070 by goroutine 9:
+</span></span><span style="display:flex;"><span>command-line-arguments.Test.func1<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>/go/src/github.com/antelman107/go_blog/test.go:16 +0x38
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Previous write at 0x00c0000a6070 by goroutine 8:
+</span></span><span style="display:flex;"><span>command-line-arguments.Test.func1<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>/go/src/github.com/antelman107/go_blog/test.go:16 +0x4e
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Goroutine <span style="color:#ae81ff">9</span> <span style="color:#f92672">(</span>running<span style="color:#f92672">)</span> created at:
+</span></span><span style="display:flex;"><span>command-line-arguments.Test<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>/go/src/github.com/antelman107/go_blog/test.go:15 +0xe8
+</span></span><span style="display:flex;"><span>testing.tRunner<span style="color:#f92672">()</span>
+</span></span><span style="display:flex;"><span>/usr/local/Cellar/go/1.14/libexec/src/testing/testing.go:992 +0x1eb
+</span></span><span style="display:flex;"><span>--- FAIL: Test <span style="color:#f92672">(</span>0.01s<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>testing.go:906: race detected during execution of test
+</span></span><span style="display:flex;"><span>FAIL
+</span></span><span style="display:flex;"><span>FAIL    command-line-arguments  0.025s
+</span></span><span style="display:flex;"><span>FAIL
+</span></span></code></pre></div><p>Race detection is not a <code>go test</code> functionality. One can even build a program in race detection mode:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ go test -race mypkg    // to test the package
+</span></span><span style="display:flex;"><span>$ go run -race .  // to run the source file
+</span></span><span style="display:flex;"><span>$ go build -race .   // to build the command
+</span></span><span style="display:flex;"><span>$ go install -race mypkg // to install the package
+</span></span></code></pre></div><p>It is nice that one can directly detect data races in a program.</p>
+<p>Even the popular &ldquo;loop closure&rdquo; issue can be detected:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">wg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">n</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">n</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">i</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Done</span>()
+</span></span><span style="display:flex;"><span>	}()
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Wait</span>()
+</span></span></code></pre></div><p>The issue here is that the code won&rsquo;t print exact 0, 1, 2 &hellip; 9 numbers, but random numbers between 0 and 9.</p>
+<h2 id="the-solution">The solution</h2>
+<p>Let&rsquo;s describe the solution for the counter task. This solution can be used for slice and map tasks.</p>
+<p>So we have a counter value that is less than what we expect.
+Despite the brevity of the increment call (<code>c++</code>), the program actually performs the following list of actions:</p>
+<ol>
+<li>read current counter value from memory,</li>
+<li>increment it,</li>
+<li>save the result to memory.</li>
+</ol>
+<p>The issue happens because some goroutines read the same initial value of the counter. After reading the same initial value, such goroutines change it in the same way. This behavior is explained in the diagram:</p>
+<p><img src="/en/post/golang-data-handling-concurrent-programs/nonatomic.svg" alt="nonatomic.svg"></p>
+<p>The more we have this same initial value reading situation, the more the counter result differs from 200.</p>
+<p>The solution here can be an atomic variable change. If some goroutine reads the counter&rsquo;s initial value, the next action should be the only counter update from that goroutine. None of the other goroutines should access or change the counter in the middle of that operation.</p>
+<p>If we add some synchronization logic as described above, the diagram will look as follows:</p>
+<p><img src="/en/post/golang-data-handling-concurrent-programs/atomic.svg" alt="atomic.svg"></p>
+<pre class="mermaid">
+  sequenceDiagram
+    participant G1 as Goroutine 1
+    participant C as Counter
+    participant G2 as Goroutine 2
+    
+    G1-&gt;&gt;C: Read value (1)
+    G2-&gt;&gt;C: Read value (1)
+    G1-&gt;&gt;G1: Calculate inc (1+1=2)
+    G2-&gt;&gt;G2: Calculate inc (1+1=2)
+    G1-&gt;&gt;C: Write value (2)
+    G2-&gt;&gt;C: Write value (2)
+    Note over C: Final value is 2, not 3!
+</pre>
+<h3 id="syncmutexsyncrwmutex-solution"><code>sync.Mutex</code>/<code>sync.RWMutex</code> solution</h3>
+<p>We can use methods <code>Lock</code> and <code>Unlock</code> to guarantee that only one goroutine works with the counter at a time.</p>
+<p>We can also use <code>sync.RWMutex</code> to provide parallel readings.</p>
+<p>But in our task, Mutex is completely enough:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">200</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">m</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">Mutex</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">n</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">n</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">i</span> <span style="color:#66d9ef">int</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Lock</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">Unlock</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Done</span>()
+</span></span><span style="display:flex;"><span>	}(<span style="color:#a6e22e">i</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Wait</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">c</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 200 == OK</span>
+</span></span></code></pre></div><h3 id="channels-solution">Channels solution</h3>
+<p>Channel operations are atomic out of the box.</p>
+<p>We can send any data into a channel with a single reader to provide sequential processing.</p>
+<p>But to do that we need some additional code:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">200</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ch</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#66d9ef">struct</span>{}, <span style="color:#a6e22e">n</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">chanWg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">chanWg</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">ch</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">chanWg</span>.<span style="color:#a6e22e">Done</span>()
+</span></span><span style="display:flex;"><span>}()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">n</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">n</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">i</span> <span style="color:#66d9ef">int</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">ch</span> <span style="color:#f92672">&lt;-</span> <span style="color:#66d9ef">struct</span>{}{}
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Done</span>()
+</span></span><span style="display:flex;"><span>	}(<span style="color:#a6e22e">i</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Wait</span>()
+</span></span><span style="display:flex;"><span>close(<span style="color:#a6e22e">ch</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">chanWg</span>.<span style="color:#a6e22e">Wait</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">c</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 200 = OK</span>
+</span></span></code></pre></div><p>We also used an empty struct here because it is the smallest sized variable type of data in Go.</p>
+<h3 id="atomic-package-solution">Atomic package solution</h3>
+<p>The standard Go package named <code>atomic</code> provides a set of atomic operations.</p>
+<p>Thanks to <code>runtime_procPin</code> / <code>runtime_procUnpin</code> functions (in the Go sources).</p>
+<p>The <code>Pin</code> function guarantees that the Go scheduler won&rsquo;t run any other goroutine until <code>Unpin</code> is called.</p>
+<p>We have several counter functions in the atomic package that help to implement our atomic counter:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> int32(<span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">200</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>{}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">n</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">n</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">i</span> <span style="color:#66d9ef">int</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">atomic</span>.<span style="color:#a6e22e">AddInt32</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">c</span>, <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Done</span>()
+</span></span><span style="display:flex;"><span>	}(<span style="color:#a6e22e">i</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">wg</span>.<span style="color:#a6e22e">Wait</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">c</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 200 = OK</span>
+</span></span></code></pre></div><p>One can encounter the atomic data change issue in many development situations.
+For example, the same issue happens with SELECT + UPDATE queries in SQL databases on multiple processes.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/map/">Map</a></li>
+        <li><a href="/tags/sources/">Sources</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;The counter value will be less than expected due to race conditions&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;The program will panic&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;The counter will always be correct&#34;}],&#34;question&#34;:&#34;What happens when multiple goroutines increment a counter variable without synchronization?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;panic: concurrent map writes&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;The map will be empty&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;No error, but incorrect results&#34;}],&#34;question&#34;:&#34;What error occurs when multiple goroutines write to a map concurrently?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Using `sync.Mutex`&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Using channels&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Using atomic package&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Using regular variables&#34;}],&#34;question&#34;:&#34;What are the solutions for thread-safe counter operations?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Using go test -race or go build -race&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Using go vet&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Using gofmt&#34;}],&#34;question&#34;:&#34;How can you detect data races in Go programs?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;The number of elements will be less than expected due to data races&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;The program will panic&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;The slice will always contain all elements&#34;}],&#34;question&#34;:&#34;What happens when writing to a slice concurrently without synchronization?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;It consists of three steps: read, increment, write&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Go doesn&#39;t support atomic operations&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;The operation is always atomic&#34;}],&#34;question&#34;:&#34;Why is the increment operation (c&#43;&#43;) not atomic?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;RWMutex allows parallel reads, Mutex blocks all operations&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;RWMutex is faster than Mutex&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;There is no difference&#34;}],&#34;question&#34;:&#34;What is the difference between sync.Mutex and sync.RWMutex?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;It&#39;s built-in Go functionality&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Channels use Mutex internally&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Channels work only in one goroutine&#34;}],&#34;question&#34;:&#34;Why are channel operations atomic?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;AddInt32&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;AddInt64&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;LoadInt32&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;SetInt32&#34;}],&#34;question&#34;:&#34;What functions does the atomic package provide for working with counters?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Tracks simultaneous access to the same memory&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Checks code syntax&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Analyzes performance&#34;}],&#34;question&#34;:&#34;How does the race detector work in Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;All goroutines use the same loop variable value&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;The loop runs too long&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Goroutines cannot finish&#34;}],&#34;question&#34;:&#34;What is the &#39;loop closure&#39; problem in goroutines?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;None - all require synchronization when writing&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Only channels&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;All Go types&#34;}],&#34;question&#34;:&#34;What data types can be safely used in concurrent programs without additional synchronization?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;It&#39;s the smallest data type in Go&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;It&#39;s faster than other types&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;It&#39;s required for channels&#34;}],&#34;question&#34;:&#34;Why is empty struct struct{} used in channels for signals?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;panic: concurrent map writes or data races when reading&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Operations execute correctly&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Map automatically synchronizes&#34;}],&#34;question&#34;:&#34;What happens when reading and writing to a map concurrently?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Guarantees that Go scheduler won&#39;t run other goroutines until Unpin&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Blocks all goroutines&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Increases goroutine priority&#34;}],&#34;question&#34;:&#34;How does runtime_procPin function help in atomic operations?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. What happens when multiple goroutines increment a counter variable without synchronization?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            The counter value will be less than expected due to race conditions
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            The program will panic
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            The counter will always be correct
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. What error occurs when multiple goroutines write to a map concurrently?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            panic: concurrent map writes
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            The map will be empty
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            No error, but incorrect results
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. What are the solutions for thread-safe counter operations?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Using `sync.Mutex`
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Using channels
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Using atomic package
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="3"
+                 id="q2-a3">
+          <label class="form-check-label" for="q2-a3">
+            Using regular variables
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. How can you detect data races in Go programs?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Using go test -race or go build -race
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Using go vet
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Using gofmt
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. What happens when writing to a slice concurrently without synchronization?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            The number of elements will be less than expected due to data races
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            The program will panic
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            The slice will always contain all elements
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="5">
+      <h5 class="mb-3">6. Why is the increment operation (c&#43;&#43;) not atomic?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="0"
+                 id="q5-a0">
+          <label class="form-check-label" for="q5-a0">
+            It consists of three steps: read, increment, write
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="1"
+                 id="q5-a1">
+          <label class="form-check-label" for="q5-a1">
+            Go doesn&#39;t support atomic operations
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="2"
+                 id="q5-a2">
+          <label class="form-check-label" for="q5-a2">
+            The operation is always atomic
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="6">
+      <h5 class="mb-3">7. What is the difference between sync.Mutex and sync.RWMutex?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="0"
+                 id="q6-a0">
+          <label class="form-check-label" for="q6-a0">
+            RWMutex allows parallel reads, Mutex blocks all operations
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="1"
+                 id="q6-a1">
+          <label class="form-check-label" for="q6-a1">
+            RWMutex is faster than Mutex
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="2"
+                 id="q6-a2">
+          <label class="form-check-label" for="q6-a2">
+            There is no difference
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="7">
+      <h5 class="mb-3">8. Why are channel operations atomic?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="0"
+                 id="q7-a0">
+          <label class="form-check-label" for="q7-a0">
+            It&#39;s built-in Go functionality
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="1"
+                 id="q7-a1">
+          <label class="form-check-label" for="q7-a1">
+            Channels use Mutex internally
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="2"
+                 id="q7-a2">
+          <label class="form-check-label" for="q7-a2">
+            Channels work only in one goroutine
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="8">
+      <h5 class="mb-3">9. What functions does the atomic package provide for working with counters?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-8" 
+                 value="0"
+                 id="q8-a0">
+          <label class="form-check-label" for="q8-a0">
+            AddInt32
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-8" 
+                 value="1"
+                 id="q8-a1">
+          <label class="form-check-label" for="q8-a1">
+            AddInt64
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-8" 
+                 value="2"
+                 id="q8-a2">
+          <label class="form-check-label" for="q8-a2">
+            LoadInt32
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-8" 
+                 value="3"
+                 id="q8-a3">
+          <label class="form-check-label" for="q8-a3">
+            SetInt32
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="9">
+      <h5 class="mb-3">10. How does the race detector work in Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="0"
+                 id="q9-a0">
+          <label class="form-check-label" for="q9-a0">
+            Tracks simultaneous access to the same memory
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="1"
+                 id="q9-a1">
+          <label class="form-check-label" for="q9-a1">
+            Checks code syntax
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="2"
+                 id="q9-a2">
+          <label class="form-check-label" for="q9-a2">
+            Analyzes performance
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="10">
+      <h5 class="mb-3">11. What is the &#39;loop closure&#39; problem in goroutines?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="0"
+                 id="q10-a0">
+          <label class="form-check-label" for="q10-a0">
+            All goroutines use the same loop variable value
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="1"
+                 id="q10-a1">
+          <label class="form-check-label" for="q10-a1">
+            The loop runs too long
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="2"
+                 id="q10-a2">
+          <label class="form-check-label" for="q10-a2">
+            Goroutines cannot finish
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="11">
+      <h5 class="mb-3">12. What data types can be safely used in concurrent programs without additional synchronization?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="0"
+                 id="q11-a0">
+          <label class="form-check-label" for="q11-a0">
+            None - all require synchronization when writing
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="1"
+                 id="q11-a1">
+          <label class="form-check-label" for="q11-a1">
+            Only channels
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="2"
+                 id="q11-a2">
+          <label class="form-check-label" for="q11-a2">
+            All Go types
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="12">
+      <h5 class="mb-3">13. Why is empty struct struct{} used in channels for signals?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="0"
+                 id="q12-a0">
+          <label class="form-check-label" for="q12-a0">
+            It&#39;s the smallest data type in Go
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="1"
+                 id="q12-a1">
+          <label class="form-check-label" for="q12-a1">
+            It&#39;s faster than other types
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="2"
+                 id="q12-a2">
+          <label class="form-check-label" for="q12-a2">
+            It&#39;s required for channels
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="13">
+      <h5 class="mb-3">14. What happens when reading and writing to a map concurrently?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="0"
+                 id="q13-a0">
+          <label class="form-check-label" for="q13-a0">
+            panic: concurrent map writes or data races when reading
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="1"
+                 id="q13-a1">
+          <label class="form-check-label" for="q13-a1">
+            Operations execute correctly
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="2"
+                 id="q13-a2">
+          <label class="form-check-label" for="q13-a2">
+            Map automatically synchronizes
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="14">
+      <h5 class="mb-3">15. How does runtime_procPin function help in atomic operations?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="0"
+                 id="q14-a0">
+          <label class="form-check-label" for="q14-a0">
+            Guarantees that Go scheduler won&#39;t run other goroutines until Unpin
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="1"
+                 id="q14-a1">
+          <label class="form-check-label" for="q14-a1">
+            Blocks all goroutines
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="2"
+                 id="q14-a2">
+          <label class="form-check-label" for="q14-a2">
+            Increases goroutine priority
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  May 2, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/sync-map.html" style="text-decoration: none; color: inherit;">sync.Map</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/sync-map.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/sync-map/dvoe.svg"
+                   style="max-height: 200px;"
+                   alt="sync.Map"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Let&rsquo;s take a look at <code>sync.Map</code> usage and its source code.</p></p>
+            
+            <a href="/en/post/sync-map.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/sync.map/" class="badge">Sync.map</a>
+                  <a href="/tags/map/" class="badge">Map</a>
+                  <a href="/tags/concurrency/" class="badge">Concurrency</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 9, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/templates.html" style="text-decoration: none; color: inherit;">GO Templates: Principles and Usage</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/templates.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/templates/lis.svg"
+                   style="max-height: 200px;"
+                   alt="GO Templates: Principles and Usage"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Packages <code>text/template</code> and <code>html/template</code> are part of the Go standard library. Go templates are used in many Go-programmed software — Docker, Kubernetes, Helm. Many third-party libraries are integrated with Go templates, for example Echo. Knowing Go template syntax is very useful.</p>
+<p>This article consists of <code>text/template</code> package documentation and a couple of author&rsquo;s solutions. After describing Go template syntax, we&rsquo;ll dive into <code>text/template</code> and <code>html/template</code> sources.</p></p>
+            
+            <a href="/en/post/templates.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/templates/" class="badge">Templates</a>
+                  <a href="/tags/html/" class="badge">Html</a>
+                  <a href="/tags/text/" class="badge">Text</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 4, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/golang-slice.html" style="text-decoration: none; color: inherit;">Principles of slice type in GO</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/golang-slice.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-slice/gophslice.svg"
+                   style="max-height: 200px;"
+                   alt="Principles of slice type in GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>The Go blog describes how to use slices. Let&rsquo;s take a look at slice internals.</p></p>
+            
+            <a href="/en/post/golang-slice.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/slice/" class="badge">Slice</a>
+                  <a href="/tags/allocation/" class="badge">Allocation</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 2, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/map-principles-golang.html" style="text-decoration: none; color: inherit;">Principles of map type in GO</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/map-principles-golang.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/map-principles-golang/map.svg"
+                   style="max-height: 200px;"
+                   alt="Principles of map type in GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>The map programming interface in Go is described in the Go blog. We just need to recall that a map is a key-value storage and it should retrieve values by key as fast as possible.</p></p>
+            
+            <a href="/en/post/map-principles-golang.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/map/" class="badge">Map</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  March 30, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/golang-regexp-matching-newline.html" style="text-decoration: none; color: inherit;">Golang regexp: matching newline</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/golang-regexp-matching-newline.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-regexp-matching-newline/regular.svg"
+                   style="max-height: 200px;"
+                   alt="Golang regexp: matching newline"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Why regular expressions with dot (&quot;.&quot;) work differently in Go compared to PHP and JavaScript.</p></p>
+            
+            <a href="/en/post/golang-regexp-matching-newline.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/regular-expressions/" class="badge">Regular Expressions</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/post/golang-data-handling-concurrent-programs.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

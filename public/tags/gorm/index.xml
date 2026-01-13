@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Gorm on Golang for all</title>
+    <link>http://localhost:51376/tags/gorm/</link>
+    <description>Recent content in Gorm on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 07 Apr 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/gorm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Filtering by a list of values with GORM</title>
+      <link>http://localhost:51376/en/post/gorm-filter-by-list-of-values.html</link>
+      <pubDate>Tue, 07 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/gorm-filter-by-list-of-values.html</guid>
+      <description>&lt;p&gt;When you need to filter data by a list of values (for example, IDs: 1, 2, 3), you should use the &lt;code&gt;ANY&lt;/code&gt; operator combined with &lt;code&gt;pq.Array&lt;/code&gt; from the PostgreSQL driver.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>GORM: filter entity by linked entity</title>
+      <link>http://localhost:51376/en/post/gorm-filter-entity-by-linked-entity.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/gorm-filter-entity-by-linked-entity.html</guid>
+      <description>&lt;p&gt;This task is not that simple, especially with GORM.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

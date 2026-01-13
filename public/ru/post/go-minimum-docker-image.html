@@ -1,0 +1,778 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Building Minimal Docker Images for Go Applications | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Let&rsquo;s discuss how to build a minimal Docker image for a Go program.
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/go-minimum-docker-image.html">
+<meta property="og:title" content="Building Minimal Docker Images for Go Applications | Golang for all">
+<meta property="og:description" content="Let&rsquo;s discuss how to build a minimal Docker image for a Go program.
+">
+<meta property="og:image" content="http://localhost:51376/ru/post/go-minimum-docker-image/docker.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2020-06-29T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-06-29T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Docker">
+    
+      <meta property="article:tag" content="Compilation">
+    
+      <meta property="article:tag" content="Upx">
+    
+      <meta property="article:tag" content="Ldflags">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/go-minimum-docker-image.html">
+<meta name="twitter:title" content="Building Minimal Docker Images for Go Applications | Golang for all">
+<meta name="twitter:description" content="Let&rsquo;s discuss how to build a minimal Docker image for a Go program.
+">
+<meta name="twitter:image" content="http://localhost:51376/ru/post/go-minimum-docker-image/docker.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/go-minimum-docker-image.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="http://localhost:51376/en/post/go-minimum-docker-image.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Building Minimal Docker Images for Go Applications</h1>
+
+    
+    <p>
+
+
+  June 29, 2020
+
+
+
+            <a href="/tags/docker/" class="badge">Docker</a>
+            <a href="/tags/compilation/" class="badge">Compilation</a>
+            <a href="/tags/upx/" class="badge">Upx</a>
+            <a href="/tags/ldflags/" class="badge">Ldflags</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/ru/post/go-minimum-docker-image/docker.svg"
+                     alt="Building Minimal Docker Images for Go Applications"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Contents</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#image-building-and-dockerfile">Image Building and Dockerfile</a></li>
+    <li><a href="#two-stage-building">Two-Stage Building</a></li>
+    <li><a href="#binary-size">Binary Size</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Let&rsquo;s discuss how to build a minimal Docker image for a Go program.</p>
+<p>Docker is supported by many operating systems — Linux, Unix, Windows, and macOS. Docker containers are also supported by many popular hosting platforms — Microsoft Azure, Amazon Web Services, Digital Ocean, and others.</p>
+<h2 id="image-building-and-dockerfile">Image Building and Dockerfile</h2>
+<p>Docker image building is performed using the <code>docker build</code> command, and a Dockerfile is required to provide building instructions.</p>
+<p>Let&rsquo;s take a look at the following Dockerfile:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-dockerfile" data-lang="dockerfile"><span style="display:flex;"><span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> rhaps1071/golang-1.14-alpine-git AS build</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /build</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> . .<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> CGO_ENABLED<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span> GOARCH<span style="color:#f92672">=</span>amd64 GOOS<span style="color:#f92672">=</span>linux go build -ldflags <span style="color:#e6db74">&#34;-s -w -extldflags &#39;-static&#39;&#34;</span> -o ./app<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> apk add upx<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> upx ./app<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> scratch</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> --from<span style="color:#f92672">=</span>build /build/app /app<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENTRYPOINT</span> [<span style="color:#e6db74">&#34;/app&#34;</span>]<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>Because we are using Go modules, we don&rsquo;t need to put the source code in a particular folder or download dependencies manually — this is done by the <code>go build</code> command itself.</p>
+<p>Let&rsquo;s now discuss all the features of this Dockerfile.</p>
+<h2 id="two-stage-building">Two-Stage Building</h2>
+<p>Docker image size is important because the image will be uploaded and downloaded during build and deployment. The larger the image size, the more time you will spend on network transmission.</p>
+<p>In the first stage (&ldquo;build&rdquo;) of the Dockerfile, I start building from the <code>rhaps1071/golang-1.14-alpine-git</code> image, which is <code>golang:1.14-alpine</code> with git installed.
+Alpine is the smallest Linux image currently available. Its image size is about 3MB.</p>
+<p>In the second stage, I use <code>scratch</code> just to place the binary file there.
+<code>scratch</code> is an out-of-the-box Docker image with zero size. This means the resulting image size equals the binary size.</p>
+<h2 id="binary-size">Binary Size</h2>
+<p>We can reduce binary size by using two approaches:</p>
+<ul>
+<li>Linking flags (<code>ldflags</code>);</li>
+<li>Compressing the binary file after compilation;</li>
+</ul>
+<p>Flags <code>-s -w</code> remove debug information from the binary. In my case, the size was reduced from 15MB to 11MB using these flags.</p>
+<p><code>-extldflags '-static'</code> is used to statically link the binary even with CGO enabled. Dynamic linking makes our binary require external libraries (<code>.so</code> files in Linux).
+External library dependencies can be reviewed by using the <code>ldd</code> command against the binary file.
+In <code>scratch</code> and Alpine, we don&rsquo;t have these libraries installed. In this case, we have to use static linking — all libraries will be compiled into our program binary.</p>
+<p>I also used the <code>upx</code> tool to compress the binary. The size was reduced from 11MB to 4.1MB.</p>
+<p>The source code for this example can be found in the GitHub repository.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/docker/">Docker</a></li>
+        <li><a href="/tags/compilation/">Compilation</a></li>
+        <li><a href="/tags/upx/">Upx</a></li>
+        <li><a href="/tags/ldflags/">Ldflags</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;scratch&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;alpine&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;ubuntu&#34;}],&#34;question&#34;:&#34;What is the smallest base Docker image?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;-s -w&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;-d -v&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;-O -g&#34;}],&#34;question&#34;:&#34;What flags remove debug information from the binary?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;upx&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;gzip&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;zip&#34;}],&#34;question&#34;:&#34;What tool is used to compress the binary file?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;To reduce final image size&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;To speed up compilation&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;To enable caching&#34;}],&#34;question&#34;:&#34;What is the purpose of two-stage Docker builds?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. What is the smallest base Docker image?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            scratch
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            alpine
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            ubuntu
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. What flags remove debug information from the binary?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            -s -w
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            -d -v
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            -O -g
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. What tool is used to compress the binary file?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            upx
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            gzip
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            zip
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. What is the purpose of two-stage Docker builds?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            To reduce final image size
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            To speed up compilation
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            To enable caching
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  July 1, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-docker-delve-remote-debug.html" style="text-decoration: none; color: inherit;">Remote debugging with Delve</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Previously we discussed local debugging with GoLand IDE. Now we&rsquo;ll discuss how to remotely debug a program running inside a Docker container using Visual Studio Code and GoLand IDE.</p></p>
+            
+            <a href="/en/post/go-docker-delve-remote-debug.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/docker/" class="badge">Docker</a>
+                  <a href="/tags/debugger/" class="badge">Debugger</a>
+                  <a href="/tags/delve/" class="badge">Delve</a>
+                  <a href="/tags/vscode/" class="badge">Vscode</a>
+                  <a href="/tags/goland/" class="badge">Goland</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  July 1, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/deploy-docker-swarm-gitlab.html" style="text-decoration: none; color: inherit;">Deploy docker swarm from Gitlab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/deploy-docker-swarm-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/deploy-docker-swarm-gitlab/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Deploy docker swarm from Gitlab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Docker container deployment has many advantages over binary deployment. Let&rsquo;s dive into advantages and see how we can implement docker container deployment from Gitlab CI.
+Let&rsquo;s talk about how standard docker can help us. Any docker orchestration tools (Kubernetes, for example) will be observed in future articles.</p></p>
+            
+            <a href="/en/post/deploy-docker-swarm-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/docker/" class="badge">Docker</a>
+                  <a href="/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  June 30, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/net-wait-go.html" style="text-decoration: none; color: inherit;">net-wait-go utility / library</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/net-wait-go.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/net-wait-go/tube2.svg"
+                   style="max-height: 200px;"
+                   alt="net-wait-go utility / library"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Both utility and Go package to wait for ports to open (TCP, UDP).</p></p>
+            
+            <a href="/en/post/net-wait-go.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/tcp/" class="badge">Tcp</a>
+                  <a href="/tags/udp/" class="badge">Udp</a>
+                  <a href="/tags/docker/" class="badge">Docker</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  May 8, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-build-and-deploy-ssh-gitlab.html" style="text-decoration: none; color: inherit;">Compilation and deploy via SSH in Gitlab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/go-build-and-deploy-ssh-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/go-build-and-deploy-ssh-gitlab/gitlab_logo.svg"
+                   style="max-height: 200px;"
+                   alt="Compilation and deploy via SSH in Gitlab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Let&rsquo;s take a look at how Go compilation works and how to use GitLab CI for that.</p></p>
+            
+            <a href="/en/post/go-build-and-deploy-ssh-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/tags/compilation/" class="badge">Compilation</a>
+                  <a href="/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/tags/ssh/" class="badge">Ssh</a>
+                  <a href="/tags/modules/" class="badge">Modules</a>
+                  <a href="/tags/vendor/" class="badge">Vendor</a>
+                  <a href="/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/ru/post/go-minimum-docker-image.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

@@ -1,0 +1,1410 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Шаблоны GO: принципы и использование | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Пакеты text/template и html/template являются частью стандартной библиотеки Go. Шаблоны Go используются во многих программах, написанных на Go — Docker, …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/templates.html">
+<meta property="og:title" content="Шаблоны GO: принципы и использование | Golang for all">
+<meta property="og:description" content="Пакеты text/template и html/template являются частью стандартной библиотеки Go. Шаблоны Go используются во многих программах, написанных на Go — Docker, …">
+<meta property="og:image" content="http://localhost:51376/en/post/templates/lis.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-04-09T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-04-09T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Templates">
+    
+      <meta property="article:tag" content="Html">
+    
+      <meta property="article:tag" content="Text">
+    
+      <meta property="article:tag" content="Sources">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/templates.html">
+<meta name="twitter:title" content="Шаблоны GO: принципы и использование | Golang for all">
+<meta name="twitter:description" content="Пакеты text/template и html/template являются частью стандартной библиотеки Go. Шаблоны Go используются во многих программах, написанных на Go — Docker, …">
+<meta name="twitter:image" content="http://localhost:51376/en/post/templates/lis.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/templates.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/templates.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Шаблоны GO: принципы и использование</h1>
+
+    
+    <p>
+
+
+  9 апреля 2020 г.
+
+
+
+            <a href="/ru/tags/templates/" class="badge">Templates</a>
+            <a href="/ru/tags/html/" class="badge">Html</a>
+            <a href="/ru/tags/text/" class="badge">Text</a>
+            <a href="/ru/tags/sources/" class="badge">Sources</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/templates/lis.svg"
+                     alt="Шаблоны GO: принципы и использование"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Содержание</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#вызовы-шаблонов">Вызовы шаблонов</a></li>
+    <li><a href="#контекст-шаблона">Контекст шаблона</a></li>
+    <li><a href="#комментарии">Комментарии</a></li>
+    <li><a href="#условный-оператор">Условный оператор</a></li>
+    <li><a href="#циклы-range">Циклы Range</a></li>
+    <li><a href="#with">With</a></li>
+    <li><a href="#шаблоны">Шаблоны</a></li>
+    <li><a href="#элементы-карты-поля-структуры-вызовы-методов">Элементы карты, поля структуры, вызовы методов</a></li>
+    <li><a href="#стандартные-функции">Стандартные функции</a></li>
+    <li><a href="#пользовательские-функции">Пользовательские функции</a></li>
+    <li><a href="#внутреннее-устройство">Внутреннее устройство</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Пакеты <code>text/template</code> и <code>html/template</code> являются частью стандартной библиотеки Go. Шаблоны Go используются во многих программах, написанных на Go — Docker, Kubernetes, Helm. Многие сторонние библиотеки интегрированы с шаблонами Go, например Echo. Знание синтаксиса шаблонов Go очень полезно.</p>
+<p>Эта статья состоит из документации пакета <code>text/template</code> и нескольких решений автора. После описания синтаксиса шаблонов Go мы погрузимся в исходники <code>text/template</code> и <code>html/template</code>.</p>
+<p>Шаблоны Go являются активными, что означает, что здесь доступны инструкции управления потоком, такие как <code>if</code>, <code>else</code> и циклы <code>range</code>.</p>
+<p>Go — строго типизированный язык, но шаблоны работают со всеми типами данных благодаря разработчикам пакета <code>reflect</code>.</p>
+<p>Давайте кратко рассмотрим основы синтаксиса шаблонов Go.</p>
+<h2 id="вызовы-шаблонов">Вызовы шаблонов</h2>
+<p>Все инструкции шаблона задаются между символами <code>{{</code> и <code>}}</code>. Любой другой текст — это обычный текст, который просто выводится без изменений.</p>
+<h2 id="контекст-шаблона">Контекст шаблона</h2>
+<p>У нас есть функции Go <code>Execute</code> и <code>ExecuteTemplate</code> для запуска шаблонов. Обе они имеют параметр <code>data interface{}</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">Execute</span>(<span style="color:#a6e22e">wr</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Writer</span>, <span style="color:#a6e22e">data</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ExecuteTemplate</span>(<span style="color:#a6e22e">wr</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Writer</span>, <span style="color:#a6e22e">name</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">data</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">error</span>
+</span></span></code></pre></div><p>Параметр <code>data</code> здесь — это данные шаблона по умолчанию. К ним можно получить доступ из шаблонов как <code>.</code>. Следующий код выводит данные по умолчанию:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{ . }}
+</span></span></code></pre></div><p>Назовём данные по умолчанию текущим контекстом шаблона. Некоторые инструкции шаблона могут изменять контекст шаблона.</p>
+<h2 id="комментарии">Комментарии</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#75715e">/* comment */</span>}}
+</span></span></code></pre></div><h2 id="условный-оператор">Условный оператор</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">condition</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><p>Если условие равно <code>0</code>, <code>&quot;&quot;</code>, <code>nil</code> или пустому массиву/срезу, условие обрабатывается как false, и T1 не выполнится. В противном случае T1 выполнится.</p>
+<p>Вариации с <code>else</code>, <code>else if</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">condition</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#66d9ef">else</span>}} <span style="color:#a6e22e">T0</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span><span style="display:flex;"><span>{{<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">condition1</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">condition2</span>}} <span style="color:#a6e22e">T0</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><h2 id="циклы-range">Циклы Range</h2>
+<p>Можно итерировать массивы, срезы, карты или каналы.</p>
+<p>В следующем коде инструкция T1 будет выполняться на каждой итерации:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#66d9ef">range</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span><span style="display:flex;"><span>{{<span style="color:#66d9ef">range</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#66d9ef">else</span>}} <span style="color:#a6e22e">T2</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><p>Переменные ключ/значение для каждой итерации также можно получить:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#66d9ef">range</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">key</span>, <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">value</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">pipeline</span>}}
+</span></span><span style="display:flex;"><span>{{ <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">key</span> }}: {{ <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">value</span> }}
+</span></span><span style="display:flex;"><span>{{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><h2 id="with">With</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#a6e22e">with</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><p>Если pipeline эквивалентен true (как описано в объяснении <code>if</code>), T1 выполняется, и текущий контекст шаблона устанавливается в pipeline.</p>
+<h2 id="шаблоны">Шаблоны</h2>
+<p>Можно создать шаблон, используя одну из следующих инструкций:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#a6e22e">block</span> <span style="color:#e6db74">&#34;name&#34;</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span><span style="display:flex;"><span>{{<span style="color:#a6e22e">define</span> <span style="color:#e6db74">&#34;name&#34;</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><p>Для запуска шаблона:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#a6e22e">template</span> <span style="color:#e6db74">&#34;name&#34;</span> <span style="color:#a6e22e">pipeline</span>}}
+</span></span></code></pre></div><h2 id="элементы-карты-поля-структуры-вызовы-методов">Элементы карты, поля структуры, вызовы методов</h2>
+<p>Шаблоны Go могут выводить данные. Например, можно вывести поле структуры или значение карты. Поля структуры, используемые в шаблонах, должны быть экспортированными (начинаться с заглавной буквы). Ключи карты могут начинаться со строчной буквы.</p>
+<p>Все они могут быть объединены в цепочку:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>.<span style="color:#a6e22e">Field1</span>.<span style="color:#a6e22e">Field2</span>.<span style="color:#a6e22e">key1</span>
+</span></span><span style="display:flex;"><span>.<span style="color:#a6e22e">key1</span>.<span style="color:#a6e22e">key2</span>
+</span></span></code></pre></div><p>Можно использовать вызовы методов в шаблонах. Методы шаблона должны возвращать одно значение или два значения, и последнее значение должно быть ошибкой. В исходниках есть такая проверка метода.</p>
+<p>Код Go:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">myType</span> <span style="color:#66d9ef">struct</span>{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">m</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">myType</span>) <span style="color:#a6e22e">Method</span>() <span style="color:#66d9ef">string</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;123&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Код шаблона:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>.<span style="color:#a6e22e">Method</span>()
+</span></span></code></pre></div><h2 id="стандартные-функции">Стандартные функции</h2>
+<p>В шаблонах Go есть два типа функций — встроенные и пользовательские.</p>
+<p>Синтаксис вызова функции для каждой функции следующий:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">funcname</span> <span style="color:#a6e22e">arg1</span> <span style="color:#a6e22e">arg2</span> <span style="color:#a6e22e">arg3</span>
+</span></span></code></pre></div><p>Список стандартных функций:</p>
+<ul>
+<li><code>call funcLocation arg1 arg2</code> — функция для вызова функции с аргументами;</li>
+<li><code>index x 1 2 3</code> — получение элемента среза/массива/карты;</li>
+<li><code>slice x 1 2</code> — срез среза/массива — <code>s[1:2]</code>;</li>
+<li><code>len x</code> — получение длины среза/массива/карты;</li>
+<li><code>print</code>, <code>printf</code>, <code>println</code> — явный вывод данных;</li>
+</ul>
+<p>Булевы операторы также работают как функции:</p>
+<ul>
+<li><code>eq arg1 arg2</code> — <code>arg1 == arg2</code></li>
+<li><code>ne arg1 arg2</code> — <code>arg1 != arg2</code></li>
+<li><code>lt arg1 arg2</code> — <code>arg1 &lt; arg2</code></li>
+<li><code>le arg1 arg2</code> — <code>arg1 &lt;= arg2</code></li>
+<li><code>gt arg1 arg2</code> — <code>arg1 &gt; arg2</code></li>
+<li><code>ge arg1 arg2</code> — <code>arg1 &gt;= arg2</code></li>
+</ul>
+<p>Значения можно объединять в цепочку с функцией с помощью оператора <code>|</code>. Такие значения становятся последним аргументом функции:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#e6db74">&#34;output&#34;</span> | <span style="color:#a6e22e">printf</span> <span style="color:#e6db74">&#34;%q&#34;</span>}}
+</span></span></code></pre></div><h2 id="пользовательские-функции">Пользовательские функции</h2>
+<p>Можно определить любую функцию в Go для использования её позже в шаблонах.</p>
+<p>Код Go функции <code>last</code>, которая помогает проверить, является ли итерируемый элемент последним в списке:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">tempTemplate</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">template</span>.<span style="color:#a6e22e">New</span>(<span style="color:#e6db74">&#34;main&#34;</span>).<span style="color:#a6e22e">Funcs</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">template</span>.<span style="color:#a6e22e">FuncMap</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;last&#34;</span>: <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">x</span> <span style="color:#66d9ef">int</span>, <span style="color:#a6e22e">a</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">ValueOf</span>(<span style="color:#a6e22e">a</span>).<span style="color:#a6e22e">Len</span>()<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>Использование <code>last</code> в шаблоне:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{ <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">allKeywords</span> <span style="color:#f92672">:=</span> .<span style="color:#a6e22e">Data</span>.<span style="color:#a6e22e">Keywords</span> }}
+</span></span><span style="display:flex;"><span>{{ <span style="color:#66d9ef">range</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">k</span>,<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">v</span> <span style="color:#f92672">:=</span> .<span style="color:#a6e22e">Data</span>.<span style="color:#a6e22e">Keywords</span>}}
+</span></span><span style="display:flex;"><span>{{ <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">v</span> }}{{ <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">ne</span> (<span style="color:#a6e22e">last</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">i</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">allKeywords</span>) }},{{ <span style="color:#a6e22e">end</span> }}
+</span></span><span style="display:flex;"><span>{{ <span style="color:#a6e22e">end</span> }}
+</span></span></code></pre></div><h2 id="внутреннее-устройство">Внутреннее устройство</h2>
+<p>Шаблоны Go используют пакет <code>reflect</code> для работы с любыми типами данных. Например, исходники <code>range</code> в <code>text/template</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">s</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">state</span>) <span style="color:#a6e22e">walkRange</span>(<span style="color:#a6e22e">dot</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Value</span>, <span style="color:#a6e22e">r</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">parse</span>.<span style="color:#a6e22e">RangeNode</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">switch</span> <span style="color:#a6e22e">val</span>.<span style="color:#a6e22e">Kind</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Array</span>, <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Slice</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Map</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Chan</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Для каждого итерируемого типа есть логическая ветвь. Тот же подход с <code>reflect</code> используется в исходниках инструкции <code>evalField</code>.</p>
+<p><code>html/template</code> использует <code>text/template</code>. <code>html/template</code> специально разработан для точного определения того, какой тип HTML-контента обрабатывается шаблоном (имя HTML-тега, атрибут, содержимое тега, CSS-контент, URL). На основе этой идентификации контента существуют различные решения экранирования.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/templates/">Templates</a></li>
+        <li><a href="/ru/tags/html/">Html</a></li>
+        <li><a href="/ru/tags/text/">Text</a></li>
+        <li><a href="/ru/tags/sources/">Sources</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;{{ и }}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{% и %}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;\u003c% и %\u003e&#34;}],&#34;question&#34;:&#34;Какие символы используются для ограничения инструкций шаблона в Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Текущий контекст шаблона (данные по умолчанию)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Символ подстановки&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Вызов метода&#34;}],&#34;question&#34;:&#34;Что представляет точка (.) в шаблонах Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Массивы&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Срезы&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Карты&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Каналы&#34;}],&#34;question&#34;:&#34;Какие типы можно итерировать с помощью инструкции range?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;text/template&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;html/parser&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;net/html&#34;}],&#34;question&#34;:&#34;Какой пакет использует html/template внутри?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Пакет reflect&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Пакет types&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Пакет interface&#34;}],&#34;question&#34;:&#34;Какой пакет позволяет шаблонам Go работать с любыми типами данных?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Когда значение равно 0&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Когда значение равно пустой строке \&#34;\&#34;&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Когда значение равно nil&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Когда значение равно 1&#34;}],&#34;question&#34;:&#34;Когда условие в инструкции if считается false в шаблонах Go?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Устанавливает текущий контекст шаблона в pipeline, если он эквивалентен true&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Создаёт новый шаблон&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Выполняет цикл&#34;}],&#34;question&#34;:&#34;Что делает инструкция with в шаблонах Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;define&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;block&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;template&#34;}],&#34;question&#34;:&#34;Какие инструкции используются для создания шаблонов?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;{{template \&#34;name\&#34; pipeline}}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{{call \&#34;name\&#34; pipeline}}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{{execute \&#34;name\&#34; pipeline}}&#34;}],&#34;question&#34;:&#34;Как вызывается созданный шаблон?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;len&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;index&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;printf&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;map&#34;}],&#34;question&#34;:&#34;Какие стандартные функции доступны в шаблонах Go?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Значение становится последним аргументом функции&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Значение становится первым аргументом функции&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Pipe оператор не поддерживается&#34;}],&#34;question&#34;:&#34;Как передать значение в функцию через pipe оператор (|)?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Должны возвращать одно значение или два значения, где последнее - ошибка&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Должны возвращать только одно значение&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Могут возвращать любое количество значений&#34;}],&#34;question&#34;:&#34;Какие требования к методам, вызываемым в шаблонах?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Использовать метод Funcs с template.FuncMap&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Использовать метод AddFunc&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Функции добавляются автоматически&#34;}],&#34;question&#34;:&#34;Как добавить пользовательские функции в шаблон?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;html/template автоматически экранирует HTML контент для безопасности&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;html/template быстрее text/template&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;html/template не использует text/template&#34;}],&#34;question&#34;:&#34;В чём основное отличие html/template от text/template?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Только экспортированные поля (начинающиеся с заглавной буквы)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Все поля структуры&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Только публичные методы&#34;}],&#34;question&#34;:&#34;Какие поля структуры можно использовать в шаблонах?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;eq (равно)&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;ne (не равно)&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;lt (меньше)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;and&#34;}],&#34;question&#34;:&#34;Какие булевы операторы доступны в шаблонах Go?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;{{range $key, $value := pipeline}}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{{range key, value := pipeline}}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{{range pipeline as $key, $value}}&#34;}],&#34;question&#34;:&#34;Как получить ключ и значение в цикле range для карты?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Какие символы используются для ограничения инструкций шаблона в Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            {{ и }}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            {% и %}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            &lt;% и %&gt;
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Что представляет точка (.) в шаблонах Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Текущий контекст шаблона (данные по умолчанию)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Символ подстановки
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Вызов метода
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Какие типы можно итерировать с помощью инструкции range?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Массивы
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Срезы
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Карты
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="3"
+                 id="q2-a3">
+          <label class="form-check-label" for="q2-a3">
+            Каналы
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Какой пакет использует html/template внутри?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            text/template
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            html/parser
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            net/html
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. Какой пакет позволяет шаблонам Go работать с любыми типами данных?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            Пакет reflect
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            Пакет types
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            Пакет interface
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="5">
+      <h5 class="mb-3">6. Когда условие в инструкции if считается false в шаблонах Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="0"
+                 id="q5-a0">
+          <label class="form-check-label" for="q5-a0">
+            Когда значение равно 0
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="1"
+                 id="q5-a1">
+          <label class="form-check-label" for="q5-a1">
+            Когда значение равно пустой строке &#34;&#34;
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="2"
+                 id="q5-a2">
+          <label class="form-check-label" for="q5-a2">
+            Когда значение равно nil
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="3"
+                 id="q5-a3">
+          <label class="form-check-label" for="q5-a3">
+            Когда значение равно 1
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="6">
+      <h5 class="mb-3">7. Что делает инструкция with в шаблонах Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="0"
+                 id="q6-a0">
+          <label class="form-check-label" for="q6-a0">
+            Устанавливает текущий контекст шаблона в pipeline, если он эквивалентен true
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="1"
+                 id="q6-a1">
+          <label class="form-check-label" for="q6-a1">
+            Создаёт новый шаблон
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="2"
+                 id="q6-a2">
+          <label class="form-check-label" for="q6-a2">
+            Выполняет цикл
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="7">
+      <h5 class="mb-3">8. Какие инструкции используются для создания шаблонов?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-7" 
+                 value="0"
+                 id="q7-a0">
+          <label class="form-check-label" for="q7-a0">
+            define
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-7" 
+                 value="1"
+                 id="q7-a1">
+          <label class="form-check-label" for="q7-a1">
+            block
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-7" 
+                 value="2"
+                 id="q7-a2">
+          <label class="form-check-label" for="q7-a2">
+            template
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="8">
+      <h5 class="mb-3">9. Как вызывается созданный шаблон?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="0"
+                 id="q8-a0">
+          <label class="form-check-label" for="q8-a0">
+            {{template &#34;name&#34; pipeline}}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="1"
+                 id="q8-a1">
+          <label class="form-check-label" for="q8-a1">
+            {{call &#34;name&#34; pipeline}}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="2"
+                 id="q8-a2">
+          <label class="form-check-label" for="q8-a2">
+            {{execute &#34;name&#34; pipeline}}
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="9">
+      <h5 class="mb-3">10. Какие стандартные функции доступны в шаблонах Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-9" 
+                 value="0"
+                 id="q9-a0">
+          <label class="form-check-label" for="q9-a0">
+            len
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-9" 
+                 value="1"
+                 id="q9-a1">
+          <label class="form-check-label" for="q9-a1">
+            index
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-9" 
+                 value="2"
+                 id="q9-a2">
+          <label class="form-check-label" for="q9-a2">
+            printf
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-9" 
+                 value="3"
+                 id="q9-a3">
+          <label class="form-check-label" for="q9-a3">
+            map
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="10">
+      <h5 class="mb-3">11. Как передать значение в функцию через pipe оператор (|)?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="0"
+                 id="q10-a0">
+          <label class="form-check-label" for="q10-a0">
+            Значение становится последним аргументом функции
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="1"
+                 id="q10-a1">
+          <label class="form-check-label" for="q10-a1">
+            Значение становится первым аргументом функции
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="2"
+                 id="q10-a2">
+          <label class="form-check-label" for="q10-a2">
+            Pipe оператор не поддерживается
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="11">
+      <h5 class="mb-3">12. Какие требования к методам, вызываемым в шаблонах?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="0"
+                 id="q11-a0">
+          <label class="form-check-label" for="q11-a0">
+            Должны возвращать одно значение или два значения, где последнее - ошибка
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="1"
+                 id="q11-a1">
+          <label class="form-check-label" for="q11-a1">
+            Должны возвращать только одно значение
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="2"
+                 id="q11-a2">
+          <label class="form-check-label" for="q11-a2">
+            Могут возвращать любое количество значений
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="12">
+      <h5 class="mb-3">13. Как добавить пользовательские функции в шаблон?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="0"
+                 id="q12-a0">
+          <label class="form-check-label" for="q12-a0">
+            Использовать метод Funcs с template.FuncMap
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="1"
+                 id="q12-a1">
+          <label class="form-check-label" for="q12-a1">
+            Использовать метод AddFunc
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="2"
+                 id="q12-a2">
+          <label class="form-check-label" for="q12-a2">
+            Функции добавляются автоматически
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="13">
+      <h5 class="mb-3">14. В чём основное отличие html/template от text/template?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="0"
+                 id="q13-a0">
+          <label class="form-check-label" for="q13-a0">
+            html/template автоматически экранирует HTML контент для безопасности
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="1"
+                 id="q13-a1">
+          <label class="form-check-label" for="q13-a1">
+            html/template быстрее text/template
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="2"
+                 id="q13-a2">
+          <label class="form-check-label" for="q13-a2">
+            html/template не использует text/template
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="14">
+      <h5 class="mb-3">15. Какие поля структуры можно использовать в шаблонах?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="0"
+                 id="q14-a0">
+          <label class="form-check-label" for="q14-a0">
+            Только экспортированные поля (начинающиеся с заглавной буквы)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="1"
+                 id="q14-a1">
+          <label class="form-check-label" for="q14-a1">
+            Все поля структуры
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="2"
+                 id="q14-a2">
+          <label class="form-check-label" for="q14-a2">
+            Только публичные методы
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="15">
+      <h5 class="mb-3">16. Какие булевы операторы доступны в шаблонах Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-15" 
+                 value="0"
+                 id="q15-a0">
+          <label class="form-check-label" for="q15-a0">
+            eq (равно)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-15" 
+                 value="1"
+                 id="q15-a1">
+          <label class="form-check-label" for="q15-a1">
+            ne (не равно)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-15" 
+                 value="2"
+                 id="q15-a2">
+          <label class="form-check-label" for="q15-a2">
+            lt (меньше)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-15" 
+                 value="3"
+                 id="q15-a3">
+          <label class="form-check-label" for="q15-a3">
+            and
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="16">
+      <h5 class="mb-3">17. Как получить ключ и значение в цикле range для карты?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-16" 
+                 value="0"
+                 id="q16-a0">
+          <label class="form-check-label" for="q16-a0">
+            {{range $key, $value := pipeline}}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-16" 
+                 value="1"
+                 id="q16-a1">
+          <label class="form-check-label" for="q16-a1">
+            {{range key, value := pipeline}}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-16" 
+                 value="2"
+                 id="q16-a2">
+          <label class="form-check-label" for="q16-a2">
+            {{range pipeline as $key, $value}}
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  4 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/golang-slice.html" style="text-decoration: none; color: inherit;">Принципы работы типа slice в GO</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/golang-slice.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-slice/gophslice.svg"
+                   style="max-height: 200px;"
+                   alt="Принципы работы типа slice в GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>В блоге Go описывается, как использовать срезы. Давайте посмотрим на внутреннее устройство срезов.</p></p>
+            
+            <a href="/ru/post/golang-slice.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/slice/" class="badge">Slice</a>
+                  <a href="/ru/tags/allocation/" class="badge">Allocation</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  2 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/golang-data-handling-concurrent-programs.html" style="text-decoration: none; color: inherit;">Обработка данных в конкурентных программах</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/golang-data-handling-concurrent-programs.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-data-handling-concurrent-programs/kanat.svg"
+                   style="max-height: 200px;"
+                   alt="Обработка данных в конкурентных программах"/>
+            </a>
+            
+            
+            <p class="card-text"><p>В Go у нас есть функциональность горутин из коробки. Мы можем запускать код параллельно. Однако в нашем параллельно выполняющемся коде мы можем работать с общими переменными, и не совсем понятно, как именно Go обрабатывает такие ситуации.</p></p>
+            
+            <a href="/ru/post/golang-data-handling-concurrent-programs.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/map/" class="badge">Map</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  2 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/map-principles-golang.html" style="text-decoration: none; color: inherit;">Принципы работы типа map в GO</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/map-principles-golang.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/map-principles-golang/map.svg"
+                   style="max-height: 200px;"
+                   alt="Принципы работы типа map в GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Программный интерфейс map в Go описан в блоге Go. Нам просто нужно вспомнить, что map — это хранилище ключ-значение, и оно должно извлекать значения по ключу как можно быстрее.</p></p>
+            
+            <a href="/ru/post/map-principles-golang.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/map/" class="badge">Map</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  30 марта 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/golang-regexp-matching-newline.html" style="text-decoration: none; color: inherit;">Golang regexp: сопоставление символа новой строки</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/golang-regexp-matching-newline.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-regexp-matching-newline/regular.svg"
+                   style="max-height: 200px;"
+                   alt="Golang regexp: сопоставление символа новой строки"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Почему регулярные выражения с точкой (&quot;.&quot;) работают по-другому в Go по сравнению с PHP и JavaScript.</p></p>
+            
+            <a href="/ru/post/golang-regexp-matching-newline.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/regular-expressions/" class="badge">Regular Expressions</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/templates.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

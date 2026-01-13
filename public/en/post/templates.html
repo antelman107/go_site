@@ -1,0 +1,1410 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>GO Templates: Principles and Usage | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Packages text/template and html/template are part of the Go standard library. Go templates are used in many Go-programmed software — Docker, Kubernetes, Helm. …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/en/post/templates.html">
+<meta property="og:title" content="GO Templates: Principles and Usage | Golang for all">
+<meta property="og:description" content="Packages text/template and html/template are part of the Go standard library. Go templates are used in many Go-programmed software — Docker, Kubernetes, Helm. …">
+<meta property="og:image" content="http://localhost:51376/en/post/templates/lis.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2020-04-09T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-04-09T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Templates">
+    
+      <meta property="article:tag" content="Html">
+    
+      <meta property="article:tag" content="Text">
+    
+      <meta property="article:tag" content="Sources">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/en/post/templates.html">
+<meta name="twitter:title" content="GO Templates: Principles and Usage | Golang for all">
+<meta name="twitter:description" content="Packages text/template and html/template are part of the Go standard library. Go templates are used in many Go-programmed software — Docker, Kubernetes, Helm. …">
+<meta name="twitter:image" content="http://localhost:51376/en/post/templates/lis.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/en/post/templates.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="http://localhost:51376/ru/post/templates.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">GO Templates: Principles and Usage</h1>
+
+    
+    <p>
+
+
+  April 9, 2020
+
+
+
+            <a href="/tags/templates/" class="badge">Templates</a>
+            <a href="/tags/html/" class="badge">Html</a>
+            <a href="/tags/text/" class="badge">Text</a>
+            <a href="/tags/sources/" class="badge">Sources</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/templates/lis.svg"
+                     alt="GO Templates: Principles and Usage"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Contents</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#template-calls">Template Calls</a></li>
+    <li><a href="#template-context">Template Context</a></li>
+    <li><a href="#comments">Comments</a></li>
+    <li><a href="#condition-operator">Condition Operator</a></li>
+    <li><a href="#range-cycles">Range Cycles</a></li>
+    <li><a href="#with">With</a></li>
+    <li><a href="#templates">Templates</a></li>
+    <li><a href="#map-elements-struct-fields-method-calls">Map Elements, Struct Fields, Method Calls</a></li>
+    <li><a href="#standard-functions">Standard Functions</a></li>
+    <li><a href="#user-defined-functions">User-Defined Functions</a></li>
+    <li><a href="#internals">Internals</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Packages <code>text/template</code> and <code>html/template</code> are part of the Go standard library. Go templates are used in many Go-programmed software — Docker, Kubernetes, Helm. Many third-party libraries are integrated with Go templates, for example Echo. Knowing Go template syntax is very useful.</p>
+<p>This article consists of <code>text/template</code> package documentation and a couple of author&rsquo;s solutions. After describing Go template syntax, we&rsquo;ll dive into <code>text/template</code> and <code>html/template</code> sources.</p>
+<p>Go templates are active, which means flow-control instructions such as <code>if</code>, <code>else</code>, and <code>range</code> cycles are available.</p>
+<p>Go is a strictly typed language, but templates work with all data types, thanks to the reflect package developers.</p>
+<p>Let&rsquo;s take a brief look at Go template syntax basics.</p>
+<h2 id="template-calls">Template Calls</h2>
+<p>All template instructions are set between <code>{{</code> and <code>}}</code> symbols. Any other text is plain text that is simply printed to output without any changes.</p>
+<h2 id="template-context">Template Context</h2>
+<p>We have <code>Execute</code> and <code>ExecuteTemplate</code> Go functions to run templates. Both of them have a <code>data interface{}</code> parameter.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">Execute</span>(<span style="color:#a6e22e">wr</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Writer</span>, <span style="color:#a6e22e">data</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ExecuteTemplate</span>(<span style="color:#a6e22e">wr</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Writer</span>, <span style="color:#a6e22e">name</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">data</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">error</span>
+</span></span></code></pre></div><p>The <code>data</code> parameter here is the default template data. It can be accessed from templates as <code>.</code>. The following code prints the default data:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{ . }}
+</span></span></code></pre></div><p>Let&rsquo;s call the default data the current template context. Some template instructions can change the template context.</p>
+<h2 id="comments">Comments</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#75715e">/* comment */</span>}}
+</span></span></code></pre></div><h2 id="condition-operator">Condition Operator</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">condition</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><p>If condition is <code>0</code>, <code>&quot;&quot;</code>, <code>nil</code>, or an empty array/slice, the condition is processed as false, and T1 won&rsquo;t execute. Otherwise, T1 will execute.</p>
+<p>Variations with <code>else</code>, <code>else if</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">condition</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#66d9ef">else</span>}} <span style="color:#a6e22e">T0</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span><span style="display:flex;"><span>{{<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">condition1</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">condition2</span>}} <span style="color:#a6e22e">T0</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><h2 id="range-cycles">Range Cycles</h2>
+<p>One can iterate arrays, slices, maps, or channels.</p>
+<p>In the following code, the T1 instruction will be executed on each iteration:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#66d9ef">range</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span><span style="display:flex;"><span>{{<span style="color:#66d9ef">range</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#66d9ef">else</span>}} <span style="color:#a6e22e">T2</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><p>Key/value variables for each iteration can also be obtained:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#66d9ef">range</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">key</span>, <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">value</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">pipeline</span>}}
+</span></span><span style="display:flex;"><span>{{ <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">key</span> }}: {{ <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">value</span> }}
+</span></span><span style="display:flex;"><span>{{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><h2 id="with">With</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#a6e22e">with</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><p>If pipeline is equivalent to true (as described in the <code>if</code> explanation), T1 is executed, and the current template context is set to pipeline.</p>
+<h2 id="templates">Templates</h2>
+<p>One can create a template using one of the following instructions:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#a6e22e">block</span> <span style="color:#e6db74">&#34;name&#34;</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span><span style="display:flex;"><span>{{<span style="color:#a6e22e">define</span> <span style="color:#e6db74">&#34;name&#34;</span> <span style="color:#a6e22e">pipeline</span>}} <span style="color:#a6e22e">T1</span> {{<span style="color:#a6e22e">end</span>}}
+</span></span></code></pre></div><p>To run a template:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#a6e22e">template</span> <span style="color:#e6db74">&#34;name&#34;</span> <span style="color:#a6e22e">pipeline</span>}}
+</span></span></code></pre></div><h2 id="map-elements-struct-fields-method-calls">Map Elements, Struct Fields, Method Calls</h2>
+<p>Go templates can print data. For example, one can print a struct field or map value. Struct fields to be used in templates should be exported (started with a capital letter). Map keys can start with a lowercase letter.</p>
+<p>All of them can be chained:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>.<span style="color:#a6e22e">Field1</span>.<span style="color:#a6e22e">Field2</span>.<span style="color:#a6e22e">key1</span>
+</span></span><span style="display:flex;"><span>.<span style="color:#a6e22e">key1</span>.<span style="color:#a6e22e">key2</span>
+</span></span></code></pre></div><p>One can use method calls in templates. Template methods should return one value or two values, and the last value should be an error. There is such a method check in the sources.</p>
+<p>Go code:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">myType</span> <span style="color:#66d9ef">struct</span>{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">m</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">myType</span>) <span style="color:#a6e22e">Method</span>() <span style="color:#66d9ef">string</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;123&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Template code:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>.<span style="color:#a6e22e">Method</span>()
+</span></span></code></pre></div><h2 id="standard-functions">Standard Functions</h2>
+<p>There are two types of functions in Go templates — built-in and user-defined.</p>
+<p>Function call syntax for every function is as follows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">funcname</span> <span style="color:#a6e22e">arg1</span> <span style="color:#a6e22e">arg2</span> <span style="color:#a6e22e">arg3</span>
+</span></span></code></pre></div><p>Standard functions list:</p>
+<ul>
+<li><code>call funcLocation arg1 arg2</code> — function to call a function with arguments;</li>
+<li><code>index x 1 2 3</code> — obtaining a slice/array/map element;</li>
+<li><code>slice x 1 2</code> — slicing slice/array — <code>s[1:2]</code>;</li>
+<li><code>len x</code> — obtaining length of slice/array/map;</li>
+<li><code>print</code>, <code>printf</code>, <code>println</code> — explicit printing of data;</li>
+</ul>
+<p>Boolean operators also work as functions:</p>
+<ul>
+<li><code>eq arg1 arg2</code> — <code>arg1 == arg2</code></li>
+<li><code>ne arg1 arg2</code> — <code>arg1 != arg2</code></li>
+<li><code>lt arg1 arg2</code> — <code>arg1 &lt; arg2</code></li>
+<li><code>le arg1 arg2</code> — <code>arg1 &lt;= arg2</code></li>
+<li><code>gt arg1 arg2</code> — <code>arg1 &gt; arg2</code></li>
+<li><code>ge arg1 arg2</code> — <code>arg1 &gt;= arg2</code></li>
+</ul>
+<p>Values can be chained to a function with the <code>|</code> operator. Such values become the last function argument:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{<span style="color:#e6db74">&#34;output&#34;</span> | <span style="color:#a6e22e">printf</span> <span style="color:#e6db74">&#34;%q&#34;</span>}}
+</span></span></code></pre></div><h2 id="user-defined-functions">User-Defined Functions</h2>
+<p>One can define any function in Go to use it later in templates.</p>
+<p>Go code of a <code>last</code> function which helps to check if the iterated element is the last in a list:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">tempTemplate</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">template</span>.<span style="color:#a6e22e">New</span>(<span style="color:#e6db74">&#34;main&#34;</span>).<span style="color:#a6e22e">Funcs</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">template</span>.<span style="color:#a6e22e">FuncMap</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;last&#34;</span>: <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">x</span> <span style="color:#66d9ef">int</span>, <span style="color:#a6e22e">a</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">ValueOf</span>(<span style="color:#a6e22e">a</span>).<span style="color:#a6e22e">Len</span>()<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>Using <code>last</code> in a template:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{{ <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">allKeywords</span> <span style="color:#f92672">:=</span> .<span style="color:#a6e22e">Data</span>.<span style="color:#a6e22e">Keywords</span> }}
+</span></span><span style="display:flex;"><span>{{ <span style="color:#66d9ef">range</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">k</span>,<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">v</span> <span style="color:#f92672">:=</span> .<span style="color:#a6e22e">Data</span>.<span style="color:#a6e22e">Keywords</span>}}
+</span></span><span style="display:flex;"><span>{{ <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">v</span> }}{{ <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">ne</span> (<span style="color:#a6e22e">last</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">i</span> <span style="color:#960050;background-color:#1e0010">$</span><span style="color:#a6e22e">allKeywords</span>) }},{{ <span style="color:#a6e22e">end</span> }}
+</span></span><span style="display:flex;"><span>{{ <span style="color:#a6e22e">end</span> }}
+</span></span></code></pre></div><h2 id="internals">Internals</h2>
+<p>Go templates use the <code>reflect</code> package to work with any data type. For example, <code>range</code> sources in <code>text/template</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">s</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">state</span>) <span style="color:#a6e22e">walkRange</span>(<span style="color:#a6e22e">dot</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Value</span>, <span style="color:#a6e22e">r</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">parse</span>.<span style="color:#a6e22e">RangeNode</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">switch</span> <span style="color:#a6e22e">val</span>.<span style="color:#a6e22e">Kind</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Array</span>, <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Slice</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Map</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">Chan</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// ...</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>There is a logical branch for every iterated type. The same reflect approach is used in the <code>evalField</code> instruction sources.</p>
+<p><code>html/template</code> uses <code>text/template</code>. <code>html/template</code> is specifically designed to identify exactly which type of HTML content is processed by the template (HTML tag&rsquo;s name, attribute, tag&rsquo;s content, CSS content, URL). Based on this content identification, there are different escape solutions.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/templates/">Templates</a></li>
+        <li><a href="/tags/html/">Html</a></li>
+        <li><a href="/tags/text/">Text</a></li>
+        <li><a href="/tags/sources/">Sources</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;{{ and }}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{% and %}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;\u003c% and %\u003e&#34;}],&#34;question&#34;:&#34;What symbols are used to delimit template instructions in Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;The current template context (default data)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;A wildcard character&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;A method call&#34;}],&#34;question&#34;:&#34;What does the dot (.) represent in Go templates?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Arrays&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Slices&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Maps&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Channels&#34;}],&#34;question&#34;:&#34;What types can be iterated using the range instruction?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;text/template&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;html/parser&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;net/html&#34;}],&#34;question&#34;:&#34;What package does html/template use internally?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;reflect package&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;types package&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;interface package&#34;}],&#34;question&#34;:&#34;What package allows Go templates to work with any data type?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;When value equals 0&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;When value equals empty string \&#34;\&#34;&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;When value equals nil&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;When value equals 1&#34;}],&#34;question&#34;:&#34;When is a condition considered false in Go template if instruction?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Sets current template context to pipeline if it&#39;s equivalent to true&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Creates a new template&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Executes a loop&#34;}],&#34;question&#34;:&#34;What does the with instruction do in Go templates?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;define&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;block&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;template&#34;}],&#34;question&#34;:&#34;What instructions are used to create templates?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;{{template \&#34;name\&#34; pipeline}}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{{call \&#34;name\&#34; pipeline}}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{{execute \&#34;name\&#34; pipeline}}&#34;}],&#34;question&#34;:&#34;How is a created template called?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;len&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;index&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;printf&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;map&#34;}],&#34;question&#34;:&#34;What standard functions are available in Go templates?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Value becomes the last function argument&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Value becomes the first function argument&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Pipe operator is not supported&#34;}],&#34;question&#34;:&#34;How to pass a value to a function using pipe operator (|)?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Must return one value or two values where the last is an error&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Must return only one value&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Can return any number of values&#34;}],&#34;question&#34;:&#34;What are the requirements for methods called in templates?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Use Funcs method with template.FuncMap&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Use AddFunc method&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Functions are added automatically&#34;}],&#34;question&#34;:&#34;How to add custom functions to a template?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;html/template automatically escapes HTML content for security&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;html/template is faster than text/template&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;html/template doesn&#39;t use text/template&#34;}],&#34;question&#34;:&#34;What is the main difference between html/template and text/template?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Only exported fields (starting with capital letter)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;All struct fields&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Only public methods&#34;}],&#34;question&#34;:&#34;What struct fields can be used in templates?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;eq (equals)&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;ne (not equals)&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;lt (less than)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;and&#34;}],&#34;question&#34;:&#34;What boolean operators are available in Go templates?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;{{range $key, $value := pipeline}}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{{range key, value := pipeline}}&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;{{range pipeline as $key, $value}}&#34;}],&#34;question&#34;:&#34;How to get key and value in range loop for a map?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. What symbols are used to delimit template instructions in Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            {{ and }}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            {% and %}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            &lt;% and %&gt;
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. What does the dot (.) represent in Go templates?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            The current template context (default data)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            A wildcard character
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            A method call
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. What types can be iterated using the range instruction?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Arrays
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Slices
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Maps
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="3"
+                 id="q2-a3">
+          <label class="form-check-label" for="q2-a3">
+            Channels
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. What package does html/template use internally?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            text/template
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            html/parser
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            net/html
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. What package allows Go templates to work with any data type?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            reflect package
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            types package
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            interface package
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="5">
+      <h5 class="mb-3">6. When is a condition considered false in Go template if instruction?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="0"
+                 id="q5-a0">
+          <label class="form-check-label" for="q5-a0">
+            When value equals 0
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="1"
+                 id="q5-a1">
+          <label class="form-check-label" for="q5-a1">
+            When value equals empty string &#34;&#34;
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="2"
+                 id="q5-a2">
+          <label class="form-check-label" for="q5-a2">
+            When value equals nil
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="3"
+                 id="q5-a3">
+          <label class="form-check-label" for="q5-a3">
+            When value equals 1
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="6">
+      <h5 class="mb-3">7. What does the with instruction do in Go templates?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="0"
+                 id="q6-a0">
+          <label class="form-check-label" for="q6-a0">
+            Sets current template context to pipeline if it&#39;s equivalent to true
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="1"
+                 id="q6-a1">
+          <label class="form-check-label" for="q6-a1">
+            Creates a new template
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="2"
+                 id="q6-a2">
+          <label class="form-check-label" for="q6-a2">
+            Executes a loop
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="7">
+      <h5 class="mb-3">8. What instructions are used to create templates?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-7" 
+                 value="0"
+                 id="q7-a0">
+          <label class="form-check-label" for="q7-a0">
+            define
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-7" 
+                 value="1"
+                 id="q7-a1">
+          <label class="form-check-label" for="q7-a1">
+            block
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-7" 
+                 value="2"
+                 id="q7-a2">
+          <label class="form-check-label" for="q7-a2">
+            template
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="8">
+      <h5 class="mb-3">9. How is a created template called?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="0"
+                 id="q8-a0">
+          <label class="form-check-label" for="q8-a0">
+            {{template &#34;name&#34; pipeline}}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="1"
+                 id="q8-a1">
+          <label class="form-check-label" for="q8-a1">
+            {{call &#34;name&#34; pipeline}}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="2"
+                 id="q8-a2">
+          <label class="form-check-label" for="q8-a2">
+            {{execute &#34;name&#34; pipeline}}
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="9">
+      <h5 class="mb-3">10. What standard functions are available in Go templates?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-9" 
+                 value="0"
+                 id="q9-a0">
+          <label class="form-check-label" for="q9-a0">
+            len
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-9" 
+                 value="1"
+                 id="q9-a1">
+          <label class="form-check-label" for="q9-a1">
+            index
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-9" 
+                 value="2"
+                 id="q9-a2">
+          <label class="form-check-label" for="q9-a2">
+            printf
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-9" 
+                 value="3"
+                 id="q9-a3">
+          <label class="form-check-label" for="q9-a3">
+            map
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="10">
+      <h5 class="mb-3">11. How to pass a value to a function using pipe operator (|)?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="0"
+                 id="q10-a0">
+          <label class="form-check-label" for="q10-a0">
+            Value becomes the last function argument
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="1"
+                 id="q10-a1">
+          <label class="form-check-label" for="q10-a1">
+            Value becomes the first function argument
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="2"
+                 id="q10-a2">
+          <label class="form-check-label" for="q10-a2">
+            Pipe operator is not supported
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="11">
+      <h5 class="mb-3">12. What are the requirements for methods called in templates?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="0"
+                 id="q11-a0">
+          <label class="form-check-label" for="q11-a0">
+            Must return one value or two values where the last is an error
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="1"
+                 id="q11-a1">
+          <label class="form-check-label" for="q11-a1">
+            Must return only one value
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="2"
+                 id="q11-a2">
+          <label class="form-check-label" for="q11-a2">
+            Can return any number of values
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="12">
+      <h5 class="mb-3">13. How to add custom functions to a template?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="0"
+                 id="q12-a0">
+          <label class="form-check-label" for="q12-a0">
+            Use Funcs method with template.FuncMap
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="1"
+                 id="q12-a1">
+          <label class="form-check-label" for="q12-a1">
+            Use AddFunc method
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="2"
+                 id="q12-a2">
+          <label class="form-check-label" for="q12-a2">
+            Functions are added automatically
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="13">
+      <h5 class="mb-3">14. What is the main difference between html/template and text/template?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="0"
+                 id="q13-a0">
+          <label class="form-check-label" for="q13-a0">
+            html/template automatically escapes HTML content for security
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="1"
+                 id="q13-a1">
+          <label class="form-check-label" for="q13-a1">
+            html/template is faster than text/template
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="2"
+                 id="q13-a2">
+          <label class="form-check-label" for="q13-a2">
+            html/template doesn&#39;t use text/template
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="14">
+      <h5 class="mb-3">15. What struct fields can be used in templates?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="0"
+                 id="q14-a0">
+          <label class="form-check-label" for="q14-a0">
+            Only exported fields (starting with capital letter)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="1"
+                 id="q14-a1">
+          <label class="form-check-label" for="q14-a1">
+            All struct fields
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="2"
+                 id="q14-a2">
+          <label class="form-check-label" for="q14-a2">
+            Only public methods
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="15">
+      <h5 class="mb-3">16. What boolean operators are available in Go templates?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-15" 
+                 value="0"
+                 id="q15-a0">
+          <label class="form-check-label" for="q15-a0">
+            eq (equals)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-15" 
+                 value="1"
+                 id="q15-a1">
+          <label class="form-check-label" for="q15-a1">
+            ne (not equals)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-15" 
+                 value="2"
+                 id="q15-a2">
+          <label class="form-check-label" for="q15-a2">
+            lt (less than)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-15" 
+                 value="3"
+                 id="q15-a3">
+          <label class="form-check-label" for="q15-a3">
+            and
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="16">
+      <h5 class="mb-3">17. How to get key and value in range loop for a map?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-16" 
+                 value="0"
+                 id="q16-a0">
+          <label class="form-check-label" for="q16-a0">
+            {{range $key, $value := pipeline}}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-16" 
+                 value="1"
+                 id="q16-a1">
+          <label class="form-check-label" for="q16-a1">
+            {{range key, value := pipeline}}
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-16" 
+                 value="2"
+                 id="q16-a2">
+          <label class="form-check-label" for="q16-a2">
+            {{range pipeline as $key, $value}}
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 4, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/golang-slice.html" style="text-decoration: none; color: inherit;">Principles of slice type in GO</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/golang-slice.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-slice/gophslice.svg"
+                   style="max-height: 200px;"
+                   alt="Principles of slice type in GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>The Go blog describes how to use slices. Let&rsquo;s take a look at slice internals.</p></p>
+            
+            <a href="/en/post/golang-slice.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/slice/" class="badge">Slice</a>
+                  <a href="/tags/allocation/" class="badge">Allocation</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 2, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/golang-data-handling-concurrent-programs.html" style="text-decoration: none; color: inherit;">Data handling in concurrent programs</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/golang-data-handling-concurrent-programs.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-data-handling-concurrent-programs/kanat.svg"
+                   style="max-height: 200px;"
+                   alt="Data handling in concurrent programs"/>
+            </a>
+            
+            
+            <p class="card-text"><p>In Go, we have goroutines functionality out of the box. We can run code in parallel. However, in our parallel running code we can work with shared variables, and it is not clear how exactly Go handles such situations.</p></p>
+            
+            <a href="/en/post/golang-data-handling-concurrent-programs.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/map/" class="badge">Map</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 2, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/map-principles-golang.html" style="text-decoration: none; color: inherit;">Principles of map type in GO</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/map-principles-golang.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/map-principles-golang/map.svg"
+                   style="max-height: 200px;"
+                   alt="Principles of map type in GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>The map programming interface in Go is described in the Go blog. We just need to recall that a map is a key-value storage and it should retrieve values by key as fast as possible.</p></p>
+            
+            <a href="/en/post/map-principles-golang.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/map/" class="badge">Map</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  March 30, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/golang-regexp-matching-newline.html" style="text-decoration: none; color: inherit;">Golang regexp: matching newline</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/golang-regexp-matching-newline.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-regexp-matching-newline/regular.svg"
+                   style="max-height: 200px;"
+                   alt="Golang regexp: matching newline"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Why regular expressions with dot (&quot;.&quot;) work differently in Go compared to PHP and JavaScript.</p></p>
+            
+            <a href="/en/post/golang-regexp-matching-newline.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/regular-expressions/" class="badge">Regular Expressions</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/post/templates.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

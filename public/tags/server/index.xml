@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Server on Golang for all</title>
+    <link>http://localhost:51376/tags/server/</link>
+    <description>Recent content in Server on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 02 May 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/server/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>HTTP</title>
+      <link>http://localhost:51376/en/post/http.html</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/http.html</guid>
+      <description>&lt;p&gt;All examples from the article are located in the github repository.&lt;/p&gt;&#xA;&lt;p&gt;Let&amp;rsquo;s take a look at HTTP tools in GO.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Coding a Simple TCP Chat in Go</title>
+      <link>http://localhost:51376/en/post/golang-tcp-server-chat.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/golang-tcp-server-chat.html</guid>
+      <description>&lt;p&gt;An example of a simple TCP chat in Go with logic explanation.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

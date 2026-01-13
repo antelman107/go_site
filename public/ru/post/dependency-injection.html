@@ -1,0 +1,1442 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Внедрение зависимостей в GO | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Давайте поговорим о паттерне внедрения зависимостей и управлении зависимостями в больших программах.
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/dependency-injection.html">
+<meta property="og:title" content="Внедрение зависимостей в GO | Golang for all">
+<meta property="og:description" content="Давайте поговорим о паттерне внедрения зависимостей и управлении зависимостями в больших программах.
+">
+<meta property="og:image" content="http://localhost:51376/en/post/dependency-injection/vlog.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-04-21T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-04-21T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Dependency">
+    
+      <meta property="article:tag" content="Injection">
+    
+      <meta property="article:tag" content="Container">
+    
+      <meta property="article:tag" content="Singleton">
+    
+      <meta property="article:tag" content="Multiton">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/dependency-injection.html">
+<meta name="twitter:title" content="Внедрение зависимостей в GO | Golang for all">
+<meta name="twitter:description" content="Давайте поговорим о паттерне внедрения зависимостей и управлении зависимостями в больших программах.
+">
+<meta name="twitter:image" content="http://localhost:51376/en/post/dependency-injection/vlog.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/dependency-injection.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/dependency-injection.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Внедрение зависимостей в GO</h1>
+
+    
+    <p>
+
+
+  21 апреля 2020 г.
+
+
+
+            <a href="/ru/tags/dependency/" class="badge">Dependency</a>
+            <a href="/ru/tags/injection/" class="badge">Injection</a>
+            <a href="/ru/tags/container/" class="badge">Container</a>
+            <a href="/ru/tags/singleton/" class="badge">Singleton</a>
+            <a href="/ru/tags/multiton/" class="badge">Multiton</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/dependency-injection/vlog.svg"
+                     alt="Внедрение зависимостей в GO"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Содержание</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#пример-с-логгером">Пример с логгером</a></li>
+    <li><a href="#определение">Определение</a></li>
+    <li><a href="#проблемы">Проблемы</a>
+      <ul>
+        <li><a href="#сервис-с-большим-количеством-зависимостей">Сервис с большим количеством зависимостей</a></li>
+        <li><a href="#копирование-кода-инициализации">Копирование кода инициализации</a></li>
+        <li><a href="#реализация-кода-инициализации-для-каждой-зависимости">Реализация кода инициализации для каждой зависимости</a></li>
+        <li><a href="#singleton">Singleton</a></li>
+        <li><a href="#пул-синглтонов-multiton">Пул синглтонов (multiton)</a></li>
+      </ul>
+    </li>
+    <li><a href="#контейнер-внедрения-зависимостей-инжектор">Контейнер внедрения зависимостей (инжектор)</a>
+      <ul>
+        <li><a href="#uber-godig">uber-go/dig</a></li>
+        <li><a href="#elliotchancedingo">elliotchance/dingo</a></li>
+        <li><a href="#sarulabsdi">sarulabs/di</a></li>
+        <li><a href="#googlewire">google/wire</a></li>
+      </ul>
+    </li>
+    <li><a href="#таблица-сравнения">Таблица сравнения</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Давайте поговорим о паттерне внедрения зависимостей и управлении зависимостями в больших программах.</p>
+<h2 id="пример-с-логгером">Пример с логгером</h2>
+<p>В любой программе есть <code>main.go</code>, который управляет инициализацией и запуском сервисов.</p>
+<p>Можно сказать, что каждый сервис в GO не реализует всю свою логику. Иногда ему требуются другие сервисы, и он полагается на них в определенных частях логики.</p>
+<p>Например, логирование часто делегируется некоторой сущности-логгеру, например zap:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Server</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">logger</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">zap</span>.<span style="color:#a6e22e">Logger</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewServer</span>(<span style="color:#a6e22e">logger</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">zap</span>.<span style="color:#a6e22e">Logger</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">Server</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Server</span>{<span style="color:#a6e22e">logger</span>: <span style="color:#a6e22e">logger</span>}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">s</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Server</span>) <span style="color:#a6e22e">Handle</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// do some work</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">s</span>.<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Info</span>(<span style="color:#e6db74">&#34;request processed&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">logger</span> <span style="color:#f92672">:=</span> <span style="color:#75715e">//... logger initializing</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">NewServer</span>(<span style="color:#a6e22e">logger</span>).<span style="color:#a6e22e">Run</span>() <span style="color:#75715e">// service with logger initializing</span>
+</span></span></code></pre></div><p>Хорошо переиспользовать код и полагаться на сущность, которая хорошо выполняет свою работу, вместо написания собственного кода.</p>
+<p>В настоящее время наш Server не логирует сам по себе, Server полагается на logger. Другими словами, logger стал зависимостью Server.
+Мы сохранили logger как свойство Server. Делая это, мы внедрили logger как зависимость.</p>
+<h2 id="определение">Определение</h2>
+<p>Внедрение зависимостей — паттерн композиции сущностей, в результате которого первая (родительская) сущность сохраняется в состоянии второй (зависимой) сущности. Родительская сущность может вызывать зависимую сущность, когда это необходимо.</p>
+<p>Изменение состояния родителя важно для различения внедрения зависимостей и внешнего вызова функции.</p>
+<p>Без изменения состояния базовую программу &ldquo;hello world&rdquo; можно ошибочно принять за внедрение зависимостей:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;hello world&#34;</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>В функции main нет состояния, поэтому это не внедрение зависимостей.</p>
+<h2 id="проблемы">Проблемы</h2>
+<p>Почему я обсуждаю внедрение зависимостей и какие проблемы могут быть за этой темой?</p>
+<p>Проблемы могут возникать в программах, которые имеют большое количество сущностей со множеством связей между ними.
+Если есть много связанных сущностей, то есть много кода их инициализации. Такой код с правильной структурой логики затрудняет поддержку сервиса.</p>
+<h3 id="сервис-с-большим-количеством-зависимостей">Сервис с большим количеством зависимостей</h3>
+<p>Давайте представим, что мы разрабатываем сервис, который должен выполнять следующее:</p>
+<ul>
+<li>взаимодействие с базой данных;</li>
+<li>выполнение внешних вызовов сервисов;</li>
+<li>логирование;</li>
+<li>загрузка и использование конфигурации;</li>
+</ul>
+<p>Конструктор сервиса должен выглядеть так:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewService</span>(
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">db</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">sql</span>.<span style="color:#a6e22e">DB</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">bankClient</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">Bank</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">cfg</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">config</span>.<span style="color:#a6e22e">Config</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">logger</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">zap</span>.<span style="color:#a6e22e">Logger</span>,
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>Здесь <code>*sql.DB</code> используется как тип параметра.</p>
+<p>Также каждая зависимость Service требует своей собственной инициализации, которая может требовать других сущностей. Например:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// Getting db connection</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">db</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sql</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#e6db74">&#34;postgres&#34;</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;host=%s port=%s user=%s dbname=%s sslmode=disable password=%s&#34;</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbHost</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbPort</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbUser</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbName</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbPass</span>)
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatal</span>(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Для создания bankClient нам нужны cfg и logger.</p>
+<p>Теперь давайте представим, что есть второй сервис, который нужно реализовать в той же программе, который также требует db, cfg, logger в качестве зависимостей. Давайте визуализируем схему зависимостей:</p>
+<p><img src="/en/post/dependency-injection/deps2.svg" alt="deps2.svg"></p>
+<p>Есть много кода для инициализации первого сервиса, но также нам нужно инициализировать второй.</p>
+<h3 id="копирование-кода-инициализации">Копирование кода инициализации</h3>
+<p>Мы могли бы просто скопировать код инициализации db, cfg, logger для service2.</p>
+<p>Это будет работать, но копирование кода — плохая идея. Больше кода для поддержки, больше вероятность ошибок.</p>
+<p>Давайте проверим другие варианты.</p>
+<h3 id="реализация-кода-инициализации-для-каждой-зависимости">Реализация кода инициализации для каждой зависимости</h3>
+<p>Например, мы можем реализовать функцию инициализации db:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">GetDB</span>(<span style="color:#a6e22e">cfg</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">config</span>.<span style="color:#a6e22e">Config</span>) (<span style="color:#f92672">*</span><span style="color:#a6e22e">sql</span>.<span style="color:#a6e22e">DB</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">db</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sql</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#e6db74">&#34;postgres&#34;</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(
+</span></span><span style="display:flex;"><span>		<span style="color:#e6db74">&#34;host=%s port=%s user=%s dbname=%s sslmode=disable password=%s&#34;</span>,
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbHost</span>, <span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbPort</span>, <span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbUser</span>, <span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbName</span>, <span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbPass</span>)
+</span></span><span style="display:flex;"><span>	)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">db</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Это выглядит хорошо и не будет дублирующегося кода инициализации db. Но нам все еще нужно реализовать этот код для каждой переиспользуемой зависимости.</p>
+<p>Мы все еще не закончили с GetDB - она будет создавать новое соединение при каждом вызове.</p>
+<h3 id="singleton">Singleton</h3>
+<p>В случае с db нам нужен единственный экземпляр.</p>
+<p>Давайте реализуем это с помощью паттерна singleton:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">db</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">db</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">sql</span>.<span style="color:#a6e22e">DB</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">GetDB</span>(<span style="color:#a6e22e">cfg</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">config</span>.<span style="color:#a6e22e">Config</span>) (<span style="color:#f92672">*</span><span style="color:#a6e22e">sql</span>.<span style="color:#a6e22e">DB</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">db</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">db</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">db</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">sql</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#e6db74">&#34;postgres&#34;</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(
+</span></span><span style="display:flex;"><span>		<span style="color:#e6db74">&#34;host=%s port=%s user=%s dbname=%s sslmode=disable password=%s&#34;</span>,
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbHost</span>, <span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbPort</span>, <span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbUser</span>, <span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbName</span>, <span style="color:#a6e22e">configStruct</span>.<span style="color:#a6e22e">DbPass</span>)
+</span></span><span style="display:flex;"><span>	)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">db</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="пул-синглтонов-multiton">Пул синглтонов (multiton)</h3>
+<p>У нас могут быть соединения с разными серверами баз данных, это должны быть отдельные соединения. Но нам все еще нужно, чтобы каждое из них было синглтоном. Давайте реализуем пул синглтонов — multiton.</p>
+<p>При небольшом количестве сущностей эти паттерны работают хорошо.
+Но если есть десятки типов сущностей, даже такой простой код, как singleton и multiton, трудно реализовать. В этом случае мы могли бы использовать некоторую централизованную логику, которая помогает строить сущности — инжектор зависимостей.</p>
+<h2 id="контейнер-внедрения-зависимостей-инжектор">Контейнер внедрения зависимостей (инжектор)</h2>
+<p>Использование отдельной сущности для построения и хранения других сущностей (инжектор) довольно распространено во многих языках программирования.
+Контейнер реализует логику создания каждой сущности, хранения и получения.</p>
+<p>Фокус в программе, использующей контейнер, перемещается с сущности и ее связей на контейнер, который помогает упростить код.</p>
+<p><img src="/en/post/dependency-injection/container.svg" alt="container.svg"></p>
+<p>Иногда работа контейнера настолько предсказуема, что можно указать зависимости в декларативном формате — XML, YAML.</p>
+<p>В Symfony (PHP) контейнер сервисов является одной из центральных частей фреймворка - даже основные компоненты Symfony разработаны для работы с контейнером.
+Symfony поддерживает XML и YAML для объявления зависимостей.</p>
+<p>В Spring (JAVA) контейнер зависимостей может быть настроен через XML или аннотации.</p>
+<p>В GO есть несколько библиотек, реализующих инжектор по-разному.</p>
+<p>Я использовал некоторые из них и подготовил обзор каждой из них ниже. Есть исходный код о взаимодействии библиотек di в отдельном репозитории github.</p>
+<h3 id="uber-godig">uber-go/dig</h3>
+<p>dig позволяет нам настроить контейнер, передавая анонимные функции и используя пакет <code>reflect</code>.</p>
+<p>Следует использовать метод Provide для добавления функции инициализации сущности в контейнер.
+Функция должна возвращать желаемую сущность или и сущность, и ошибку.</p>
+<p>Давайте посмотрим, как мы можем создать logger, который зависит от config. (Это почти оригинальный пример из readme dig).</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">dig</span>.<span style="color:#a6e22e">New</span>()
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Provide</span>(<span style="color:#66d9ef">func</span>() (<span style="color:#f92672">*</span><span style="color:#a6e22e">Config</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#75715e">// В реальной программе здесь должно быть чтение из файла, например</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">cfg</span> <span style="color:#a6e22e">Config</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Unmarshal</span>([]byte(<span style="color:#e6db74">`{&#34;prefix&#34;: &#34;[foo] &#34;}`</span>), <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">cfg</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">cfg</span>, <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>})
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>	panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Функция для создания logger с использованием config</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Provide</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">cfg</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Config</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Logger</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Stdout</span>, <span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">Prefix</span>, <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>})
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>	panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Используя пакет <code>reflect</code>, dig анализирует типы возвращаемого значения и типы параметров.
+Используя эти данные, связи между сущностями разрешаются.</p>
+<p>Для получения сущности из контейнера есть метод Invoke:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Invoke</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">l</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Logger</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">Print</span>(<span style="color:#e6db74">&#34;You&#39;ve been invoked&#34;</span>)
+</span></span><span style="display:flex;"><span>})
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>	panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>При создании идентичной сущности следует передать параметр name при вызове Provide. В противном случае Provide вернет ошибку.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// создаем еще один логгер</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Provide</span>(
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">cfg</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Config</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Logger</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Stdout</span>, <span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">Prefix</span>, <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>	},
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">dig</span>.<span style="color:#a6e22e">Name</span>(<span style="color:#e6db74">&#34;logger2&#34;</span>), <span style="color:#75715e">// передаем опцию имени</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>	panic(<span style="color:#a6e22e">err</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>К сожалению, получение именованной сущности не так просто — в функции Invoke нет параметра name.
+В связанном issue на github разработчики говорят, что проблема исправлена, но еще не выпущена.
+В настоящее время следует использовать структуру с помеченными полями для вызова именованных сущностей:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">dig</span>.<span style="color:#a6e22e">New</span>()
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Provide</span>(<span style="color:#a6e22e">username</span>, <span style="color:#a6e22e">dig</span>.<span style="color:#a6e22e">Name</span>(<span style="color:#e6db74">&#34;username&#34;</span>))
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Provide</span>(<span style="color:#a6e22e">password</span>, <span style="color:#a6e22e">dig</span>.<span style="color:#a6e22e">Name</span>(<span style="color:#e6db74">&#34;password&#34;</span>))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">c</span>.<span style="color:#a6e22e">Invoke</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">p</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">dig</span>.<span style="color:#a6e22e">In</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">U</span> <span style="color:#66d9ef">string</span> <span style="color:#e6db74">`name:&#34;username&#34;`</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">P</span> <span style="color:#66d9ef">string</span> <span style="color:#e6db74">`name:&#34;password&#34;`</span>
+</span></span><span style="display:flex;"><span>}) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;user &gt;&gt;&gt;&#34;</span>, <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">U</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;pwd  &gt;&gt;&gt;&#34;</span>, <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">P</span>)
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>dig (и каждая библиотека инжектора здесь) реализует ленивую загрузку сущностей. Требуемые сущности создаются только при вызове Invoke.</p>
+<p>Мы могли бы говорить о том, что <code>reflect</code> медленный, но для контейнера это не имеет значения, потому что обычно контейнер используется один раз при запуске программы.</p>
+<p>В результате: проблема с именованными сущностями должна быть задокументирована в основном readme dig. В остальных случаях он работает отлично как инжектор.</p>
+<h3 id="elliotchancedingo">elliotchance/dingo</h3>
+<p>elliotchance/dingo работает совершенно по-другому.
+Следует указать YAML конфигурацию для генерации GO-кода контейнера. Давайте продолжим с примером logger-config. Наш YAML должен выглядеть так:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">services</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">Config</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">type</span>: <span style="color:#e6db74">&#39;*Config&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">error</span>: <span style="color:#ae81ff">return nil</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">returns</span>: <span style="color:#ae81ff">NewConfig()</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">Logger</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">type</span>: <span style="color:#e6db74">&#39;*log.Logger&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">import</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#e6db74">&#39;os&#39;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">returns</span>: <span style="color:#ae81ff">log.New(os.Stdout, @{Config}.Prefix, 0)</span>
+</span></span></code></pre></div><p>Для меня YAML не очень удобен в использовании здесь. Вы увидите ниже, что некоторые части YAML могут быть фактически частями GO кода. Но для меня GO код удобнее быть в *.go файлах — по крайней мере IDE проверит синтаксис go.</p>
+<p>Для каждой сущности в YAML, вероятно, нужно указать следующее:</p>
+<ul>
+<li>imports — список импортированных библиотек;</li>
+<li>error — GO код, который должен быть вызван при проверке ошибки;</li>
+<li>returns — часть GO кода, которая инициализирует и вернет сущность;</li>
+</ul>
+<p>С returns я не мог решить: должен ли я добавить большую часть GO кода в YAML, или должен ли я создать функцию-конструктор для каждой сущности. В итоге я переместил всю логику построения конфигурации в функцию NewConfig:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewConfig</span>() (<span style="color:#f92672">*</span><span style="color:#a6e22e">Config</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">cfg</span> <span style="color:#a6e22e">Config</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Unmarshal</span>([]byte(<span style="color:#e6db74">`{&#34;prefix&#34;: &#34;[foo] &#34;}`</span>), <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">cfg</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">cfg</span>, <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Когда YAML готов, следует установить бинарный файл dingo и вызвать его в директории проекта — <code>go get -u github.com/elliotchance/dingo; dingo</code>.</p>
+<p>Генерация кода работает быстро. Мне кажется, что большинство настроек из YAML просто напрямую копируются в сгенерированный *.go файл. Поэтому сгенерированный файл может быть невалидным.
+Сгенерированный код помещается в файл dingo.go. Контейнер — это простая структура с полями для каждой сущности с логикой singleton:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Container</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Config</span>	<span style="color:#f92672">*</span><span style="color:#a6e22e">Config</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Logger</span>	<span style="color:#f92672">*</span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Logger</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">container</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Container</span>) <span style="color:#a6e22e">GetLogger</span>() <span style="color:#f92672">*</span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Logger</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">container</span>.<span style="color:#a6e22e">Logger</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">service</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Stdout</span>, <span style="color:#a6e22e">container</span>.<span style="color:#a6e22e">GetConfig</span>().<span style="color:#a6e22e">Prefix</span>, <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">container</span>.<span style="color:#a6e22e">Logger</span> = <span style="color:#a6e22e">service</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">container</span>.<span style="color:#a6e22e">Logger</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>В результате: elliotchance/dingo помогает генерировать простой типизированный контейнер из YAML, но помещение GO кода в YAML заставляет меня чувствовать себя немного некомфортно.</p>
+<h3 id="sarulabsdi">sarulabs/di</h3>
+<p>sarulabs/di похож на dig, но не использует <code>reflect</code>. Все зависимости в di должны иметь уникальные имена.</p>
+<p>Основное отличие в том, что в dig нам не нужно инициализировать зависимости нашей сущности, даже из контейнера — они просто приходят как параметры функции.
+В di нам нужно извлекать зависимости из контейнера:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">builder</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">di</span>.<span style="color:#a6e22e">Def</span>{
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Name</span>: <span style="color:#e6db74">&#34;logger&#34;</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Build</span>: <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">ctn</span> <span style="color:#a6e22e">di</span>.<span style="color:#a6e22e">Container</span>) (<span style="color:#66d9ef">interface</span>{}, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// Получаем config из контейнера для инициализации logger</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">cfg</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Config</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">ctn</span>.<span style="color:#a6e22e">Fill</span>(<span style="color:#e6db74">&#34;config&#34;</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">cfg</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// Инициализируем logger</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Stdout</span>, <span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">Prefix</span>, <span style="color:#ae81ff">0</span>), <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>GO код, который получает зависимость из контейнера, не большой, но он будет копироваться между сущностями с похожими зависимостями.</p>
+<p>Но также sarulabs/di имеет бонус — можно указать не только функцию создания, но и функцию-хук уничтожения контейнера. Уничтожение контейнера di начинается с вызова DeleteWithSubContainers и может быть выполнено при завершении программы.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">Close</span>: <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">obj</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">obj</span>.(<span style="color:#f92672">*</span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Logger</span>); <span style="color:#a6e22e">ok</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;logger close&#34;</span>) <span style="color:#75715e">// этот код вызывается при уничтожении logger</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Как я упоминал ранее, di не использует <code>reflect</code> и также не хранит никакой информации о типах сущностей, поэтому мы должны использовать приведение типов в функции Close, чтобы получить logger к исходному типу.</p>
+<p>Также есть бонусная функциональность sarulabs/dingo, от того же разработчика, которая также предоставляет строго типизированный контейнер и генерацию кода.</p>
+<p>В результате: di — отличный инжектор, но есть некоторая логика копирования кода — для получения зависимости из контейнера.</p>
+<p>dig здесь лучше.</p>
+<h3 id="googlewire">google/wire</h3>
+<p>С wire нам нужно поместить код шаблона функции построения для каждой сущности. Мы должны поместить комментарий <code>//+build wireinject</code> в начало таких файлов-шаблонов.</p>
+<p>Затем мы должны запустить <code>go get github.com/google/wire/cmd/wire; wire</code>, который генерирует файлы <code>*_gen.go</code> для каждого файла-шаблона. Сгенерированный код будет содержать реальные функции-конструкторы, которые генерируются из шаблонов.</p>
+<p>Для нашего примера logger-config шаблон конструктора logger будет выглядеть так:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">//+build wireinject</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;log&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;github.com/google/wire&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Шаблон для генерации</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">GetLogger</span>() (<span style="color:#f92672">*</span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Logger</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	panic(<span style="color:#a6e22e">wire</span>.<span style="color:#a6e22e">Build</span>(<span style="color:#a6e22e">NewLogger</span>, <span style="color:#a6e22e">NewConfig</span>))
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Сгенерированный код помещается в <code>*_gen.go</code> и выглядит так:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>	<span style="color:#e6db74">&#34;log&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Injectors from wire.go:</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">GetLogger</span>() (<span style="color:#f92672">*</span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Logger</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">config</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewConfig</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">logger</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewLogger</span>(<span style="color:#a6e22e">config</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">logger</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Как в elliotchance/dingo, в wire есть генерация кода. Но мне не удалось сгенерировать невалидный GO код. В каждой ситуации с невалидным шаблоном wire выводит ошибки и код не генерируется.</p>
+<p>Есть один минус в wire — нам нужно реализовать шаблон конструктора, используя вызовы пакета wire. И эти вызовы не так выразительны, как GO код. Поэтому я также переместил всю логику конструктора в функции-конструкторы, чтобы просто вызывать эти функции-конструкторы из шаблонов.</p>
+<h2 id="таблица-сравнения">Таблица сравнения</h2>
+<table>
+  <thead>
+      <tr>
+          <th>Библиотека</th>
+          <th>Формат зависимостей</th>
+          <th>Генерация GO кода</th>
+          <th>Типизация</th>
+          <th>Сокращение кода</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>uber-go/dig</td>
+          <td>GO код, анонимные функции с параметрами</td>
+          <td>Нет</td>
+          <td>Строгая, но также используется reflect</td>
+          <td>Максимальное</td>
+      </tr>
+      <tr>
+          <td>elliotchance/dingo</td>
+          <td>YAML</td>
+          <td>Да</td>
+          <td>Строгая</td>
+          <td>Максимальное, но есть смешивание GO кода в YAML</td>
+      </tr>
+      <tr>
+          <td>sarulabs/di</td>
+          <td>GO код, объявление функций Build с ручным получением параметров</td>
+          <td>Нет, но sarulabs/dingo позволяет это</td>
+          <td>Все зависимости хранятся как interface{}. Но sarulabs/dingo предлагает строго типизированный контейнер</td>
+          <td>Хорошее, но нам нужно получать зависимости из контейнера</td>
+      </tr>
+      <tr>
+          <td>google/wire</td>
+          <td>GO код — шаблоны функций-конструкторов</td>
+          <td>Да</td>
+          <td>Строгая</td>
+          <td>Максимальное</td>
+      </tr>
+  </tbody>
+</table>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/dependency/">Dependency</a></li>
+        <li><a href="/ru/tags/injection/">Injection</a></li>
+        <li><a href="/ru/tags/container/">Container</a></li>
+        <li><a href="/ru/tags/singleton/">Singleton</a></li>
+        <li><a href="/ru/tags/multiton/">Multiton</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Паттерн, при котором родительская сущность сохраняет зависимую сущность в своем состоянии&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Паттерн вызова функции&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Паттерн подключения к базе данных&#34;}],&#34;question&#34;:&#34;Что такое внедрение зависимостей?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Паттерн Singleton&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Паттерн Factory&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Паттерн Builder&#34;}],&#34;question&#34;:&#34;Какой паттерн используется, когда нужен единственный экземпляр зависимости?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;uber-go/dig&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;google/wire&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;sarulabs/di&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;golang/di&#34;}],&#34;question&#34;:&#34;Какие библиотеки упоминаются для внедрения зависимостей в Go?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Пакет reflect&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Пакет types&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Пакет inject&#34;}],&#34;question&#34;:&#34;Какой пакет использует dig для анализа параметров функций и типов возвращаемых значений?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Пул синглтонов - несколько отдельных синглтонов для разных экземпляров одного типа&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Множественное наследование&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Паттерн для создания множества объектов&#34;}],&#34;question&#34;:&#34;Что такое паттерн multiton?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Много кода инициализации&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Сложность поддержки сервиса&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Дублирование кода инициализации&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Увеличение скорости выполнения программы&#34;}],&#34;question&#34;:&#34;Какие проблемы возникают при большом количестве зависимостей в программе?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Invoke&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Get&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Retrieve&#34;}],&#34;question&#34;:&#34;Какой метод используется в dig для получения сущности из контейнера?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Provide&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Add&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Register&#34;}],&#34;question&#34;:&#34;Какой метод используется в dig для добавления функции инициализации сущности в контейнер?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Сущности создаются только при вызове Invoke&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Сущности создаются сразу при добавлении в контейнер&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Сущности создаются при старте программы&#34;}],&#34;question&#34;:&#34;Как работает ленивая загрузка сущностей в контейнерах зависимостей?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;elliotchance/dingo&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;uber-go/dig&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;sarulabs/di&#34;}],&#34;question&#34;:&#34;Какая библиотека использует генерацию GO кода из YAML конфигурации?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;google/wire&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;uber-go/dig&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;sarulabs/di&#34;}],&#34;question&#34;:&#34;Какая библиотека использует генерацию GO кода из шаблонов функций-конструкторов?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;di не использует reflect&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;di требует ручного получения зависимостей из контейнера&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;di поддерживает функции-хуки уничтожения&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;di использует reflect для анализа типов&#34;}],&#34;question&#34;:&#34;Какое отличие sarulabs/di от uber-go/dig?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Это отличает внедрение зависимостей от внешнего вызова функции&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Это увеличивает производительность&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Это требуется для работы контейнера&#34;}],&#34;question&#34;:&#34;Почему изменение состояния родительской сущности важно для определения внедрения зависимостей?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Передаётся параметр name при вызове Provide&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Используется отдельный метод CreateNamed&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Это невозможно в dig&#34;}],&#34;question&#34;:&#34;Как в dig создаются идентичные сущности одного типа?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Упрощение кода инициализации&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Централизованное управление зависимостями&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Автоматическое разрешение зависимостей&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Увеличение времени выполнения программы&#34;}],&#34;question&#34;:&#34;Какие преимущества даёт использование контейнера внедрения зависимостей?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Что такое внедрение зависимостей?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            Паттерн, при котором родительская сущность сохраняет зависимую сущность в своем состоянии
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            Паттерн вызова функции
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            Паттерн подключения к базе данных
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Какой паттерн используется, когда нужен единственный экземпляр зависимости?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Паттерн Singleton
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Паттерн Factory
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Паттерн Builder
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Какие библиотеки упоминаются для внедрения зависимостей в Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            uber-go/dig
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            google/wire
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            sarulabs/di
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="3"
+                 id="q2-a3">
+          <label class="form-check-label" for="q2-a3">
+            golang/di
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Какой пакет использует dig для анализа параметров функций и типов возвращаемых значений?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Пакет reflect
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Пакет types
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Пакет inject
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. Что такое паттерн multiton?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            Пул синглтонов - несколько отдельных синглтонов для разных экземпляров одного типа
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            Множественное наследование
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            Паттерн для создания множества объектов
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="5">
+      <h5 class="mb-3">6. Какие проблемы возникают при большом количестве зависимостей в программе?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="0"
+                 id="q5-a0">
+          <label class="form-check-label" for="q5-a0">
+            Много кода инициализации
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="1"
+                 id="q5-a1">
+          <label class="form-check-label" for="q5-a1">
+            Сложность поддержки сервиса
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="2"
+                 id="q5-a2">
+          <label class="form-check-label" for="q5-a2">
+            Дублирование кода инициализации
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="3"
+                 id="q5-a3">
+          <label class="form-check-label" for="q5-a3">
+            Увеличение скорости выполнения программы
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="6">
+      <h5 class="mb-3">7. Какой метод используется в dig для получения сущности из контейнера?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="0"
+                 id="q6-a0">
+          <label class="form-check-label" for="q6-a0">
+            Invoke
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="1"
+                 id="q6-a1">
+          <label class="form-check-label" for="q6-a1">
+            Get
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="2"
+                 id="q6-a2">
+          <label class="form-check-label" for="q6-a2">
+            Retrieve
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="7">
+      <h5 class="mb-3">8. Какой метод используется в dig для добавления функции инициализации сущности в контейнер?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="0"
+                 id="q7-a0">
+          <label class="form-check-label" for="q7-a0">
+            Provide
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="1"
+                 id="q7-a1">
+          <label class="form-check-label" for="q7-a1">
+            Add
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="2"
+                 id="q7-a2">
+          <label class="form-check-label" for="q7-a2">
+            Register
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="8">
+      <h5 class="mb-3">9. Как работает ленивая загрузка сущностей в контейнерах зависимостей?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="0"
+                 id="q8-a0">
+          <label class="form-check-label" for="q8-a0">
+            Сущности создаются только при вызове Invoke
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="1"
+                 id="q8-a1">
+          <label class="form-check-label" for="q8-a1">
+            Сущности создаются сразу при добавлении в контейнер
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="2"
+                 id="q8-a2">
+          <label class="form-check-label" for="q8-a2">
+            Сущности создаются при старте программы
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="9">
+      <h5 class="mb-3">10. Какая библиотека использует генерацию GO кода из YAML конфигурации?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="0"
+                 id="q9-a0">
+          <label class="form-check-label" for="q9-a0">
+            elliotchance/dingo
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="1"
+                 id="q9-a1">
+          <label class="form-check-label" for="q9-a1">
+            uber-go/dig
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="2"
+                 id="q9-a2">
+          <label class="form-check-label" for="q9-a2">
+            sarulabs/di
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="10">
+      <h5 class="mb-3">11. Какая библиотека использует генерацию GO кода из шаблонов функций-конструкторов?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="0"
+                 id="q10-a0">
+          <label class="form-check-label" for="q10-a0">
+            google/wire
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="1"
+                 id="q10-a1">
+          <label class="form-check-label" for="q10-a1">
+            uber-go/dig
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-10" 
+                 value="2"
+                 id="q10-a2">
+          <label class="form-check-label" for="q10-a2">
+            sarulabs/di
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="11">
+      <h5 class="mb-3">12. Какое отличие sarulabs/di от uber-go/dig?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-11" 
+                 value="0"
+                 id="q11-a0">
+          <label class="form-check-label" for="q11-a0">
+            di не использует reflect
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-11" 
+                 value="1"
+                 id="q11-a1">
+          <label class="form-check-label" for="q11-a1">
+            di требует ручного получения зависимостей из контейнера
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-11" 
+                 value="2"
+                 id="q11-a2">
+          <label class="form-check-label" for="q11-a2">
+            di поддерживает функции-хуки уничтожения
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-11" 
+                 value="3"
+                 id="q11-a3">
+          <label class="form-check-label" for="q11-a3">
+            di использует reflect для анализа типов
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="12">
+      <h5 class="mb-3">13. Почему изменение состояния родительской сущности важно для определения внедрения зависимостей?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="0"
+                 id="q12-a0">
+          <label class="form-check-label" for="q12-a0">
+            Это отличает внедрение зависимостей от внешнего вызова функции
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="1"
+                 id="q12-a1">
+          <label class="form-check-label" for="q12-a1">
+            Это увеличивает производительность
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="2"
+                 id="q12-a2">
+          <label class="form-check-label" for="q12-a2">
+            Это требуется для работы контейнера
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="13">
+      <h5 class="mb-3">14. Как в dig создаются идентичные сущности одного типа?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="0"
+                 id="q13-a0">
+          <label class="form-check-label" for="q13-a0">
+            Передаётся параметр name при вызове Provide
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="1"
+                 id="q13-a1">
+          <label class="form-check-label" for="q13-a1">
+            Используется отдельный метод CreateNamed
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="2"
+                 id="q13-a2">
+          <label class="form-check-label" for="q13-a2">
+            Это невозможно в dig
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="14">
+      <h5 class="mb-3">15. Какие преимущества даёт использование контейнера внедрения зависимостей?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-14" 
+                 value="0"
+                 id="q14-a0">
+          <label class="form-check-label" for="q14-a0">
+            Упрощение кода инициализации
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-14" 
+                 value="1"
+                 id="q14-a1">
+          <label class="form-check-label" for="q14-a1">
+            Централизованное управление зависимостями
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-14" 
+                 value="2"
+                 id="q14-a2">
+          <label class="form-check-label" for="q14-a2">
+            Автоматическое разрешение зависимостей
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-14" 
+                 value="3"
+                 id="q14-a3">
+          <label class="form-check-label" for="q14-a3">
+            Увеличение времени выполнения программы
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/dependency-injection.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

@@ -1,0 +1,881 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Принципы работы типа slice в GO | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="В блоге Go описывается, как использовать срезы. Давайте посмотрим на внутреннее устройство срезов.
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/golang-slice.html">
+<meta property="og:title" content="Принципы работы типа slice в GO | Golang for all">
+<meta property="og:description" content="В блоге Go описывается, как использовать срезы. Давайте посмотрим на внутреннее устройство срезов.
+">
+<meta property="og:image" content="http://localhost:51376/en/post/golang-slice/gophslice.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-04-04T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-04-04T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Slice">
+    
+      <meta property="article:tag" content="Allocation">
+    
+      <meta property="article:tag" content="Sources">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/golang-slice.html">
+<meta name="twitter:title" content="Принципы работы типа slice в GO | Golang for all">
+<meta name="twitter:description" content="В блоге Go описывается, как использовать срезы. Давайте посмотрим на внутреннее устройство срезов.
+">
+<meta name="twitter:image" content="http://localhost:51376/en/post/golang-slice/gophslice.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/golang-slice.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/golang-slice.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Принципы работы типа slice в GO</h1>
+
+    
+    <p>
+
+
+  4 апреля 2020 г.
+
+
+
+            <a href="/ru/tags/slice/" class="badge">Slice</a>
+            <a href="/ru/tags/allocation/" class="badge">Allocation</a>
+            <a href="/ru/tags/sources/" class="badge">Sources</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/golang-slice/gophslice.svg"
+                     alt="Принципы работы типа slice в GO"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Содержание</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#поведение-среза-при-добавлении-элементов">Поведение среза при добавлении элементов</a></li>
+    <li><a href="#влияние-добавления-элементов-на-память">Влияние добавления элементов на память</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>В блоге Go описывается, как использовать срезы. Давайте посмотрим на внутреннее устройство срезов.</p>
+<p>Срез — это тип данных, который оборачивает массив.</p>
+<p>Различия между срезом и массивом:</p>
+<ul>
+<li>Срез — это указатель на массив</li>
+<li>Размер среза можно изменять</li>
+</ul>
+<p>В исходниках Go срез представлен следующей структурой:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">slice</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">array</span> <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">len</span>   <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">cap</span>   <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Здесь используется <code>unsafe.Pointer</code> для указателя на массив.</p>
+<p><code>len</code> (длина) — текущая длина среза, <code>cap</code> (ёмкость) — количество элементов в базовом массиве.</p>
+<p>Оба поля можно передать как параметры функции <code>make</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">s</span> <span style="color:#f92672">:=</span> make(
+</span></span><span style="display:flex;"><span>	[]<span style="color:#66d9ef">int</span>,
+</span></span><span style="display:flex;"><span>	<span style="color:#ae81ff">10</span>, <span style="color:#75715e">// len</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ae81ff">10</span>, <span style="color:#75715e">// cap</span>
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>Ёмкость — основной параметр, отвечающий за выделение памяти в срезах. Она также отвечает за производительность append.</p>
+<h2 id="поведение-среза-при-добавлении-элементов">Поведение среза при добавлении элементов</h2>
+<p>Давайте посмотрим на поведение среза при добавлении элементов:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">a</span> <span style="color:#f92672">:=</span> []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">a</span>[<span style="color:#ae81ff">0</span>:<span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">b</span>[<span style="color:#ae81ff">0</span>] = <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">a</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [0]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>[<span style="color:#ae81ff">0</span>] = <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [1]</span>
+</span></span></code></pre></div><p>Мы создали срез <code>b</code> из среза <code>a</code>. Как видим, оба среза указывают на один и тот же базовый массив.</p>
+<p>Добавим операцию append к одному из срезов:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">a</span> <span style="color:#f92672">:=</span> []<span style="color:#66d9ef">int</span>{<span style="color:#ae81ff">1</span>}
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">a</span>[<span style="color:#ae81ff">0</span>:<span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span> = append(<span style="color:#a6e22e">a</span>, <span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>[<span style="color:#ae81ff">0</span>] = <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">a</span>, <span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [10 2] [0]</span>
+</span></span></code></pre></div><p>После append срезы имеют разные значения в первом элементе. Теперь срезы указывают на разные массивы.</p>
+<p>Эту ситуацию можно понять, изучив исходники функции <code>growslice</code>.</p>
+<p>При изменении ёмкости данные базового массива всегда копируются:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">memmove</span>(<span style="color:#a6e22e">p</span>, <span style="color:#a6e22e">old</span>.<span style="color:#a6e22e">array</span>, <span style="color:#a6e22e">lenmem</span>)
+</span></span></code></pre></div><p>Теперь давайте посмотрим на реальные изменения ёмкости:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">newcap</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">old</span>.<span style="color:#a6e22e">cap</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">doublecap</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">newcap</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">newcap</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">cap</span> &gt; <span style="color:#a6e22e">doublecap</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">newcap</span> = <span style="color:#a6e22e">cap</span>
+</span></span><span style="display:flex;"><span>} <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">old</span>.<span style="color:#a6e22e">len</span> &lt; <span style="color:#ae81ff">1024</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">newcap</span> = <span style="color:#a6e22e">doublecap</span>
+</span></span><span style="display:flex;"><span>	} <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// Проверяем 0 &lt; newcap для обнаружения переполнения</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// и предотвращения бесконечного цикла.</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">for</span> <span style="color:#ae81ff">0</span> &lt; <span style="color:#a6e22e">newcap</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">newcap</span> &lt; <span style="color:#a6e22e">cap</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">newcap</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">newcap</span> <span style="color:#f92672">/</span> <span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// Устанавливаем newcap в запрошенную cap, когда</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// вычисление newcap привело к переполнению.</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">newcap</span> <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">newcap</span> = <span style="color:#a6e22e">cap</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Когда длина среза &lt; 1024, размер памяти удваивается.</p>
+<p>В противном случае срез растёт на четверть.</p>
+<h2 id="влияние-добавления-элементов-на-память">Влияние добавления элементов на память</h2>
+<p>Добавление элементов в срез оказывает значительное влияние на память:</p>
+<ul>
+<li>При изменении ёмкости массив будет скопирован</li>
+<li>Выделенная память будет расти согласно внутренней логике Go</li>
+<li>Чтобы избежать выделений памяти, необходимо установить начальную ёмкость среза достаточно большой</li>
+</ul>
+<p>В следующем примере единственное изменение — это ёмкость среза. Теперь после добавления элементов в срез изменения ёмкости не происходит. Оба среза по-прежнему указывают на один и тот же массив:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">a</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">int</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>[<span style="color:#ae81ff">0</span>] = <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">a</span>[<span style="color:#ae81ff">0</span>:<span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">b</span>[<span style="color:#ae81ff">0</span>] = <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">a</span>, <span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [0] [0]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span> = append(<span style="color:#a6e22e">a</span>, <span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">a</span>[<span style="color:#ae81ff">0</span>] = <span style="color:#ae81ff">10</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">a</span>, <span style="color:#a6e22e">b</span>)
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// [10 2] [10]</span>
+</span></span></code></pre></div><p>В блоге Go описывается возможность использования другой функции append. Однако единственное, что мы можем сделать — это делать ещё более агрессивные выделения памяти, чем Go:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">AppendByte</span>(<span style="color:#a6e22e">slice</span> []<span style="color:#66d9ef">byte</span>, <span style="color:#a6e22e">data</span> <span style="color:#f92672">...</span><span style="color:#66d9ef">byte</span>) []<span style="color:#66d9ef">byte</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">m</span> <span style="color:#f92672">:=</span> len(<span style="color:#a6e22e">slice</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span> <span style="color:#f92672">+</span> len(<span style="color:#a6e22e">data</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> &gt; cap(<span style="color:#a6e22e">slice</span>) { <span style="color:#75715e">// при необходимости перевыделяем</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e">// выделяем вдвое больше необходимого для будущего роста.</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">newSlice</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">byte</span>, (<span style="color:#a6e22e">n</span><span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>		copy(<span style="color:#a6e22e">newSlice</span>, <span style="color:#a6e22e">slice</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">slice</span> = <span style="color:#a6e22e">newSlice</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">slice</span> = <span style="color:#a6e22e">slice</span>[<span style="color:#ae81ff">0</span>:<span style="color:#a6e22e">n</span>]
+</span></span><span style="display:flex;"><span>	copy(<span style="color:#a6e22e">slice</span>[<span style="color:#a6e22e">m</span>:<span style="color:#a6e22e">n</span>], <span style="color:#a6e22e">data</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">slice</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Следует быть осторожным, когда новый срез создаётся как часть старого. Весь старый базовый массив останется в памяти.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/slice/">Slice</a></li>
+        <li><a href="/ru/tags/allocation/">Allocation</a></li>
+        <li><a href="/ru/tags/sources/">Sources</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Срез — это указатель на массив&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Размер среза можно изменять&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Массивы быстрее срезов&#34;}],&#34;question&#34;:&#34;В чем основное различие между срезом и массивом в Go?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Данные копируются в новый массив&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Массив расширяется на месте&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Ничего не происходит&#34;}],&#34;question&#34;:&#34;Что происходит с базовым массивом, когда ёмкость среза изменяется во время append?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Размер памяти удваивается&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Память растет на четверть&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Память растет на фиксированное количество&#34;}],&#34;question&#34;:&#34;Как растет ёмкость среза, когда длина меньше 1024?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Старый базовый массив остается в памяти&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Старый массив сразу удаляется сборщиком мусора&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Оба среза используют один и тот же массив&#34;}],&#34;question&#34;:&#34;Что происходит, когда вы создаете новый срез из старого среза, и ёмкость старого среза изменяется?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. В чем основное различие между срезом и массивом в Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            Срез — это указатель на массив
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            Размер среза можно изменять
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            Массивы быстрее срезов
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Что происходит с базовым массивом, когда ёмкость среза изменяется во время append?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Данные копируются в новый массив
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Массив расширяется на месте
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Ничего не происходит
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Как растет ёмкость среза, когда длина меньше 1024?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Размер памяти удваивается
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Память растет на четверть
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Память растет на фиксированное количество
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Что происходит, когда вы создаете новый срез из старого среза, и ёмкость старого среза изменяется?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Старый базовый массив остается в памяти
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Старый массив сразу удаляется сборщиком мусора
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Оба среза используют один и тот же массив
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  23 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/profiling.html" style="text-decoration: none; color: inherit;">Профилирование Go: основы и практика</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/profiling.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/profiling/goph.svg"
+                   style="max-height: 200px;"
+                   alt="Профилирование Go: основы и практика"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Go имеет богатые инструменты профилирования с самого начала — пакет <code>pprof</code> и <code>go tool pprof</code>. Давайте обсудим, почему профилирование полезно, как с ним работать и что нового в этой области.</p></p>
+            
+            <a href="/ru/post/profiling.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/profiling/" class="badge">Profiling</a>
+                  <a href="/ru/tags/pprof/" class="badge">Pprof</a>
+                  <a href="/ru/tags/benchmark/" class="badge">Benchmark</a>
+                  <a href="/ru/tags/ab/" class="badge">Ab</a>
+                  <a href="/ru/tags/cpu/" class="badge">Cpu</a>
+                  <a href="/ru/tags/allocation/" class="badge">Allocation</a>
+                  <a href="/ru/tags/remote/" class="badge">Remote</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  9 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/templates.html" style="text-decoration: none; color: inherit;">Шаблоны GO: принципы и использование</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/templates.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/templates/lis.svg"
+                   style="max-height: 200px;"
+                   alt="Шаблоны GO: принципы и использование"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Пакеты <code>text/template</code> и <code>html/template</code> являются частью стандартной библиотеки Go. Шаблоны Go используются во многих программах, написанных на Go — Docker, Kubernetes, Helm. Многие сторонние библиотеки интегрированы с шаблонами Go, например Echo. Знание синтаксиса шаблонов Go очень полезно.</p>
+<p>Эта статья состоит из документации пакета <code>text/template</code> и нескольких решений автора. После описания синтаксиса шаблонов Go мы погрузимся в исходники <code>text/template</code> и <code>html/template</code>.</p></p>
+            
+            <a href="/ru/post/templates.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/templates/" class="badge">Templates</a>
+                  <a href="/ru/tags/html/" class="badge">Html</a>
+                  <a href="/ru/tags/text/" class="badge">Text</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  2 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/golang-data-handling-concurrent-programs.html" style="text-decoration: none; color: inherit;">Обработка данных в конкурентных программах</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/golang-data-handling-concurrent-programs.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-data-handling-concurrent-programs/kanat.svg"
+                   style="max-height: 200px;"
+                   alt="Обработка данных в конкурентных программах"/>
+            </a>
+            
+            
+            <p class="card-text"><p>В Go у нас есть функциональность горутин из коробки. Мы можем запускать код параллельно. Однако в нашем параллельно выполняющемся коде мы можем работать с общими переменными, и не совсем понятно, как именно Go обрабатывает такие ситуации.</p></p>
+            
+            <a href="/ru/post/golang-data-handling-concurrent-programs.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/map/" class="badge">Map</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  2 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/map-principles-golang.html" style="text-decoration: none; color: inherit;">Принципы работы типа map в GO</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/map-principles-golang.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/map-principles-golang/map.svg"
+                   style="max-height: 200px;"
+                   alt="Принципы работы типа map в GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Программный интерфейс map в Go описан в блоге Go. Нам просто нужно вспомнить, что map — это хранилище ключ-значение, и оно должно извлекать значения по ключу как можно быстрее.</p></p>
+            
+            <a href="/ru/post/map-principles-golang.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/map/" class="badge">Map</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  30 марта 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/golang-regexp-matching-newline.html" style="text-decoration: none; color: inherit;">Golang regexp: сопоставление символа новой строки</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/golang-regexp-matching-newline.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-regexp-matching-newline/regular.svg"
+                   style="max-height: 200px;"
+                   alt="Golang regexp: сопоставление символа новой строки"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Почему регулярные выражения с точкой (&quot;.&quot;) работают по-другому в Go по сравнению с PHP и JavaScript.</p></p>
+            
+            <a href="/ru/post/golang-regexp-matching-newline.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/regular-expressions/" class="badge">Regular Expressions</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/golang-slice.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

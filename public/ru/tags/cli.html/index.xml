@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cli on Golang for all</title>
+    <link>http://localhost:51048/ru/tags/cli.html.html</link>
+    <description>Recent content in Cli on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Fri, 20 Dec 2024 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51048/ru/tags/cli.html/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Деплой Telegram бота на AWS Lambda с Function URL</title>
+      <link>http://localhost:51048/ru/post/go-telegram-bot-aws-lambda-deploy.html</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/go-telegram-bot-aws-lambda-deploy.html</guid>
+      <description>&lt;p&gt;Эта статья является продолжением статьи &lt;a href=&#34;http://localhost:51048/ru/post/go-telegram-gemini-ai-bot.html&#34;&gt;&amp;ldquo;Создание AI-телеграм бота на Go с Gemini API и AWS Lambda&amp;rdquo;&lt;/a&gt; и содержит детальные инструкции по настройке и деплою Telegram бота на AWS Lambda с использованием Function URL.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

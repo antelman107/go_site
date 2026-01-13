@@ -1,0 +1,790 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Утилита и библиотека net-wait-go | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Утилита и пакет Go для ожидания открытия портов (TCP, UDP).
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/net-wait-go.html">
+<meta property="og:title" content="Утилита и библиотека net-wait-go | Golang for all">
+<meta property="og:description" content="Утилита и пакет Go для ожидания открытия портов (TCP, UDP).
+">
+<meta property="og:image" content="http://localhost:51376/en/post/net-wait-go/tube2.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-06-30T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-06-30T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Tcp">
+    
+      <meta property="article:tag" content="Udp">
+    
+      <meta property="article:tag" content="Docker">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/net-wait-go.html">
+<meta name="twitter:title" content="Утилита и библиотека net-wait-go | Golang for all">
+<meta name="twitter:description" content="Утилита и пакет Go для ожидания открытия портов (TCP, UDP).
+">
+<meta name="twitter:image" content="http://localhost:51376/en/post/net-wait-go/tube2.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/net-wait-go.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/net-wait-go.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Утилита и библиотека net-wait-go</h1>
+
+    
+    <p>
+
+
+  30 июня 2020 г.
+
+
+
+            <a href="/ru/tags/tcp/" class="badge">Tcp</a>
+            <a href="/ru/tags/udp/" class="badge">Udp</a>
+            <a href="/ru/tags/docker/" class="badge">Docker</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/net-wait-go/tube2.svg"
+                     alt="Утилита и библиотека net-wait-go"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Содержание</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#что-это">Что это?</a></li>
+    <li><a href="#зачем-это-нужно">Зачем это нужно?</a></li>
+    <li><a href="#использование-библиотеки">Использование библиотеки</a>
+      <ul>
+        <li><a href="#простой-пример">Простой пример</a></li>
+        <li><a href="#определение-всех-опциональных-настроек">Определение всех опциональных настроек</a></li>
+      </ul>
+    </li>
+    <li><a href="#использование-утилиты">Использование утилиты</a>
+      <ul>
+        <li><a href="#проверка-1-сервиса">Проверка 1 сервиса</a></li>
+        <li><a href="#проверка-2-сервисов">Проверка 2 сервисов</a></li>
+        <li><a href="#проверка-2-сервисов-ошибка">Проверка 2 сервисов (ошибка)</a></li>
+      </ul>
+    </li>
+    <li><a href="#поддержка-udp">Поддержка UDP</a>
+      <ul>
+        <li><a href="#пример-udp-пакета">Пример UDP пакета</a></li>
+      </ul>
+    </li>
+    <li><a href="#исходный-код">Исходный код</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Утилита и пакет Go для ожидания открытия портов (TCP, UDP).</p>
+<h2 id="что-это">Что это?</h2>
+<p>Утилита и пакет Go для ожидания открытия портов (TCP, UDP).</p>
+<h2 id="зачем-это-нужно">Зачем это нужно?</h2>
+<p>В докеризированных приложениях обычно развертывается несколько контейнеров вместе с основным контейнером программы.
+Нам нужно знать, запущены ли контейнеры, чтобы мы могли продолжить выполнение нашей программы или завершить её с ошибкой после некоторого дедлайна.</p>
+<p>В интернете есть множество примеров, которые советуют использовать несколько bash-команд, таких как <code>nc</code>, <code>timeout</code>, <code>curl</code>. Но что если у нас есть Go программа с минимальным Docker образом <code>FROM scratch</code>, который не имеет bash? Мы могли бы использовать этот пакет как библиотеку в нашей программе — просто добавить пару строк кода для проверки доступности портов.</p>
+<p>Этот пакет также можно скачать как утилиту и использовать из командной строки.</p>
+<h2 id="использование-библиотеки">Использование библиотеки</h2>
+<h3 id="простой-пример">Простой пример</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">import</span> <span style="color:#e6db74">&#34;github.com/antelman107/net-wait-go/wait&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">wait</span>.<span style="color:#a6e22e">New</span>().<span style="color:#a6e22e">Do</span>([]<span style="color:#66d9ef">string</span>{<span style="color:#e6db74">&#34;postgres:5432&#34;</span>}) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#e6db74">&#34;db is not available&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="определение-всех-опциональных-настроек">Определение всех опциональных настроек</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">import</span> <span style="color:#e6db74">&#34;github.com/antelman107/net-wait-go/wait&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> !<span style="color:#a6e22e">wait</span>.<span style="color:#a6e22e">New</span>(
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">wait</span>.<span style="color:#a6e22e">WithProto</span>(<span style="color:#e6db74">&#34;tcp&#34;</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">wait</span>.<span style="color:#a6e22e">WithWait</span>(<span style="color:#ae81ff">200</span><span style="color:#f92672">*</span><span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Millisecond</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">wait</span>.<span style="color:#a6e22e">WithBreak</span>(<span style="color:#ae81ff">50</span><span style="color:#f92672">*</span><span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Millisecond</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">wait</span>.<span style="color:#a6e22e">WithDeadline</span>(<span style="color:#ae81ff">15</span><span style="color:#f92672">*</span><span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>),
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">wait</span>.<span style="color:#a6e22e">WithDebug</span>(<span style="color:#66d9ef">true</span>),
+</span></span><span style="display:flex;"><span>).<span style="color:#a6e22e">Do</span>([]<span style="color:#66d9ef">string</span>{<span style="color:#e6db74">&#34;postgres:5432&#34;</span>}) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Error</span>(<span style="color:#e6db74">&#34;db is not available&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="использование-утилиты">Использование утилиты</h2>
+<pre tabindex="0"><code>net-wait-go
+
+-addrs string
+    address:port(,address:port,address:port,...)
+-deadline uint
+    дедлайн в миллисекундах (по умолчанию 10000)
+-debug
+    переключатель отладочных сообщений
+-delay uint
+    пауза между запросами в миллисекундах (по умолчанию 50)
+-packet string
+    UDP пакет для отправки
+-proto string
+    tcp (по умолчанию &#34;tcp&#34;)
+-wait uint
+    задержка одного запроса в миллисекундах (по умолчанию 100)
+</code></pre><h3 id="проверка-1-сервиса">Проверка 1 сервиса</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>net-wait-go -addrs ya.ru:443 -debug true
+</span></span></code></pre></div><pre tabindex="0"><code>2020/06/30 18:07:38 ya.ru:443 is OK
+</code></pre><p>Код возврата 0</p>
+<h3 id="проверка-2-сервисов">Проверка 2 сервисов</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>net-wait-go -addrs ya.ru:443,yandex.ru:443 -debug true
+</span></span></code></pre></div><pre tabindex="0"><code>2020/06/30 18:09:24 yandex.ru:443 is OK
+2020/06/30 18:09:24 ya.ru:443 is OK
+</code></pre><p>Код возврата 0</p>
+<h3 id="проверка-2-сервисов-ошибка">Проверка 2 сервисов (ошибка)</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>net-wait-go -addrs ya.ru:445,yandex.ru:445 -debug true
+</span></span></code></pre></div><pre tabindex="0"><code>2020/06/30 18:09:24 yandex.ru:445 is FAILED
+2020/06/30 18:09:24 ya.ru:445 is FAILED
+...
+</code></pre><p>Код возврата 1</p>
+<h2 id="поддержка-udp">Поддержка UDP</h2>
+<p>Поскольку UDP как протокол не обеспечивает соединение между сервером и клиентами, он не поддерживается в большинстве популярных утилит:</p>
+<ul>
+<li>wait-for-it (<a href="https://github.com/vishnubob/wait-for-it/issues/29">issue</a>)</li>
+<li>netcat (nc) имеет следующую заметку на странице руководства:</li>
+</ul>
+<p><strong>CAVEATS</strong></p>
+<blockquote>
+<p>UDP port scans will always succeed (i.e. report the port as open)</p></blockquote>
+<p>net-wait-go предоставляет поддержку UDP, работая следующим образом:</p>
+<ul>
+<li>отправляет осмысленный пакет на сервер</li>
+<li>ждёт ответного сообщения от сервера (минимум 1 байт)</li>
+</ul>
+<h3 id="пример-udp-пакета">Пример UDP пакета</h3>
+<p>Игровой сервер Counter Strike доступен через UDP. Давайте проверим случайный сервер Counter Strike, отправив пакет A2S_INFO (<a href="https://developer.valvesoftware.com/wiki/Server_queries#A2S_INFO">документация</a>):</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>net-wait-go -proto udp -addrs 46.174.53.245:27015,185.158.113.136:27015 -packet <span style="color:#e6db74">&#39;/////1RTb3VyY2UgRW5naW5lIFF1ZXJ5AA==&#39;</span> -debug true
+</span></span></code></pre></div><pre tabindex="0"><code>2020/07/12 15:13:25 udp 185.158.113.136:27015 is OK
+2020/07/12 15:13:25 udp 46.174.53.245:27015 is OK
+</code></pre><p>Код возврата 0</p>
+<p>Значение <code>-packet</code> здесь — это пакет A2S_INFO, закодированный в base64, который документирован <a href="https://github.com/wriley/steamserverinfo/blob/master/steamserverinfo.go#L133">здесь</a>.</p>
+<h2 id="исходный-код">Исходный код</h2>
+<p>Доступен здесь — <a href="https://github.com/antelman107/net-wait-go">github.com/antelman107/net-wait-go</a>.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/tcp/">Tcp</a></li>
+        <li><a href="/ru/tags/udp/">Udp</a></li>
+        <li><a href="/ru/tags/docker/">Docker</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Для ожидания открытия портов (TCP, UDP)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Для тестирования скорости сети&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Для мониторинга сетевого трафика&#34;}],&#34;question&#34;:&#34;Для чего используется net-wait-go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Минимальные Docker-образы не имеют bash или обычных утилит&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Docker не поддерживает сеть&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Он быстрее bash-команд&#34;}],&#34;question&#34;:&#34;Почему net-wait-go полезен для Docker-контейнеров?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;TCP&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;UDP&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;HTTP&#34;}],&#34;question&#34;:&#34;Какие протоколы поддерживает net-wait-go?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Для чего используется net-wait-go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            Для ожидания открытия портов (TCP, UDP)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            Для тестирования скорости сети
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            Для мониторинга сетевого трафика
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Почему net-wait-go полезен для Docker-контейнеров?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Минимальные Docker-образы не имеют bash или обычных утилит
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Docker не поддерживает сеть
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Он быстрее bash-команд
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Какие протоколы поддерживает net-wait-go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            TCP
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            UDP
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            HTTP
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  1 июля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-docker-delve-remote-debug.html" style="text-decoration: none; color: inherit;">Удалённая отладка с Delve</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Ранее мы обсуждали локальную отладку с помощью IDE GoLand. Теперь мы обсудим, как удалённо отлаживать программу, работающую внутри Docker-контейнера, используя Visual Studio Code и GoLand IDE.</p></p>
+            
+            <a href="/ru/post/go-docker-delve-remote-debug.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/debugger/" class="badge">Debugger</a>
+                  <a href="/ru/tags/delve/" class="badge">Delve</a>
+                  <a href="/ru/tags/vscode/" class="badge">Vscode</a>
+                  <a href="/ru/tags/goland/" class="badge">Goland</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  1 июля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/deploy-docker-swarm-gitlab.html" style="text-decoration: none; color: inherit;">Деплой docker swarm из Gitlab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/deploy-docker-swarm-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/deploy-docker-swarm-gitlab/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Деплой docker swarm из Gitlab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер</p>
+<p>Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.</p></p>
+            
+            <a href="/ru/post/deploy-docker-swarm-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/ru/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/ru/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  29 июня 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-minimum-docker-image.html" style="text-decoration: none; color: inherit;">Создание минимального Docker образа для Go приложений</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/go-minimum-docker-image.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/ru/post/go-minimum-docker-image/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Создание минимального Docker образа для Go приложений"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Давайте обсудим, как создать минимальный Docker образ для Go программы.</p></p>
+            
+            <a href="/en/post/go-minimum-docker-image.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/compilation/" class="badge">Compilation</a>
+                  <a href="/ru/tags/upx/" class="badge">Upx</a>
+                  <a href="/ru/tags/ldflags/" class="badge">Ldflags</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  30 марта 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/golang-tcp-server-chat.html" style="text-decoration: none; color: inherit;">Создание простого TCP чата на Go</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Пример простого TCP чата на Go с объяснением логики.</p></p>
+            
+            <a href="/ru/post/golang-tcp-server-chat.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/tcp/" class="badge">Tcp</a>
+                  <a href="/ru/tags/server/" class="badge">Server</a>
+                  <a href="/ru/tags/chat/" class="badge">Chat</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/net-wait-go.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

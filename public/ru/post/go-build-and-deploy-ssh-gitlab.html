@@ -1,0 +1,824 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Компиляция и деплой через SSH в GitLab CI | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Давайте рассмотрим, как работает компиляция Go и как использовать GitLab CI для этого.
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/go-build-and-deploy-ssh-gitlab.html">
+<meta property="og:title" content="Компиляция и деплой через SSH в GitLab CI | Golang for all">
+<meta property="og:description" content="Давайте рассмотрим, как работает компиляция Go и как использовать GitLab CI для этого.
+">
+<meta property="og:image" content="http://localhost:51376/en/post/go-build-and-deploy-ssh-gitlab/gitlab_logo.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-05-08T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-05-08T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Gitlab">
+    
+      <meta property="article:tag" content="Compilation">
+    
+      <meta property="article:tag" content="Deploy">
+    
+      <meta property="article:tag" content="Ssh">
+    
+      <meta property="article:tag" content="Modules">
+    
+      <meta property="article:tag" content="Vendor">
+    
+      <meta property="article:tag" content="Ci/Cd">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/go-build-and-deploy-ssh-gitlab.html">
+<meta name="twitter:title" content="Компиляция и деплой через SSH в GitLab CI | Golang for all">
+<meta name="twitter:description" content="Давайте рассмотрим, как работает компиляция Go и как использовать GitLab CI для этого.
+">
+<meta name="twitter:image" content="http://localhost:51376/en/post/go-build-and-deploy-ssh-gitlab/gitlab_logo.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/go-build-and-deploy-ssh-gitlab.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/go-build-and-deploy-ssh-gitlab.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Компиляция и деплой через SSH в GitLab CI</h1>
+
+    
+    <p>
+
+
+  8 мая 2020 г.
+
+
+
+            <a href="/ru/tags/gitlab/" class="badge">Gitlab</a>
+            <a href="/ru/tags/compilation/" class="badge">Compilation</a>
+            <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+            <a href="/ru/tags/ssh/" class="badge">Ssh</a>
+            <a href="/ru/tags/modules/" class="badge">Modules</a>
+            <a href="/ru/tags/vendor/" class="badge">Vendor</a>
+            <a href="/ru/tags/ci/cd/" class="badge">Ci/Cd</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/go-build-and-deploy-ssh-gitlab/gitlab_logo.svg"
+                     alt="Компиляция и деплой через SSH в GitLab CI"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Содержание</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#компиляция">Компиляция</a></li>
+    <li><a href="#vendor-или-загрузка">Vendor или загрузка</a></li>
+    <li><a href="#gitlab">GitLab</a></li>
+    <li><a href="#компиляция-с-gitlab">Компиляция с GitLab</a></li>
+    <li><a href="#деплой-через-ssh">Деплой через SSH</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Давайте рассмотрим, как работает компиляция Go и как использовать GitLab CI для этого.</p>
+<h2 id="компиляция">Компиляция</h2>
+<p>Для компиляции программы Go мы должны выполнить <code>go build -o binary_name</code>.</p>
+<p>Если есть импорты стороннего кода, это означает, что в проекте есть внешние зависимости. Для сборки бинарного файла требуется весь исходный код (включая исходный код сторонних библиотек).</p>
+<h2 id="vendor-или-загрузка">Vendor или загрузка</h2>
+<p>В настоящее время последняя версия Go — 1.14.2. Начиная с Go 1.11, в Go есть функциональность Go modules.</p>
+<p>Go modules заставляют Go загружать каждую зависимость при вызове <code>go run</code> или <code>go build</code>. Также мы можем явно загрузить зависимости, вызвав <code>go get ./...</code>.</p>
+<p>Загруженный код зависимостей кэшируется в <code>$GOPATH/pkg/mod</code> или в <code>$HOME/go/pkg/mod</code>, если переменная <code>$GOPATH</code> не установлена.</p>
+<p>Также есть подход vendor, который можно использовать для зависимостей. Если установлен параметр <code>-mod=vendor</code>, зависимости будут загружены в папку <code>vendor</code>. Эта папка может находиться внутри репозитория проекта и храниться в Git.</p>
+<p>Если исходный код зависимостей хранится вместе с кодом проекта, нет необходимости загружать зависимости.</p>
+<h2 id="gitlab">GitLab</h2>
+<p>GitLab позволяет нам выполнять некоторые действия после отправки кода.</p>
+<p>Чтобы заставить GitLab что-то делать с вашим кодом, нам нужно поместить файл <code>.gitlab-ci.yml</code> с инструкциями в корень репозитория.</p>
+<h2 id="компиляция-с-gitlab">Компиляция с GitLab</h2>
+<p>Нам нужно установить определенные этапы и действия, чтобы GitLab их выполнял. Для каждого этапа и действия мы можем указать Docker-образ, который будет загружен.</p>
+<p>Исходный код загружается в папку <code>/builds/{project_group}/{project_name}</code>, что означает, что нет необходимости что-либо делать для получения исходного кода.</p>
+<p>Я создал этап сборки и действие с тем же именем:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">stages</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">build</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">build</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">image</span>: <span style="color:#ae81ff">rhaps1071/golang-1.14-alpine-git</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">stage</span>: <span style="color:#ae81ff">build</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">go get ./...</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">GOARCH=amd64 GOOS=linux go build -ldflags &#34;-extldflags &#39;-static&#39;&#34; -o $CI_PROJECT_DIR/binary</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">artifacts</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">paths</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#ae81ff">binary</span>
+</span></span></code></pre></div><p>Я использовал пользовательский Docker-образ <code>rhaps1071/golang-1.14-alpine-git</code> для выполнения сборки. Я добавил команду <code>git</code> в свой пользовательский Docker-образ, которой нет в <code>golang:1.14-alpine</code>. Это критично для работы <code>go get ./...</code>, который загружает зависимости, используя <code>git clone</code>.</p>
+<p><code>golang:1.14-alpine</code> основан на Alpine Linux, который очень мал (около 3MB). Но размер <code>golang:1.14-alpine</code> составляет 370MB из-за Go в нем. Однако есть экономия размера образа в 2 раза по сравнению с <code>golang:1.14</code> (809MB), который основан на Ubuntu.</p>
+<p>В проекте нет подхода vendor, поэтому мне приходится загружать зависимости. Вот почему используется <code>go get ./...</code>.</p>
+<p>Как упоминалось ранее, исходный код размещается GitLab в папку <code>/builds/{project_group}/{project_name}</code>. Этот путь находится вне <code>$GOPATH</code>. Чтобы команды Go работали вне <code>$GOPATH</code>, требуется файл <code>go.mod</code>, который должен быть помещен в корень файлов проекта. Этот файл можно создать командой <code>go mod init</code>. Если нет файла <code>go.mod</code>, <code>go get ./...</code> (также <code>go run</code> и <code>go build</code>) не будут работать вне <code>$GOPATH</code>.</p>
+<p>Если в вашем проекте нет Go modules, ваш исходный код должен быть помещен внутрь <code>$GOPATH</code>. В GitLab CI мы можем сделать это, скопировав следующим образом:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cp /builds/* $GOPATH/src/
+</span></span></code></pre></div><p>Секция <code>artifacts</code> в <code>.gitlab-ci.yml</code> позволяет нам сохранить любой файл из CI для ручной загрузки через интерфейс GitLab или передать этот файл следующим этапам/действиям.</p>
+<h2 id="деплой-через-ssh">Деплой через SSH</h2>
+<p>Давайте рассмотрим простой деплой бинарного файла через SSH:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">deploy_stage</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">image</span>: <span style="color:#ae81ff">kroniak/ssh-client</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">stage</span>: <span style="color:#ae81ff">deploy</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">environment</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">name</span>: <span style="color:#ae81ff">stage</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">url</span>: <span style="color:#ae81ff">http://stage.project.com</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">when</span>: <span style="color:#ae81ff">manual</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">mkdir -p ~/.ssh</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">echo &#34;$SSH_PRIVATE_KEY&#34; &gt; ~/.ssh/id_rsa</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">chmod -R 700 ~/.ssh</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">echo &#34;$SSH_KNOWN_HOSTS&#34; &gt;&gt; ~/.ssh/known_hosts</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">chmod 644 ~/.ssh/known_hosts</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">echo &#34;$CONFIG&#34; &gt; ./config.json</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">scp -P$SSH_PORT -r ./config.json $SSH_USER@$SSH_HOST:/var/www/project/config/</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">scp -P$SSH_PORT -r ./binary $SSH_USER@$SSH_HOST:~/binary_tmp</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">ssh -p$SSH_PORT $SSH_USER@$SSH_HOST &#39;sudo service project stop &amp;&amp; cp ~/binary_tmp /var/www/project/binary &amp;&amp; sudo service project restart&#39;</span>
+</span></span></code></pre></div><p>Здесь мы снова используем пользовательский Docker-образ на основе Alpine Linux — размер <code>kroniak/ssh-client</code> составляет 12.1MB. На этот раз установлен SSH-клиент, который позволяет нам использовать команды <code>ssh</code> и <code>scp</code>.</p>
+<p>Логика деплоя следующая:</p>
+<ul>
+<li>Установлены следующие переменные GitLab:
+<ul>
+<li><code>$SSH_PRIVATE_KEY</code> — приватный SSH-ключ для доступа к серверу</li>
+<li><code>$SSH_USER</code>, <code>$SSH_HOST</code>, <code>$SSH_PORT</code> — SSH-учетные данные</li>
+<li><code>$SSH_KNOWN_HOSTS</code> — данные для файла <code>.ssh/known_hosts</code>, которые помогают нам проверить, что мы деплоим на нужный сервер</li>
+<li><code>$CONFIG</code> — содержимое файла конфигурации сервиса в формате JSON</li>
+</ul>
+</li>
+<li>При деплое мы помещаем данные из некоторых переменных GitLab в файлы</li>
+<li>Все файлы копируются командой <code>scp</code>. Мы могли бы использовать <code>rsync</code> здесь, потому что он копирует только измененные файлы. Но поскольку нужно скопировать только 2 файла, это не имеет значения</li>
+<li>Наконец, мы меняем наш бинарный файл и перезапускаем сервис</li>
+</ul>
+<p>Полное содержимое <code>.gitlab-ci.yml</code> ниже:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">stages</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">build</span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">deploy</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">build</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">image</span>: <span style="color:#ae81ff">rhaps1071/golang-1.14-alpine-git</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">stage</span>: <span style="color:#ae81ff">build</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">go get ./...</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">GOARCH=amd64 GOOS=linux go build -ldflags &#34;-extldflags &#39;-static&#39;&#34; -o $CI_PROJECT_DIR/binary</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">artifacts</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">paths</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#ae81ff">binary</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">deploy_stage</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">image</span>: <span style="color:#ae81ff">kroniak/ssh-client</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">stage</span>: <span style="color:#ae81ff">deploy</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">environment</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">name</span>: <span style="color:#ae81ff">stage</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">url</span>: <span style="color:#ae81ff">http://stage.project.com</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">when</span>: <span style="color:#ae81ff">manual</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">script</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">mkdir -p ~/.ssh</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">echo &#34;$SSH_PRIVATE_KEY&#34; &gt; ~/.ssh/id_rsa</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">chmod -R 700 ~/.ssh</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">echo &#34;$SSH_KNOWN_HOSTS&#34; &gt;&gt; ~/.ssh/known_hosts</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">chmod 644 ~/.ssh/known_hosts</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">echo &#34;$CONFIG&#34; &gt; ./config.json</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">scp -P$SSH_PORT -r ./config.json $SSH_USER@$SSH_HOST:/var/www/project/config/</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">scp -P$SSH_PORT -r ./binary $SSH_USER@$SSH_HOST:~/binary_tmp</span>
+</span></span><span style="display:flex;"><span>    - <span style="color:#ae81ff">ssh -p$SSH_PORT $SSH_USER@$SSH_HOST &#39;sudo service project stop &amp;&amp; cp ~/binary_tmp /var/www/project/binary &amp;&amp; sudo service project restart&#39;</span>
+</span></span></code></pre></div>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/gitlab/">Gitlab</a></li>
+        <li><a href="/ru/tags/compilation/">Compilation</a></li>
+        <li><a href="/ru/tags/deploy/">Deploy</a></li>
+        <li><a href="/ru/tags/ssh/">Ssh</a></li>
+        <li><a href="/ru/tags/modules/">Modules</a></li>
+        <li><a href="/ru/tags/vendor/">Vendor</a></li>
+        <li><a href="/ru/tags/ci/cd/">Ci/Cd</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;.gitlab-ci.yml&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;gitlab.yml&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;ci.yml&#34;}],&#34;question&#34;:&#34;Какой файл нужен в корне репозитория для включения GitLab CI?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;go.mod&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;go.sum&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;vendor.json&#34;}],&#34;question&#34;:&#34;Какой файл требуется для работы команд Go вне $GOPATH?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Для хранения исходного кода зависимостей вместе с кодом проекта&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Для автоматической загрузки зависимостей&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Для более быстрой компиляции&#34;}],&#34;question&#34;:&#34;Для чего используется подход vendor?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;artifacts&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;files&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;output&#34;}],&#34;question&#34;:&#34;Какая секция в .gitlab-ci.yml позволяет сохранять файлы для загрузки или передачи следующим этапам?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Какой файл нужен в корне репозитория для включения GitLab CI?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            .gitlab-ci.yml
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            gitlab.yml
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            ci.yml
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Какой файл требуется для работы команд Go вне $GOPATH?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            go.mod
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            go.sum
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            vendor.json
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Для чего используется подход vendor?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Для хранения исходного кода зависимостей вместе с кодом проекта
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Для автоматической загрузки зависимостей
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Для более быстрой компиляции
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Какая секция в .gitlab-ci.yml позволяет сохранять файлы для загрузки или передачи следующим этапам?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            artifacts
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            files
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            output
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  20 декабря 2024 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-telegram-bot-aws-lambda-deploy.html" style="text-decoration: none; color: inherit;">Деплой Telegram бота на AWS Lambda с Function URL</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Эта статья является продолжением статьи <a href="/ru/post/go-telegram-gemini-ai-bot.html">&ldquo;Создание AI-телеграм бота на Go с Gemini API и AWS Lambda&rdquo;</a> и содержит детальные инструкции по настройке и деплою Telegram бота на AWS Lambda с использованием Function URL.</p></p>
+            
+            <a href="/ru/post/go-telegram-bot-aws-lambda-deploy.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/go/" class="badge">Go</a>
+                  <a href="/ru/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/ru/tags/aws/" class="badge">Aws</a>
+                  <a href="/ru/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/ru/tags/function-url/" class="badge">Function-Url</a>
+                  <a href="/ru/tags/cli/" class="badge">Cli</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  1 июля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/deploy-docker-swarm-gitlab.html" style="text-decoration: none; color: inherit;">Деплой docker swarm из Gitlab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/deploy-docker-swarm-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/deploy-docker-swarm-gitlab/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Деплой docker swarm из Gitlab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер</p>
+<p>Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.</p></p>
+            
+            <a href="/ru/post/deploy-docker-swarm-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/ru/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/ru/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  29 июня 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-minimum-docker-image.html" style="text-decoration: none; color: inherit;">Создание минимального Docker образа для Go приложений</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/go-minimum-docker-image.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/ru/post/go-minimum-docker-image/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Создание минимального Docker образа для Go приложений"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Давайте обсудим, как создать минимальный Docker образ для Go программы.</p></p>
+            
+            <a href="/en/post/go-minimum-docker-image.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/compilation/" class="badge">Compilation</a>
+                  <a href="/ru/tags/upx/" class="badge">Upx</a>
+                  <a href="/ru/tags/ldflags/" class="badge">Ldflags</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/go-build-and-deploy-ssh-gitlab.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

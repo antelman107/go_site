@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Chat on Golang for all</title>
+    <link>http://localhost:51048/ru/tags/chat.html.html</link>
+    <description>Recent content in Chat on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Mon, 30 Mar 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51048/ru/tags/chat.html/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Создание простого TCP чата на Go</title>
+      <link>http://localhost:51048/ru/post/golang-tcp-server-chat.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/golang-tcp-server-chat.html</guid>
+      <description>&lt;p&gt;Пример простого TCP чата на Go с объяснением логики.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

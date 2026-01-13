@@ -1,0 +1,778 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Создание минимального Docker образа для Go приложений | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Давайте обсудим, как создать минимальный Docker образ для Go программы.
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/en/post/go-minimum-docker-image.html">
+<meta property="og:title" content="Создание минимального Docker образа для Go приложений | Golang for all">
+<meta property="og:description" content="Давайте обсудим, как создать минимальный Docker образ для Go программы.
+">
+<meta property="og:image" content="http://localhost:51376/ru/post/go-minimum-docker-image/docker.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-06-29T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-06-29T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Docker">
+    
+      <meta property="article:tag" content="Compilation">
+    
+      <meta property="article:tag" content="Upx">
+    
+      <meta property="article:tag" content="Ldflags">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/en/post/go-minimum-docker-image.html">
+<meta name="twitter:title" content="Создание минимального Docker образа для Go приложений | Golang for all">
+<meta name="twitter:description" content="Давайте обсудим, как создать минимальный Docker образ для Go программы.
+">
+<meta name="twitter:image" content="http://localhost:51376/ru/post/go-minimum-docker-image/docker.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/en/post/go-minimum-docker-image.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/ru/post/go-minimum-docker-image.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Создание минимального Docker образа для Go приложений</h1>
+
+    
+    <p>
+
+
+  29 июня 2020 г.
+
+
+
+            <a href="/ru/tags/docker/" class="badge">Docker</a>
+            <a href="/ru/tags/compilation/" class="badge">Compilation</a>
+            <a href="/ru/tags/upx/" class="badge">Upx</a>
+            <a href="/ru/tags/ldflags/" class="badge">Ldflags</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/ru/post/go-minimum-docker-image/docker.svg"
+                     alt="Создание минимального Docker образа для Go приложений"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Содержание</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#сборка-образа-и-dockerfile">Сборка образа и Dockerfile</a></li>
+    <li><a href="#двухэтапная-сборка">Двухэтапная сборка</a></li>
+    <li><a href="#размер-бинарного-файла">Размер бинарного файла</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Давайте обсудим, как создать минимальный Docker образ для Go программы.</p>
+<p>Docker поддерживается многими операционными системами — Linux, Unix, Windows и macOS. Docker контейнеры также поддерживаются многими популярными хостинг-платформами — Microsoft Azure, Amazon Web Services, Digital Ocean и другими.</p>
+<h2 id="сборка-образа-и-dockerfile">Сборка образа и Dockerfile</h2>
+<p>Сборка Docker образа выполняется с помощью команды <code>docker build</code>, а Dockerfile необходим для предоставления инструкций по сборке.</p>
+<p>Давайте посмотрим на следующий Dockerfile:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-dockerfile" data-lang="dockerfile"><span style="display:flex;"><span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> rhaps1071/golang-1.14-alpine-git AS build</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /build</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> . .<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> CGO_ENABLED<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span> GOARCH<span style="color:#f92672">=</span>amd64 GOOS<span style="color:#f92672">=</span>linux go build -ldflags <span style="color:#e6db74">&#34;-s -w -extldflags &#39;-static&#39;&#34;</span> -o ./app<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> apk add upx<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> upx ./app<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> scratch</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> --from<span style="color:#f92672">=</span>build /build/app /app<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENTRYPOINT</span> [<span style="color:#e6db74">&#34;/app&#34;</span>]<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>Поскольку мы используем Go модули, нам не нужно помещать исходный код в определенную папку или загружать зависимости вручную — это делается самой командой <code>go build</code>.</p>
+<p>Теперь давайте обсудим все особенности этого Dockerfile.</p>
+<h2 id="двухэтапная-сборка">Двухэтапная сборка</h2>
+<p>Размер Docker образа важен, потому что образ будет загружаться и скачиваться во время сборки и развертывания. Чем больше размер образа, тем больше времени вы потратите на передачу по сети.</p>
+<p>На первом этапе (&ldquo;build&rdquo;) в Dockerfile я начинаю сборку с образа <code>rhaps1071/golang-1.14-alpine-git</code>, который представляет собой <code>golang:1.14-alpine</code> с установленным git.
+Alpine — это самый маленький Linux образ, доступный в настоящее время. Размер его образа составляет около 3MB.</p>
+<p>На втором этапе я использую <code>scratch</code> просто для размещения бинарного файла там.
+<code>scratch</code> — это готовый Docker образ с нулевым размером. Это означает, что результирующий размер образа равен размеру бинарного файла.</p>
+<h2 id="размер-бинарного-файла">Размер бинарного файла</h2>
+<p>Мы можем уменьшить размер бинарного файла, используя два подхода:</p>
+<ul>
+<li>Флаги линковки (<code>ldflags</code>);</li>
+<li>Сжатие бинарного файла после компиляции;</li>
+</ul>
+<p>Флаги <code>-s -w</code> удаляют отладочную информацию из бинарного файла. В моем случае размер был уменьшен с 15MB до 11MB благодаря этим флагам.</p>
+<p><code>-extldflags '-static'</code> используется для статической линковки бинарного файла даже при включенном CGO. Динамическая линковка делает наш бинарный файл зависимым от внешних библиотек (файлы <code>.so</code> в Linux).
+Зависимости внешних библиотек можно проверить с помощью команды <code>ldd</code> для бинарного файла.
+В <code>scratch</code> и Alpine у нас не установлены эти библиотеки. В этом случае нам приходится использовать статическую линковку — все библиотеки будут скомпилированы в наш бинарный файл программы.</p>
+<p>Я также использовал инструмент <code>upx</code> для сжатия бинарного файла. Размер был уменьшен с 11MB до 4.1MB.</p>
+<p>Исходный код этого примера можно найти в репозитории GitHub.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/docker/">Docker</a></li>
+        <li><a href="/ru/tags/compilation/">Compilation</a></li>
+        <li><a href="/ru/tags/upx/">Upx</a></li>
+        <li><a href="/ru/tags/ldflags/">Ldflags</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;scratch&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;alpine&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;ubuntu&#34;}],&#34;question&#34;:&#34;Какой базовый Docker образ самый маленький?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;-s -w&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;-d -v&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;-O -g&#34;}],&#34;question&#34;:&#34;Какие флаги удаляют отладочную информацию из бинарного файла?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;upx&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;gzip&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;zip&#34;}],&#34;question&#34;:&#34;Какой инструмент используется для сжатия бинарного файла?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Уменьшить размер итогового образа&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Ускорить компиляцию&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Включить кэширование&#34;}],&#34;question&#34;:&#34;Какова цель двухэтапной сборки Docker?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Какой базовый Docker образ самый маленький?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            scratch
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            alpine
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            ubuntu
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Какие флаги удаляют отладочную информацию из бинарного файла?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            -s -w
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            -d -v
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            -O -g
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Какой инструмент используется для сжатия бинарного файла?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            upx
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            gzip
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            zip
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Какова цель двухэтапной сборки Docker?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Уменьшить размер итогового образа
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Ускорить компиляцию
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Включить кэширование
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  1 июля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-docker-delve-remote-debug.html" style="text-decoration: none; color: inherit;">Удалённая отладка с Delve</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Ранее мы обсуждали локальную отладку с помощью IDE GoLand. Теперь мы обсудим, как удалённо отлаживать программу, работающую внутри Docker-контейнера, используя Visual Studio Code и GoLand IDE.</p></p>
+            
+            <a href="/ru/post/go-docker-delve-remote-debug.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/debugger/" class="badge">Debugger</a>
+                  <a href="/ru/tags/delve/" class="badge">Delve</a>
+                  <a href="/ru/tags/vscode/" class="badge">Vscode</a>
+                  <a href="/ru/tags/goland/" class="badge">Goland</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  1 июля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/deploy-docker-swarm-gitlab.html" style="text-decoration: none; color: inherit;">Деплой docker swarm из Gitlab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/deploy-docker-swarm-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/deploy-docker-swarm-gitlab/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Деплой docker swarm из Gitlab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер</p>
+<p>Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.</p></p>
+            
+            <a href="/ru/post/deploy-docker-swarm-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+                  <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/ru/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/ru/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  30 июня 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/net-wait-go.html" style="text-decoration: none; color: inherit;">Утилита и библиотека net-wait-go</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/net-wait-go.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/net-wait-go/tube2.svg"
+                   style="max-height: 200px;"
+                   alt="Утилита и библиотека net-wait-go"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Утилита и пакет Go для ожидания открытия портов (TCP, UDP).</p></p>
+            
+            <a href="/ru/post/net-wait-go.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/tcp/" class="badge">Tcp</a>
+                  <a href="/ru/tags/udp/" class="badge">Udp</a>
+                  <a href="/ru/tags/docker/" class="badge">Docker</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  8 мая 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-build-and-deploy-ssh-gitlab.html" style="text-decoration: none; color: inherit;">Компиляция и деплой через SSH в GitLab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/go-build-and-deploy-ssh-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/go-build-and-deploy-ssh-gitlab/gitlab_logo.svg"
+                   style="max-height: 200px;"
+                   alt="Компиляция и деплой через SSH в GitLab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Давайте рассмотрим, как работает компиляция Go и как использовать GitLab CI для этого.</p></p>
+            
+            <a href="/ru/post/go-build-and-deploy-ssh-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/ru/tags/compilation/" class="badge">Compilation</a>
+                  <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/ru/tags/ssh/" class="badge">Ssh</a>
+                  <a href="/ru/tags/modules/" class="badge">Modules</a>
+                  <a href="/ru/tags/vendor/" class="badge">Vendor</a>
+                  <a href="/ru/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/en/post/go-minimum-docker-image.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

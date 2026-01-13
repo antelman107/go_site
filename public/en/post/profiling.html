@@ -1,0 +1,1338 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Profiling Go: Basics and Practice | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Go has rich profiling tools from the very beginning — the pprof package and go tool pprof. Let&rsquo;s discuss why profiling is useful, how to work with it, and …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/en/post/profiling.html">
+<meta property="og:title" content="Profiling Go: Basics and Practice | Golang for all">
+<meta property="og:description" content="Go has rich profiling tools from the very beginning — the pprof package and go tool pprof. Let&rsquo;s discuss why profiling is useful, how to work with it, and …">
+<meta property="og:image" content="http://localhost:51376/en/post/profiling/goph.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2020-04-23T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-04-23T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Profiling">
+    
+      <meta property="article:tag" content="Pprof">
+    
+      <meta property="article:tag" content="Benchmark">
+    
+      <meta property="article:tag" content="Ab">
+    
+      <meta property="article:tag" content="Cpu">
+    
+      <meta property="article:tag" content="Allocation">
+    
+      <meta property="article:tag" content="Remote">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/en/post/profiling.html">
+<meta name="twitter:title" content="Profiling Go: Basics and Practice | Golang for all">
+<meta name="twitter:description" content="Go has rich profiling tools from the very beginning — the pprof package and go tool pprof. Let&rsquo;s discuss why profiling is useful, how to work with it, and …">
+<meta name="twitter:image" content="http://localhost:51376/en/post/profiling/goph.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/en/post/profiling.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="http://localhost:51376/ru/post/profiling.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Profiling Go: Basics and Practice</h1>
+
+    
+    <p>
+
+
+  April 23, 2020
+
+
+
+            <a href="/tags/profiling/" class="badge">Profiling</a>
+            <a href="/tags/pprof/" class="badge">Pprof</a>
+            <a href="/tags/benchmark/" class="badge">Benchmark</a>
+            <a href="/tags/ab/" class="badge">Ab</a>
+            <a href="/tags/cpu/" class="badge">Cpu</a>
+            <a href="/tags/allocation/" class="badge">Allocation</a>
+            <a href="/tags/remote/" class="badge">Remote</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/profiling/goph.svg"
+                     alt="Profiling Go: Basics and Practice"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Contents</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#why-profiling-is-useful">Why Profiling is Useful</a></li>
+    <li><a href="#what-tool-is-good-for-profiling">What Tool is Good for Profiling</a></li>
+    <li><a href="#how-to-profile">How to Profile</a></li>
+    <li><a href="#profiling-example">Profiling Example</a>
+      <ul>
+        <li><a href="#getting-profile-data">Getting Profile Data</a></li>
+        <li><a href="#cpu-profile-analysis">CPU Profile Analysis</a></li>
+      </ul>
+    </li>
+    <li><a href="#conclusion">Conclusion</a></li>
+    <li><a href="#remote-profiling">Remote Profiling</a></li>
+    <li><a href="#whats-new-in-the-profiling-topic">What&rsquo;s New in the Profiling Topic</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Go has rich profiling tools from the very beginning — the <code>pprof</code> package and <code>go tool pprof</code>. Let&rsquo;s discuss why profiling is useful, how to work with it, and what&rsquo;s new in this area.</p>
+<h2 id="why-profiling-is-useful">Why Profiling is Useful</h2>
+<p>While using a debugger, one can find logic mistakes. This is basic debugging.</p>
+<p>A program could work logically correctly, but the following side effects could appear:</p>
+<ul>
+<li>long execution time in some cases;</li>
+<li>high memory consumption;</li>
+<li>high processor load;</li>
+</ul>
+<p>All of the above are not bugs as long as the program is still functioning. However, high resource consumption is expensive for service owners — supporting such services requires new hardware resources from time to time.</p>
+<p>If the service&rsquo;s external load is increasing, all these &ldquo;weak points&rdquo; could become the reason for unexpected failures — if the service runs out of memory, it will just exit; if there is not enough CPU, the server will become unavailable even for SSH connections.</p>
+<p>A profiler is extremely helpful for inspecting the program to find such issues.</p>
+<h2 id="what-tool-is-good-for-profiling">What Tool is Good for Profiling</h2>
+<p>Go&rsquo;s standard profiler tool — <code>pprof</code> — is excellent. Let&rsquo;s use <code>pprof</code>.</p>
+<h2 id="how-to-profile">How to Profile</h2>
+<p>Profiling consists of two activities:</p>
+<ol>
+<li>collecting profiling data from the service;</li>
+<li>visualizing and analyzing the data;</li>
+</ol>
+<p>In order to collect profiling data, one should:</p>
+<ul>
+<li>implement manual metrics collection and exporting with the <code>pprof</code> package, or</li>
+<li>start the <code>net/http/pprof</code> endpoint, which provides profiling data exporting;</li>
+</ul>
+<p>For beginners, it&rsquo;s simpler to use option 2.</p>
+<p>To start the profiling endpoint, one should:</p>
+<ul>
+<li>add <code>import _ &quot;net/http/pprof&quot;</code> to the program code;</li>
+<li>if there is already a <code>net/http</code> server started in the program — nothing more is required;</li>
+<li>if not, one should add server start code:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">ListenAndServe</span>(<span style="color:#e6db74">&#34;localhost:6060&#34;</span>, <span style="color:#66d9ef">nil</span>))
+</span></span><span style="display:flex;"><span>}()
+</span></span></code></pre></div><p>According to the <code>net/http/pprof</code> source, it becomes obvious what that import does:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">init</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/&#34;</span>, <span style="color:#a6e22e">Index</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/cmdline&#34;</span>, <span style="color:#a6e22e">Cmdline</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/profile&#34;</span>, <span style="color:#a6e22e">Profile</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/symbol&#34;</span>, <span style="color:#a6e22e">Symbol</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">HandleFunc</span>(<span style="color:#e6db74">&#34;/debug/pprof/trace&#34;</span>, <span style="color:#a6e22e">Trace</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="profiling-example">Profiling Example</h2>
+<p>I&rsquo;m going to profile a web service started at <code>localhost:8090</code>.</p>
+<p>I&rsquo;ve imported <code>net/http/pprof</code> and added an HTTP server start.</p>
+<h3 id="getting-profile-data">Getting Profile Data</h3>
+<p>First, I&rsquo;m going to load my service using the Apache Benchmark (<code>ab</code>) tool:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>ab -n <span style="color:#ae81ff">1000</span> -c10 http://localhost:8090/
+</span></span></code></pre></div><p><code>ab</code> prints its own statistics about request times, but currently I don&rsquo;t need it. I&rsquo;m going to analyze profiling data for now.</p>
+<p>While the service is under load, I request CPU profiling data for the following 5 seconds:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl http://localhost:6060/debug/pprof/profile?seconds<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span> &gt; ./profile
+</span></span></code></pre></div><p>As a result, the profile file is downloaded. That&rsquo;s all for getting profiling data. Let&rsquo;s analyze it.</p>
+<h3 id="cpu-profile-analysis">CPU Profile Analysis</h3>
+<p>Let&rsquo;s open the profiling data I&rsquo;ve just downloaded with <code>go tool pprof</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>go tool pprof ./profile
+</span></span></code></pre></div><pre tabindex="0"><code>Type: cpu
+Time: Apr 19, 2020 at 9:28pm (+03)
+Duration: 5.40s, Total samples = 400ms ( 7.41%)
+Entering interactive mode (type &#34;help&#34; for commands, &#34;o&#34; for options)
+</code></pre><p>We can print data as an image:</p>
+<pre tabindex="0"><code>(pprof) web
+</code></pre><p>This requires Graphviz tool installation.</p>
+<p>As a result, I got a function scheme where the longest-running functions are bigger than others.</p>
+<p><img src="/en/post/profiling/img.png" alt="img.png"></p>
+<p>As we can see, the most time is spent on <code>html/template</code> package calls, which involves Go sources. This is the profiler&rsquo;s standard behavior — it doesn&rsquo;t matter if the function is from application code or from Go sources.</p>
+<p>Let&rsquo;s get back to the pprof terminal and print the top 15 functions by work time:</p>
+<pre tabindex="0"><code>(pprof) top15
+</code></pre><pre tabindex="0"><code>Showing nodes accounting for 0, 0% of 400ms total
+Showing top 15 nodes out of 147
+      flat  flat%   sum%        cum   cum%
+         0     0%     0%      260ms 65.00%  net/http.(*conn).serve
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo.(*Echo).ServeHTTP
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo.(*Echo).ServeHTTP.func1
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo.(*Echo).add.func1
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo.(*context).Render
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo/middleware.AddTrailingSlashWithConfig.func1.1
+         0     0%     0%      240ms 60.00%  github.com/labstack/echo/middleware.CORSWithConfig.func1.1
+         0     0%     0%      240ms 60.00%  net/http.serverHandler.ServeHTTP
+         0     0%     0%      220ms 55.00%  html/template.(*Template).Execute
+         0     0%     0%      220ms 55.00%  text/template.(*Template).Execute
+         0     0%     0%      220ms 55.00%  text/template.(*Template).execute
+         0     0%     0%      220ms 55.00%  text/template.(*state).walk
+         0     0%     0%      220ms 55.00%  text/template.(*state).walkTemplate
+</code></pre><p>There is also template rendering in the top.</p>
+<p>We can print any function source to see which part of it is taking which time:</p>
+<pre tabindex="0"><code>(pprof) list text/template.\(\*state\).walk$
+</code></pre><pre tabindex="0"><code>Total: 400ms
+ROUTINE ======================== text/template.(*state).walk in /usr/local/Cellar/go/1.14/libexec/src/text/template/exec.go
+         0      830ms (flat, cum) 207.50% of Total
+         .          .    250:	s.at(node)
+         .          .    251:	switch node := node.(type) {
+         .          .    252:	case *parse.ActionNode:
+         .          .    253:		// Do not pop variables so they persist until next end.
+         .          .    254:		// Also, if the action declares variables, don&#39;t print the result.
+    160ms    160ms    255:		val := s.evalPipeline(dot, node.Pipe)
+         .          .    256:		if len(node.Pipe.Decl) == 0 {
+     20ms     20ms    257:			s.printValue(node, val)
+         .          .    258:		}
+         .          .    259:	case *parse.IfNode:
+     40ms     40ms    260:		s.walkIfOrWith(parse.NodeIf, dot, node.Pipe, node.List, node.ElseList)
+         .          .    261:	case *parse.ListNode:
+         .          .    262:		for _, node := range node.Nodes {
+    220ms    220ms    263:			s.walk(dot, node)
+         .          .    264:		}
+         .          .    265:	case *parse.RangeNode:
+    170ms    170ms    266:		s.walkRange(dot, node)
+         .          .    267:	case *parse.TemplateNode:
+    220ms    220ms    268:		s.walkTemplate(dot, node)
+         .          .    269:	case *parse.TextNode:
+         .          .    270:		if _, err := s.wr.Write(node.Text); err != nil {
+         .          .    271:			s.writeError(err)
+         .          .    272:		}
+         .          .    273:	case *parse.WithNode:
+</code></pre><p>Conclusion:</p>
+<ul>
+<li>there is recursion here (line 263);</li>
+<li>there are <code>reflect</code> package calls, which are considered &ldquo;heavy&rdquo;;</li>
+<li>I can&rsquo;t change Go source code.</li>
+</ul>
+<p>But I can change my service code that calls Go standard packages. Currently, there is a template call on every client request in my service. However, the templates are static and constant. The output of the template call depends on request data.</p>
+<p>I&rsquo;m going to cache the template call result — rendering will be called once for each request data combination. On the first request, there is no data in the cache. In that case, the template call is executed. The result of the template call is saved into the cache with a key generated from request data. On every request, the service checks if there is data in the cache by a certain key. And the service uses cached data if there is any.</p>
+<p>I changed the service code and ran profiling again. The results are below:</p>
+<pre tabindex="0"><code>(pprof) top15
+</code></pre><pre tabindex="0"><code>Showing nodes accounting for 90ms, 50.00% of 180ms total
+Showing top 15 nodes out of 78
+      flat  flat%   sum%        cum   cum%
+         0     0%     0%      100ms 55.56%  net/http.(*conn).serve
+     90ms 50.00% 50.00%       90ms 50.00%  syscall.syscall
+         0     0% 50.00%       60ms 33.33%  bufio.(*Writer).Flush
+         0     0% 50.00%       60ms 33.33%  internal/poll.(*FD).Write
+         0     0% 50.00%       60ms 33.33%  net.(*conn).Write
+         0     0% 50.00%       60ms 33.33%  net.(*netFD).Write
+         0     0% 50.00%       60ms 33.33%  net/http.(*response).finishRequest
+         0     0% 50.00%       60ms 33.33%  net/http.checkConnErrorWriter.Write
+         0     0% 50.00%       60ms 33.33%  syscall.Write
+         0     0% 50.00%       60ms 33.33%  syscall.write
+         0     0% 50.00%       40ms 22.22%  runtime.findrunnable
+         0     0% 50.00%       40ms 22.22%  runtime.mcall
+         0     0% 50.00%       40ms 22.22%  runtime.schedule
+         0     0% 50.00%       30ms 16.67%  github.com/labstack/echo.(*Echo).Start
+</code></pre><p>As we can see, there are <code>syscall.Write</code> calls in the top now. And template calls are not in the top anymore.</p>
+<p>This is perfect! Because the goal of our changes is to make application behavior as fast as possible, to make basic OS operations — reading and sending data over the network — appear at the top.</p>
+<p>Now let&rsquo;s compare the <code>ab</code> results — the &ldquo;Requests per second&rdquo; row:</p>
+<ul>
+<li><strong>Before:</strong> Requests per second: 14.13 [#/sec] (mean)</li>
+<li><strong>After:</strong> Requests per second: 638.38 [#/sec] (mean)</li>
+</ul>
+<p>As we can see, the service is performing much faster now.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>One can open the <code>net/http/pprof</code> endpoint in a browser. It is the same endpoint we used <code>curl</code> to get profiling data. The page looks as follows:</p>
+<p><code>/debug/pprof/</code></p>
+<p>Types of profiles available:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Count</th>
+          <th>Profile</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>9</td>
+          <td>allocs</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>block</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>cmdline</td>
+      </tr>
+      <tr>
+          <td>9</td>
+          <td>goroutine</td>
+      </tr>
+      <tr>
+          <td>9</td>
+          <td>heap</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>mutex</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>profile</td>
+      </tr>
+      <tr>
+          <td>18</td>
+          <td>threadcreate</td>
+      </tr>
+      <tr>
+          <td>0</td>
+          <td>trace</td>
+      </tr>
+  </tbody>
+</table>
+<p>We can grab some other metrics:</p>
+<ul>
+<li>about memory allocation in every function;</li>
+<li>about <code>sync.Mutex</code> calls;</li>
+<li>about new thread creation;</li>
+<li>and many others.</li>
+</ul>
+<p>The most useful here are CPU and memory profiling.</p>
+<h2 id="remote-profiling">Remote Profiling</h2>
+<p>The profiling <code>pprof</code> endpoint, which we&rsquo;ve enabled above, can be accessed from an external network:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// server listens on every network interface (not only localhost), port 6060</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">ListenAndServe</span>(<span style="color:#e6db74">&#34;:6060&#34;</span>, <span style="color:#66d9ef">nil</span>))
+</span></span></code></pre></div><p>But one should be careful to restrict it for developers only!</p>
+<p>It is very useful to profile production services, but the profiling endpoint available for external client requests is a vulnerability — profiler calls slow down the service.</p>
+<h2 id="whats-new-in-the-profiling-topic">What&rsquo;s New in the Profiling Topic</h2>
+<p>The profiling data providing approach covers any situation and is not going to be changed.</p>
+<p>However, data analysis can be improved here. A lot of visualization tools have been released.</p>
+<p>To me, the most helpful is flamegraph.</p>
+<p>There are Go profiling data display possibilities in GoLand IDE. But <code>go tool pprof</code> also provides rich filtering and sorting functionality. There is no such functionality covered in this article, but there are some examples in the Go blog.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/profiling/">Profiling</a></li>
+        <li><a href="/tags/pprof/">Pprof</a></li>
+        <li><a href="/tags/benchmark/">Benchmark</a></li>
+        <li><a href="/tags/ab/">Ab</a></li>
+        <li><a href="/tags/cpu/">Cpu</a></li>
+        <li><a href="/tags/allocation/">Allocation</a></li>
+        <li><a href="/tags/remote/">Remote</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;To find long execution times&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;To find logic bugs&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;To find high memory consumption&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;To find high processor load&#34;}],&#34;question&#34;:&#34;What are the main reasons to use profiling?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Import `net/http/pprof` and start an HTTP server&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Use go tool pprof directly&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Add profiling code manually&#34;}],&#34;question&#34;:&#34;What is the simplest way to enable profiling in a Go program?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;go tool pprof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;go prof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;pprof analyze&#34;}],&#34;question&#34;:&#34;What command is used to analyze profiling data?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;CPU profiling&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Memory profiling&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Network profiling&#34;}],&#34;question&#34;:&#34;What are the most useful types of profiling?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;/debug/pprof/profile&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;/debug/pprof/cpu&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;/debug/pprof/performance&#34;}],&#34;question&#34;:&#34;What endpoint is used to get CPU profile?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;heap (memory)&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;goroutine&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;mutex&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;network&#34;}],&#34;question&#34;:&#34;What types of profiles are available through net/http/pprof?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;top&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;list&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;show&#34;}],&#34;question&#34;:&#34;What command in pprof is used to show top functions by execution time?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;list&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;source&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;code&#34;}],&#34;question&#34;:&#34;What command in pprof is used to view function source code with execution time?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Outputs function diagram as an image&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Opens web browser&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Starts web server&#34;}],&#34;question&#34;:&#34;What does the &#39;web&#39; command do in pprof?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Apache Benchmark (ab)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;curl&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;wget&#34;}],&#34;question&#34;:&#34;What tool is used to load the service in the profiling example?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Profiler calls slow down the service&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Profiling endpoint can be a vulnerability&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Profiling requires a lot of memory&#34;}],&#34;question&#34;:&#34;Why is it important to be careful with remote profiling?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;A tool for visualizing profiling data&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;A type of profile in pprof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;A go tool pprof command&#34;}],&#34;question&#34;:&#34;What is flamegraph?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;net/http/pprof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;runtime/pprof&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;go/pprof&#34;}],&#34;question&#34;:&#34;What package is used to automatically provide profiling endpoints?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;HTTP handlers for profiling are automatically registered&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Automatic profiling starts&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Profile file is created&#34;}],&#34;question&#34;:&#34;What happens when importing net/http/pprof?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;seconds&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;duration&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;time&#34;}],&#34;question&#34;:&#34;What parameter is used in CPU profile request to specify data collection duration?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. What are the main reasons to use profiling?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            To find long execution times
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            To find logic bugs
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            To find high memory consumption
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="3"
+                 id="q0-a3">
+          <label class="form-check-label" for="q0-a3">
+            To find high processor load
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. What is the simplest way to enable profiling in a Go program?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Import `net/http/pprof` and start an HTTP server
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Use go tool pprof directly
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Add profiling code manually
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. What command is used to analyze profiling data?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            go tool pprof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            go prof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            pprof analyze
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. What are the most useful types of profiling?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            CPU profiling
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Memory profiling
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Network profiling
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. What endpoint is used to get CPU profile?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            /debug/pprof/profile
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            /debug/pprof/cpu
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            /debug/pprof/performance
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="5">
+      <h5 class="mb-3">6. What types of profiles are available through net/http/pprof?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="0"
+                 id="q5-a0">
+          <label class="form-check-label" for="q5-a0">
+            heap (memory)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="1"
+                 id="q5-a1">
+          <label class="form-check-label" for="q5-a1">
+            goroutine
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="2"
+                 id="q5-a2">
+          <label class="form-check-label" for="q5-a2">
+            mutex
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-5" 
+                 value="3"
+                 id="q5-a3">
+          <label class="form-check-label" for="q5-a3">
+            network
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="6">
+      <h5 class="mb-3">7. What command in pprof is used to show top functions by execution time?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="0"
+                 id="q6-a0">
+          <label class="form-check-label" for="q6-a0">
+            top
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="1"
+                 id="q6-a1">
+          <label class="form-check-label" for="q6-a1">
+            list
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="2"
+                 id="q6-a2">
+          <label class="form-check-label" for="q6-a2">
+            show
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="7">
+      <h5 class="mb-3">8. What command in pprof is used to view function source code with execution time?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="0"
+                 id="q7-a0">
+          <label class="form-check-label" for="q7-a0">
+            list
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="1"
+                 id="q7-a1">
+          <label class="form-check-label" for="q7-a1">
+            source
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="2"
+                 id="q7-a2">
+          <label class="form-check-label" for="q7-a2">
+            code
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="8">
+      <h5 class="mb-3">9. What does the &#39;web&#39; command do in pprof?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="0"
+                 id="q8-a0">
+          <label class="form-check-label" for="q8-a0">
+            Outputs function diagram as an image
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="1"
+                 id="q8-a1">
+          <label class="form-check-label" for="q8-a1">
+            Opens web browser
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-8" 
+                 value="2"
+                 id="q8-a2">
+          <label class="form-check-label" for="q8-a2">
+            Starts web server
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="9">
+      <h5 class="mb-3">10. What tool is used to load the service in the profiling example?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="0"
+                 id="q9-a0">
+          <label class="form-check-label" for="q9-a0">
+            Apache Benchmark (ab)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="1"
+                 id="q9-a1">
+          <label class="form-check-label" for="q9-a1">
+            curl
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="2"
+                 id="q9-a2">
+          <label class="form-check-label" for="q9-a2">
+            wget
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="10">
+      <h5 class="mb-3">11. Why is it important to be careful with remote profiling?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="0"
+                 id="q10-a0">
+          <label class="form-check-label" for="q10-a0">
+            Profiler calls slow down the service
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="1"
+                 id="q10-a1">
+          <label class="form-check-label" for="q10-a1">
+            Profiling endpoint can be a vulnerability
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="2"
+                 id="q10-a2">
+          <label class="form-check-label" for="q10-a2">
+            Profiling requires a lot of memory
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="11">
+      <h5 class="mb-3">12. What is flamegraph?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="0"
+                 id="q11-a0">
+          <label class="form-check-label" for="q11-a0">
+            A tool for visualizing profiling data
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="1"
+                 id="q11-a1">
+          <label class="form-check-label" for="q11-a1">
+            A type of profile in pprof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="2"
+                 id="q11-a2">
+          <label class="form-check-label" for="q11-a2">
+            A go tool pprof command
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="12">
+      <h5 class="mb-3">13. What package is used to automatically provide profiling endpoints?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="0"
+                 id="q12-a0">
+          <label class="form-check-label" for="q12-a0">
+            net/http/pprof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="1"
+                 id="q12-a1">
+          <label class="form-check-label" for="q12-a1">
+            runtime/pprof
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="2"
+                 id="q12-a2">
+          <label class="form-check-label" for="q12-a2">
+            go/pprof
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="13">
+      <h5 class="mb-3">14. What happens when importing net/http/pprof?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="0"
+                 id="q13-a0">
+          <label class="form-check-label" for="q13-a0">
+            HTTP handlers for profiling are automatically registered
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="1"
+                 id="q13-a1">
+          <label class="form-check-label" for="q13-a1">
+            Automatic profiling starts
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-13" 
+                 value="2"
+                 id="q13-a2">
+          <label class="form-check-label" for="q13-a2">
+            Profile file is created
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="14">
+      <h5 class="mb-3">15. What parameter is used in CPU profile request to specify data collection duration?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="0"
+                 id="q14-a0">
+          <label class="form-check-label" for="q14-a0">
+            seconds
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="1"
+                 id="q14-a1">
+          <label class="form-check-label" for="q14-a1">
+            duration
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="2"
+                 id="q14-a2">
+          <label class="form-check-label" for="q14-a2">
+            time
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 4, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/golang-slice.html" style="text-decoration: none; color: inherit;">Principles of slice type in GO</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/golang-slice.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-slice/gophslice.svg"
+                   style="max-height: 200px;"
+                   alt="Principles of slice type in GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>The Go blog describes how to use slices. Let&rsquo;s take a look at slice internals.</p></p>
+            
+            <a href="/en/post/golang-slice.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/slice/" class="badge">Slice</a>
+                  <a href="/tags/allocation/" class="badge">Allocation</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/post/profiling.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

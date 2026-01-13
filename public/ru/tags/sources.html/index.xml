@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sources on Golang for all</title>
+    <link>http://localhost:51048/ru/tags/sources.html.html</link>
+    <description>Recent content in Sources on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Thu, 09 Apr 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51048/ru/tags/sources.html/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Шаблоны GO: принципы и использование</title>
+      <link>http://localhost:51048/ru/post/templates.html</link>
+      <pubDate>Thu, 09 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/templates.html</guid>
+      <description>&lt;p&gt;Пакеты &lt;code&gt;text/template&lt;/code&gt; и &lt;code&gt;html/template&lt;/code&gt; являются частью стандартной библиотеки Go. Шаблоны Go используются во многих программах, написанных на Go — Docker, Kubernetes, Helm. Многие сторонние библиотеки интегрированы с шаблонами Go, например Echo. Знание синтаксиса шаблонов Go очень полезно.&lt;/p&gt;&#xA;&lt;p&gt;Эта статья состоит из документации пакета &lt;code&gt;text/template&lt;/code&gt; и нескольких решений автора. После описания синтаксиса шаблонов Go мы погрузимся в исходники &lt;code&gt;text/template&lt;/code&gt; и &lt;code&gt;html/template&lt;/code&gt;.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Принципы работы типа slice в GO</title>
+      <link>http://localhost:51048/ru/post/golang-slice.html</link>
+      <pubDate>Sat, 04 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/golang-slice.html</guid>
+      <description>&lt;p&gt;В блоге Go описывается, как использовать срезы. Давайте посмотрим на внутреннее устройство срезов.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Обработка данных в конкурентных программах</title>
+      <link>http://localhost:51048/ru/post/golang-data-handling-concurrent-programs.html</link>
+      <pubDate>Thu, 02 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/golang-data-handling-concurrent-programs.html</guid>
+      <description>&lt;p&gt;В Go у нас есть функциональность горутин из коробки. Мы можем запускать код параллельно. Однако в нашем параллельно выполняющемся коде мы можем работать с общими переменными, и не совсем понятно, как именно Go обрабатывает такие ситуации.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Принципы работы типа map в GO</title>
+      <link>http://localhost:51048/ru/post/map-principles-golang.html</link>
+      <pubDate>Thu, 02 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/map-principles-golang.html</guid>
+      <description>&lt;p&gt;Программный интерфейс map в Go описан в блоге Go. Нам просто нужно вспомнить, что map — это хранилище ключ-значение, и оно должно извлекать значения по ключу как можно быстрее.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang regexp: сопоставление символа новой строки</title>
+      <link>http://localhost:51048/ru/post/golang-regexp-matching-newline.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/golang-regexp-matching-newline.html</guid>
+      <description>&lt;p&gt;Почему регулярные выражения с точкой (&amp;quot;.&amp;quot;) работают по-другому в Go по сравнению с PHP и JavaScript.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

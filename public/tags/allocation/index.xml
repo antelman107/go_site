@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Allocation on Golang for all</title>
+    <link>http://localhost:51376/tags/allocation/</link>
+    <description>Recent content in Allocation on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 23 Apr 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/allocation/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Profiling Go: Basics and Practice</title>
+      <link>http://localhost:51376/en/post/profiling.html</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/profiling.html</guid>
+      <description>&lt;p&gt;Go has rich profiling tools from the very beginning — the &lt;code&gt;pprof&lt;/code&gt; package and &lt;code&gt;go tool pprof&lt;/code&gt;. Let&amp;rsquo;s discuss why profiling is useful, how to work with it, and what&amp;rsquo;s new in this area.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Principles of slice type in GO</title>
+      <link>http://localhost:51376/en/post/golang-slice.html</link>
+      <pubDate>Sat, 04 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/golang-slice.html</guid>
+      <description>&lt;p&gt;The Go blog describes how to use slices. Let&amp;rsquo;s take a look at slice internals.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

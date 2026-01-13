@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Golang for all</title>
+    <link>http://localhost:51376/posts/</link>
+    <description>Recent content in Posts on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 20 Dec 2024 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Deploying Telegram Bot to AWS Lambda with Function URL</title>
+      <link>http://localhost:51376/en/post/go-telegram-bot-aws-lambda-deploy.html</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/go-telegram-bot-aws-lambda-deploy.html</guid>
+      <description>&lt;p&gt;This article is a continuation of &lt;a href=&#34;http://localhost:51376/en/post/go-telegram-gemini-ai-bot.html&#34;&gt;&amp;ldquo;Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda&amp;rdquo;&lt;/a&gt; and contains detailed instructions for setting up and deploying a Telegram bot to AWS Lambda using Function URL.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda</title>
+      <link>http://localhost:51376/en/post/go-telegram-gemini-ai-bot.html</link>
+      <pubDate>Thu, 19 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/go-telegram-gemini-ai-bot.html</guid>
+      <description>&lt;p&gt;In this article, we&amp;rsquo;ll explore how to build an intelligent Telegram bot using Go that acts as a proxy between users and Google&amp;rsquo;s Gemini API. The bot will handle two primary functions: answering user messages and generating images. While this mechanism can be significantly extended with additional capabilities like voice and video generation, we&amp;rsquo;ll focus on these two request types for simplicity.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Remote debugging with Delve</title>
+      <link>http://localhost:51376/en/post/go-docker-delve-remote-debug.html</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 -0700</pubDate>
+      <guid>http://localhost:51376/en/post/go-docker-delve-remote-debug.html</guid>
+      <description>&lt;p&gt;Previously we discussed local debugging with GoLand IDE. Now we&amp;rsquo;ll discuss how to remotely debug a program running inside a Docker container using Visual Studio Code and GoLand IDE.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Deploy docker swarm from Gitlab CI</title>
+      <link>http://localhost:51376/en/post/deploy-docker-swarm-gitlab.html</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/deploy-docker-swarm-gitlab.html</guid>
+      <description>&lt;p&gt;Docker container deployment has many advantages over binary deployment. Let&amp;rsquo;s dive into advantages and see how we can implement docker container deployment from Gitlab CI.&#xA;Let&amp;rsquo;s talk about how standard docker can help us. Any docker orchestration tools (Kubernetes, for example) will be observed in future articles.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>net-wait-go utility / library</title>
+      <link>http://localhost:51376/en/post/net-wait-go.html</link>
+      <pubDate>Tue, 30 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/net-wait-go.html</guid>
+      <description>&lt;p&gt;Both utility and Go package to wait for ports to open (TCP, UDP).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Building Minimal Docker Images for Go Applications</title>
+      <link>http://localhost:51376/ru/post/go-minimum-docker-image.html</link>
+      <pubDate>Mon, 29 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/go-minimum-docker-image.html</guid>
+      <description>&lt;p&gt;Let&amp;rsquo;s discuss how to build a minimal Docker image for a Go program.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Compilation and deploy via SSH in Gitlab CI</title>
+      <link>http://localhost:51376/en/post/go-build-and-deploy-ssh-gitlab.html</link>
+      <pubDate>Fri, 08 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/go-build-and-deploy-ssh-gitlab.html</guid>
+      <description>&lt;p&gt;Let&amp;rsquo;s take a look at how Go compilation works and how to use GitLab CI for that.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>HTTP</title>
+      <link>http://localhost:51376/en/post/http.html</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/http.html</guid>
+      <description>&lt;p&gt;All examples from the article are located in the github repository.&lt;/p&gt;&#xA;&lt;p&gt;Let&amp;rsquo;s take a look at HTTP tools in GO.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>sync.Map</title>
+      <link>http://localhost:51376/en/post/sync-map.html</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/sync-map.html</guid>
+      <description>&lt;p&gt;Let&amp;rsquo;s take a look at &lt;code&gt;sync.Map&lt;/code&gt; usage and its source code.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Profiling Go: Basics and Practice</title>
+      <link>http://localhost:51376/en/post/profiling.html</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/profiling.html</guid>
+      <description>&lt;p&gt;Go has rich profiling tools from the very beginning — the &lt;code&gt;pprof&lt;/code&gt; package and &lt;code&gt;go tool pprof&lt;/code&gt;. Let&amp;rsquo;s discuss why profiling is useful, how to work with it, and what&amp;rsquo;s new in this area.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Dependency injection in GO</title>
+      <link>http://localhost:51376/en/post/dependency-injection.html</link>
+      <pubDate>Tue, 21 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/dependency-injection.html</guid>
+      <description>&lt;p&gt;Let&amp;rsquo;s talk about dependency injection pattern and dependency management in large programs.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>GO Templates: Principles and Usage</title>
+      <link>http://localhost:51376/en/post/templates.html</link>
+      <pubDate>Thu, 09 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/templates.html</guid>
+      <description>&lt;p&gt;Packages &lt;code&gt;text/template&lt;/code&gt; and &lt;code&gt;html/template&lt;/code&gt; are part of the Go standard library. Go templates are used in many Go-programmed software — Docker, Kubernetes, Helm. Many third-party libraries are integrated with Go templates, for example Echo. Knowing Go template syntax is very useful.&lt;/p&gt;&#xA;&lt;p&gt;This article consists of &lt;code&gt;text/template&lt;/code&gt; package documentation and a couple of author&amp;rsquo;s solutions. After describing Go template syntax, we&amp;rsquo;ll dive into &lt;code&gt;text/template&lt;/code&gt; and &lt;code&gt;html/template&lt;/code&gt; sources.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Filtering by a list of values with GORM</title>
+      <link>http://localhost:51376/en/post/gorm-filter-by-list-of-values.html</link>
+      <pubDate>Tue, 07 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/gorm-filter-by-list-of-values.html</guid>
+      <description>&lt;p&gt;When you need to filter data by a list of values (for example, IDs: 1, 2, 3), you should use the &lt;code&gt;ANY&lt;/code&gt; operator combined with &lt;code&gt;pq.Array&lt;/code&gt; from the PostgreSQL driver.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Principles of slice type in GO</title>
+      <link>http://localhost:51376/en/post/golang-slice.html</link>
+      <pubDate>Sat, 04 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/golang-slice.html</guid>
+      <description>&lt;p&gt;The Go blog describes how to use slices. Let&amp;rsquo;s take a look at slice internals.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Data handling in concurrent programs</title>
+      <link>http://localhost:51376/en/post/golang-data-handling-concurrent-programs.html</link>
+      <pubDate>Thu, 02 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/golang-data-handling-concurrent-programs.html</guid>
+      <description>&lt;p&gt;In Go, we have goroutines functionality out of the box. We can run code in parallel. However, in our parallel running code we can work with shared variables, and it is not clear how exactly Go handles such situations.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Principles of map type in GO</title>
+      <link>http://localhost:51376/en/post/map-principles-golang.html</link>
+      <pubDate>Thu, 02 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/map-principles-golang.html</guid>
+      <description>&lt;p&gt;The map programming interface in Go is described in the Go blog. We just need to recall that a map is a key-value storage and it should retrieve values by key as fast as possible.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Coding a Simple TCP Chat in Go</title>
+      <link>http://localhost:51376/en/post/golang-tcp-server-chat.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/golang-tcp-server-chat.html</guid>
+      <description>&lt;p&gt;An example of a simple TCP chat in Go with logic explanation.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Golang regexp: matching newline</title>
+      <link>http://localhost:51376/en/post/golang-regexp-matching-newline.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/golang-regexp-matching-newline.html</guid>
+      <description>&lt;p&gt;Why regular expressions with dot (&amp;quot;.&amp;quot;) work differently in Go compared to PHP and JavaScript.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>GORM: filter entity by linked entity</title>
+      <link>http://localhost:51376/en/post/gorm-filter-entity-by-linked-entity.html</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/gorm-filter-entity-by-linked-entity.html</guid>
+      <description>&lt;p&gt;This task is not that simple, especially with GORM.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why and how to use a debugger with Go</title>
+      <link>http://localhost:51376/en/post/goland-debugger.html</link>
+      <pubDate>Tue, 24 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/goland-debugger.html</guid>
+      <description>&lt;p&gt;A debugger is a very helpful and powerful tool. It can help you understand exactly what is happening in your code, explore new projects, and avoid unnecessary debug code changes.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

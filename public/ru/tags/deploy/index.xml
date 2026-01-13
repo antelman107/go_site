@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Deploy on Golang for all</title>
+    <link>http://localhost:51376/ru/tags/deploy/</link>
+    <description>Recent content in Deploy on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Fri, 20 Dec 2024 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/ru/tags/deploy/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Деплой Telegram бота на AWS Lambda с Function URL</title>
+      <link>http://localhost:51376/ru/post/go-telegram-bot-aws-lambda-deploy.html</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/go-telegram-bot-aws-lambda-deploy.html</guid>
+      <description>&lt;p&gt;Эта статья является продолжением статьи &lt;a href=&#34;http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html&#34;&gt;&amp;ldquo;Создание AI-телеграм бота на Go с Gemini API и AWS Lambda&amp;rdquo;&lt;/a&gt; и содержит детальные инструкции по настройке и деплою Telegram бота на AWS Lambda с использованием Function URL.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Деплой docker swarm из Gitlab CI</title>
+      <link>http://localhost:51376/ru/post/deploy-docker-swarm-gitlab.html</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/deploy-docker-swarm-gitlab.html</guid>
+      <description>&lt;p&gt;Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер&lt;/p&gt;&#xA;&lt;p&gt;Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Компиляция и деплой через SSH в GitLab CI</title>
+      <link>http://localhost:51376/ru/post/go-build-and-deploy-ssh-gitlab.html</link>
+      <pubDate>Fri, 08 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/go-build-and-deploy-ssh-gitlab.html</guid>
+      <description>&lt;p&gt;Давайте рассмотрим, как работает компиляция Go и как использовать GitLab CI для этого.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

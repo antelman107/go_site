@@ -1,0 +1,716 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>sync.Map | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Давайте рассмотрим использование sync.Map и его исходный код.
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/sync-map.html">
+<meta property="og:title" content="sync.Map | Golang for all">
+<meta property="og:description" content="Давайте рассмотрим использование sync.Map и его исходный код.
+">
+<meta property="og:image" content="http://localhost:51376/en/post/sync-map/dvoe.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2020-05-02T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-05-02T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Sync.map">
+    
+      <meta property="article:tag" content="Map">
+    
+      <meta property="article:tag" content="Concurrency">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/sync-map.html">
+<meta name="twitter:title" content="sync.Map | Golang for all">
+<meta name="twitter:description" content="Давайте рассмотрим использование sync.Map и его исходный код.
+">
+<meta name="twitter:image" content="http://localhost:51376/en/post/sync-map/dvoe.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/sync-map.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/sync-map.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">sync.Map</h1>
+
+    
+    <p>
+
+
+  2 мая 2020 г.
+
+
+
+            <a href="/ru/tags/sync.map/" class="badge">Sync.map</a>
+            <a href="/ru/tags/map/" class="badge">Map</a>
+            <a href="/ru/tags/concurrency/" class="badge">Concurrency</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/sync-map/dvoe.svg"
+                     alt="sync.Map"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Содержание</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#интерфейс">Интерфейс</a></li>
+    <li><a href="#исходный-код">Исходный код</a></li>
+    <li><a href="#чтение">Чтение</a></li>
+    <li><a href="#обновление">Обновление</a></li>
+    <li><a href="#итерация">Итерация</a></li>
+    <li><a href="#резюме">Резюме</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Давайте рассмотрим использование <code>sync.Map</code> и его исходный код.</p>
+<h2 id="интерфейс">Интерфейс</h2>
+<p>Следующие методы доступны для работы с <code>sync.Map</code>:</p>
+<ul>
+<li><code>Load(key interface{}) (value interface{}, ok bool)</code></li>
+<li><code>Store(key, value interface{})</code></li>
+<li><code>Delete(key interface{})</code></li>
+<li><code>Range(f func(key, value interface{}) bool)</code></li>
+<li><code>LoadOrStore(key, value interface{}) (actual interface{}, loaded bool)</code></li>
+</ul>
+<p>Это покрывает все случаи использования карты — вставка, чтение, удаление и итерация. Также есть бонусный метод <code>LoadOrStore</code>, который позволяет установить значение по ключу, если значение не было установлено ранее.</p>
+<p>Для выполнения итерации есть <code>Range</code>, который получает функцию, вызываемую для каждого элемента карты. Если эта функция возвращает <code>false</code>, итерация будет остановлена.</p>
+<p>При виде названия <code>sync.Map</code> можно подумать, что <code>sync.Map</code> — это простая карта с некоторыми функциями пакета <code>sync</code>. Но на самом деле <code>sync.Map</code> намного сложнее. Давайте погрузимся в исходный код и выясним, как это работает.</p>
+<h2 id="исходный-код">Исходный код</h2>
+<p>Структура <code>sync.Map</code> выглядит следующим образом:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Map</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">mu</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">Mutex</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">read</span> <span style="color:#a6e22e">atomic</span>.<span style="color:#a6e22e">Value</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">dirty</span> <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">interface</span>{}]<span style="color:#f92672">*</span><span style="color:#a6e22e">entry</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">misses</span> <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">readOnly</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">m</span>       <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">interface</span>{}]<span style="color:#f92672">*</span><span style="color:#a6e22e">entry</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">amended</span> <span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>read</code> — указатель на структуру <code>readOnly</code>. Эта структура хранит часть данных, которые используются для чтения данных по ключу или для проверки наличия данных за этим ключом. В <code>read</code> нет вставок, поэтому при доступе к <code>read</code> не используется мьютекс.</p>
+<p><code>dirty</code> — карта, которая хранит другую часть элементов. Она обычно используется для размещения новых элементов и также для чтения. В этом случае мьютекс <code>mu</code> используется при доступе к <code>dirty</code>.</p>
+<p>Таким образом, <code>sync.Map</code> имеет две внутренние карты (<code>read</code> и <code>dirty</code>). Используя одну карту только для чтения, а вторую для записи, <code>sync.Map</code> пытается избежать использования мьютекса, когда это возможно. Давайте рассмотрим операции <code>sync.Map</code>.</p>
+<h2 id="чтение">Чтение</h2>
+<p>Сначала обращаются к <code>read</code>, чтобы проверить, есть ли данные за ключом. Если они есть — данные возвращаются. Это самый простой сценарий — вернуть данные из <code>read</code>.</p>
+<p>Затем выполняется поиск в <code>dirty</code> — мьютекс <code>mu</code> активируется заранее. <code>misses</code> — счетчик обращений к <code>dirty</code> — увеличивается. Важная деталь — если значение этого счетчика больше количества элементов в <code>dirty</code>, элементы из <code>dirty</code> будут скопированы в <code>read</code>, и счетчик будет сброшен. Копирование произойдет сразу после доступа к <code>dirty</code> — в этот момент активируется <code>mu</code>.</p>
+<p>Чтобы избежать лишнего доступа к <code>dirty</code>, в структуре <code>readOnly</code> (которая является <code>read</code>) есть поле <code>amended</code>. <code>amended = true</code> означает, что в <code>sync.Map</code> есть непустая карта <code>dirty</code>.</p>
+<p>Таким образом, чтение из <code>sync.Map</code> наиболее эффективно, когда оно только для чтения. В этом случае это чтение равно простому чтению карты (без мьютекса). Если есть только чтение из большой карты, настроенной заранее, <code>sync.Map</code> хорошо подходит для этого случая.</p>
+<h2 id="обновление">Обновление</h2>
+<p>Сначала выполняется проверка <code>read</code> — есть ли данные за ключом. Если да — значение обновляется с помощью <code>atomic.CompareAndSwap</code>.</p>
+<p>Если данных, прочитанных по ключу, нет, выполняется то же чтение в <code>dirty</code>. Если <code>dirty</code> не инициализирована — она будет инициализирована.</p>
+<p>Таким образом, обновление уже существующего ключа простое, но добавление данных с новым ключом сложное.</p>
+<h2 id="итерация">Итерация</h2>
+<p>Перед итерацией <code>dirty</code> копируется в <code>read</code>, если <code>dirty</code> что-то хранит. Это делается с активированным мьютексом <code>mu</code>.</p>
+<p>Затем выполняется итерация по <code>read</code> — простая итерация по карте.</p>
+<h2 id="резюме">Резюме</h2>
+<p><code>sync.Map</code> — это сложная структура, состоящая в основном из двух карт — одной для чтения и одной для новых элементов. <code>sync.Map</code> не только близок к <code>map+sync.RWMutex</code> по показателям скорости, но также может быть лучшим в случае только чтения. Когда есть и чтение, и обновление, <code>sync.Map</code> будет иметь элементы как в <code>read</code>, так и в <code>dirty</code>. В этом случае <code>sync.Map</code> работает хуже, чем <code>map+sync.RWMutex</code>, из-за чтения из двух внутренних карт. Кроме того, есть счетчик, который нужно обновлять при доступе к <code>dirty</code>.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/sync.map/">Sync.map</a></li>
+        <li><a href="/ru/tags/map/">Map</a></li>
+        <li><a href="/ru/tags/concurrency/">Concurrency</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;read - для чтения данных&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;dirty - для новых элементов и записи&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;cache - для кэширования&#34;}],&#34;question&#34;:&#34;Какие две внутренние карты есть в `sync.Map`?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Чтение из &#39;read&#39; не требует мьютекса&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Он использует меньше памяти&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Он быстрее обычных карт&#34;}],&#34;question&#34;:&#34;Почему `sync.Map` наиболее эффективен для сценариев только чтения?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Элементы из &#39;dirty&#39; копируются в &#39;read&#39;, и счетчик сбрасывается&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Карта очищается&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Выбрасывается ошибка&#34;}],&#34;question&#34;:&#34;Что происходит, когда счетчик &#39;misses&#39; превышает количество элементов в &#39;dirty&#39;?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Когда есть и чтение, и обновление&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Когда есть только чтение&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Когда карта пуста&#34;}],&#34;question&#34;:&#34;Когда `sync.Map` работает хуже, чем `map&#43;sync.RWMutex`?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Какие две внутренние карты есть в `sync.Map`?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            read - для чтения данных
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            dirty - для новых элементов и записи
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            cache - для кэширования
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Почему `sync.Map` наиболее эффективен для сценариев только чтения?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Чтение из &#39;read&#39; не требует мьютекса
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Он использует меньше памяти
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Он быстрее обычных карт
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Что происходит, когда счетчик &#39;misses&#39; превышает количество элементов в &#39;dirty&#39;?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Элементы из &#39;dirty&#39; копируются в &#39;read&#39;, и счетчик сбрасывается
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Карта очищается
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Выбрасывается ошибка
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Когда `sync.Map` работает хуже, чем `map&#43;sync.RWMutex`?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Когда есть и чтение, и обновление
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Когда есть только чтение
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Когда карта пуста
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  2 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/golang-data-handling-concurrent-programs.html" style="text-decoration: none; color: inherit;">Обработка данных в конкурентных программах</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/golang-data-handling-concurrent-programs.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-data-handling-concurrent-programs/kanat.svg"
+                   style="max-height: 200px;"
+                   alt="Обработка данных в конкурентных программах"/>
+            </a>
+            
+            
+            <p class="card-text"><p>В Go у нас есть функциональность горутин из коробки. Мы можем запускать код параллельно. Однако в нашем параллельно выполняющемся коде мы можем работать с общими переменными, и не совсем понятно, как именно Go обрабатывает такие ситуации.</p></p>
+            
+            <a href="/ru/post/golang-data-handling-concurrent-programs.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/map/" class="badge">Map</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  2 апреля 2020 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/map-principles-golang.html" style="text-decoration: none; color: inherit;">Принципы работы типа map в GO</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/map-principles-golang.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/map-principles-golang/map.svg"
+                   style="max-height: 200px;"
+                   alt="Принципы работы типа map в GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Программный интерфейс map в Go описан в блоге Go. Нам просто нужно вспомнить, что map — это хранилище ключ-значение, и оно должно извлекать значения по ключу как можно быстрее.</p></p>
+            
+            <a href="/ru/post/map-principles-golang.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/map/" class="badge">Map</a>
+                  <a href="/ru/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/sync-map.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

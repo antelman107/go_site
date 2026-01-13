@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Multiton on Golang for all</title>
+    <link>http://localhost:51376/tags/multiton/</link>
+    <description>Recent content in Multiton on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 21 Apr 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/multiton/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Dependency injection in GO</title>
+      <link>http://localhost:51376/en/post/dependency-injection.html</link>
+      <pubDate>Tue, 21 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/dependency-injection.html</guid>
+      <description>&lt;p&gt;Let&amp;rsquo;s talk about dependency injection pattern and dependency management in large programs.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

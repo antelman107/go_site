@@ -1,0 +1,45 @@
+{{ define "main" }}
+  {{ .Content }}
+  {{ range site.RegularPages }}
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">{{ partial "func/FormatDate.html" .PublishDate }}</span>
+        <h2 class="card-title">{{ .Title }}</h2>
+
+        {{ $featured_image := partial "func/GetFeaturedImage.html" . }}
+        {{ if $featured_image }}
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        {{ .Summary }}
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ .RelPermalink }}">
+                        <img class="card-img-top mb-4"
+                             src="{{ $featured_image }}"
+                             style="max-height: 300px;" alt="{{ .Title }}"/></a>
+                </div>
+            </div>
+        </div>
+        {{ else }}
+        <p class="card-text">
+            {{ .Summary }}
+        </p>
+        {{ end }}
+
+        <a href="{{ .RelPermalink }}" class="btn btn-primary">{{ i18n "readMore" }}</a>
+        
+        {{/* Вывод тегов конкретного поста */}}
+        {{- with .GetTerms "tags" }}
+            {{- range . }}
+              <a href="{{ .RelPermalink }}" class="badge">{{ .LinkTitle }}</a>
+            {{- end }}
+        {{- end }}
+    </div>
+</div>
+</div>
+  {{ end }}
+{{ end }}

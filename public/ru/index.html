@@ -1,0 +1,896 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head>
+	<meta name="generator" content="Hugo 0.147.8"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Golang for all - Articles about Go programming language">
+
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="http://localhost:51376/ru/">
+<meta property="og:title" content="Golang for all">
+<meta property="og:description" content="Golang for all - Articles about Go programming language">
+<meta property="og:image" content="http://localhost:51376//gopher.png">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/">
+<meta name="twitter:title" content="Golang for all">
+<meta name="twitter:description" content="Golang for all - Articles about Go programming language">
+<meta name="twitter:image" content="http://localhost:51376//gopher.png">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+  
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  20 декабря 2024 г.
+
+
+</span>
+        <h2 class="card-title">Деплой Telegram бота на AWS Lambda с Function URL</h2>
+
+        
+        
+        <p class="card-text">
+            <p>Эта статья является продолжением статьи <a href="/ru/post/go-telegram-gemini-ai-bot.html">&ldquo;Создание AI-телеграм бота на Go с Gemini API и AWS Lambda&rdquo;</a> и содержит детальные инструкции по настройке и деплою Telegram бота на AWS Lambda с использованием Function URL.</p>
+        </p>
+        
+
+        <a href="/ru/post/go-telegram-bot-aws-lambda-deploy.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/go/" class="badge">Go</a>
+              <a href="/ru/tags/telegram/" class="badge">Telegram</a>
+              <a href="/ru/tags/aws/" class="badge">Aws</a>
+              <a href="/ru/tags/lambda/" class="badge">Lambda</a>
+              <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+              <a href="/ru/tags/function-url/" class="badge">Function-Url</a>
+              <a href="/ru/tags/cli/" class="badge">Cli</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  19 декабря 2024 г.
+
+
+</span>
+        <h2 class="card-title">Создание AI-телеграм бота на Go с Gemini API и AWS Lambda</h2>
+
+        
+        
+        <p class="card-text">
+            <p>В этой статье мы рассмотрим, как создать интеллектуального Telegram бота на Go, который выступает в роли прокси между пользователями и API Google Gemini. Бот будет выполнять две основные функции: отвечать на сообщения пользователей и генерировать изображения. Хотя этот механизм может быть существенно расширен дополнительными возможностями, такими как генерация голоса и видео, мы сосредоточимся на этих двух типах запросов для простоты.</p>
+        </p>
+        
+
+        <a href="/ru/post/go-telegram-gemini-ai-bot.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/go/" class="badge">Go</a>
+              <a href="/ru/tags/telegram/" class="badge">Telegram</a>
+              <a href="/ru/tags/gemini/" class="badge">Gemini</a>
+              <a href="/ru/tags/ai/" class="badge">Ai</a>
+              <a href="/ru/tags/aws/" class="badge">Aws</a>
+              <a href="/ru/tags/lambda/" class="badge">Lambda</a>
+              <a href="/ru/tags/bot/" class="badge">Bot</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  1 июля 2020 г.
+
+
+</span>
+        <h2 class="card-title">Удалённая отладка с Delve</h2>
+
+        
+        
+        <p class="card-text">
+            <p>Ранее мы обсуждали локальную отладку с помощью IDE GoLand. Теперь мы обсудим, как удалённо отлаживать программу, работающую внутри Docker-контейнера, используя Visual Studio Code и GoLand IDE.</p>
+        </p>
+        
+
+        <a href="/ru/post/go-docker-delve-remote-debug.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/docker/" class="badge">Docker</a>
+              <a href="/ru/tags/debugger/" class="badge">Debugger</a>
+              <a href="/ru/tags/delve/" class="badge">Delve</a>
+              <a href="/ru/tags/vscode/" class="badge">Vscode</a>
+              <a href="/ru/tags/goland/" class="badge">Goland</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  1 июля 2020 г.
+
+
+</span>
+        <h2 class="card-title">Деплой docker swarm из Gitlab CI</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер</p>
+<p>Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/deploy-docker-swarm-gitlab.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/deploy-docker-swarm-gitlab/docker.svg"
+                             style="max-height: 300px;" alt="Деплой docker swarm из Gitlab CI"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/deploy-docker-swarm-gitlab.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/docker/" class="badge">Docker</a>
+              <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+              <a href="/ru/tags/gitlab/" class="badge">Gitlab</a>
+              <a href="/ru/tags/ci/cd/" class="badge">Ci/Cd</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  30 июня 2020 г.
+
+
+</span>
+        <h2 class="card-title">Утилита и библиотека net-wait-go</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Утилита и пакет Go для ожидания открытия портов (TCP, UDP).</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/net-wait-go.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/net-wait-go/tube2.svg"
+                             style="max-height: 300px;" alt="Утилита и библиотека net-wait-go"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/net-wait-go.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/tcp/" class="badge">Tcp</a>
+              <a href="/ru/tags/udp/" class="badge">Udp</a>
+              <a href="/ru/tags/docker/" class="badge">Docker</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  29 июня 2020 г.
+
+
+</span>
+        <h2 class="card-title">Создание минимального Docker образа для Go приложений</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Давайте обсудим, как создать минимальный Docker образ для Go программы.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/en/post/go-minimum-docker-image.html">
+                        <img class="card-img-top mb-4"
+                             src="/ru/post/go-minimum-docker-image/docker.svg"
+                             style="max-height: 300px;" alt="Создание минимального Docker образа для Go приложений"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/en/post/go-minimum-docker-image.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/docker/" class="badge">Docker</a>
+              <a href="/ru/tags/compilation/" class="badge">Compilation</a>
+              <a href="/ru/tags/upx/" class="badge">Upx</a>
+              <a href="/ru/tags/ldflags/" class="badge">Ldflags</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  8 мая 2020 г.
+
+
+</span>
+        <h2 class="card-title">Компиляция и деплой через SSH в GitLab CI</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Давайте рассмотрим, как работает компиляция Go и как использовать GitLab CI для этого.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/go-build-and-deploy-ssh-gitlab.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/go-build-and-deploy-ssh-gitlab/gitlab_logo.svg"
+                             style="max-height: 300px;" alt="Компиляция и деплой через SSH в GitLab CI"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/go-build-and-deploy-ssh-gitlab.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/gitlab/" class="badge">Gitlab</a>
+              <a href="/ru/tags/compilation/" class="badge">Compilation</a>
+              <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+              <a href="/ru/tags/ssh/" class="badge">Ssh</a>
+              <a href="/ru/tags/modules/" class="badge">Modules</a>
+              <a href="/ru/tags/vendor/" class="badge">Vendor</a>
+              <a href="/ru/tags/ci/cd/" class="badge">Ci/Cd</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  2 мая 2020 г.
+
+
+</span>
+        <h2 class="card-title">HTTP</h2>
+
+        
+        
+        <p class="card-text">
+            <p>Все примеры из статьи находятся в репозитории на github.</p>
+<p>Давайте рассмотрим инструменты HTTP в GO.</p>
+        </p>
+        
+
+        <a href="/ru/post/http.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/http/" class="badge">Http</a>
+              <a href="/ru/tags/client/" class="badge">Client</a>
+              <a href="/ru/tags/server/" class="badge">Server</a>
+              <a href="/ru/tags/middleware/" class="badge">Middleware</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  2 мая 2020 г.
+
+
+</span>
+        <h2 class="card-title">sync.Map</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Давайте рассмотрим использование <code>sync.Map</code> и его исходный код.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/sync-map.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/sync-map/dvoe.svg"
+                             style="max-height: 300px;" alt="sync.Map"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/sync-map.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/sync.map/" class="badge">Sync.map</a>
+              <a href="/ru/tags/map/" class="badge">Map</a>
+              <a href="/ru/tags/concurrency/" class="badge">Concurrency</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  23 апреля 2020 г.
+
+
+</span>
+        <h2 class="card-title">Профилирование Go: основы и практика</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Go имеет богатые инструменты профилирования с самого начала — пакет <code>pprof</code> и <code>go tool pprof</code>. Давайте обсудим, почему профилирование полезно, как с ним работать и что нового в этой области.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/profiling.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/profiling/goph.svg"
+                             style="max-height: 300px;" alt="Профилирование Go: основы и практика"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/profiling.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/profiling/" class="badge">Profiling</a>
+              <a href="/ru/tags/pprof/" class="badge">Pprof</a>
+              <a href="/ru/tags/benchmark/" class="badge">Benchmark</a>
+              <a href="/ru/tags/ab/" class="badge">Ab</a>
+              <a href="/ru/tags/cpu/" class="badge">Cpu</a>
+              <a href="/ru/tags/allocation/" class="badge">Allocation</a>
+              <a href="/ru/tags/remote/" class="badge">Remote</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  21 апреля 2020 г.
+
+
+</span>
+        <h2 class="card-title">Внедрение зависимостей в GO</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Давайте поговорим о паттерне внедрения зависимостей и управлении зависимостями в больших программах.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/dependency-injection.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/dependency-injection/vlog.svg"
+                             style="max-height: 300px;" alt="Внедрение зависимостей в GO"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/dependency-injection.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/dependency/" class="badge">Dependency</a>
+              <a href="/ru/tags/injection/" class="badge">Injection</a>
+              <a href="/ru/tags/container/" class="badge">Container</a>
+              <a href="/ru/tags/singleton/" class="badge">Singleton</a>
+              <a href="/ru/tags/multiton/" class="badge">Multiton</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  9 апреля 2020 г.
+
+
+</span>
+        <h2 class="card-title">Шаблоны GO: принципы и использование</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Пакеты <code>text/template</code> и <code>html/template</code> являются частью стандартной библиотеки Go. Шаблоны Go используются во многих программах, написанных на Go — Docker, Kubernetes, Helm. Многие сторонние библиотеки интегрированы с шаблонами Go, например Echo. Знание синтаксиса шаблонов Go очень полезно.</p>
+<p>Эта статья состоит из документации пакета <code>text/template</code> и нескольких решений автора. После описания синтаксиса шаблонов Go мы погрузимся в исходники <code>text/template</code> и <code>html/template</code>.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/templates.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/templates/lis.svg"
+                             style="max-height: 300px;" alt="Шаблоны GO: принципы и использование"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/templates.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/templates/" class="badge">Templates</a>
+              <a href="/ru/tags/html/" class="badge">Html</a>
+              <a href="/ru/tags/text/" class="badge">Text</a>
+              <a href="/ru/tags/sources/" class="badge">Sources</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  7 апреля 2020 г.
+
+
+</span>
+        <h2 class="card-title">Фильтрация по списку значений с помощью GORM</h2>
+
+        
+        
+        <p class="card-text">
+            <p>Когда необходимо отфильтровать данные по списку значений (например, по ID: 1, 2, 3), следует использовать оператор <code>ANY</code> в сочетании с <code>pq.Array</code> из драйвера PostgreSQL.</p>
+        </p>
+        
+
+        <a href="/ru/post/gorm-filter-by-list-of-values.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/gorm/" class="badge">Gorm</a>
+              <a href="/ru/tags/sql/" class="badge">Sql</a>
+              <a href="/ru/tags/postgresql/" class="badge">Postgresql</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  4 апреля 2020 г.
+
+
+</span>
+        <h2 class="card-title">Принципы работы типа slice в GO</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>В блоге Go описывается, как использовать срезы. Давайте посмотрим на внутреннее устройство срезов.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/golang-slice.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/golang-slice/gophslice.svg"
+                             style="max-height: 300px;" alt="Принципы работы типа slice в GO"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/golang-slice.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/slice/" class="badge">Slice</a>
+              <a href="/ru/tags/allocation/" class="badge">Allocation</a>
+              <a href="/ru/tags/sources/" class="badge">Sources</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  2 апреля 2020 г.
+
+
+</span>
+        <h2 class="card-title">Обработка данных в конкурентных программах</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>В Go у нас есть функциональность горутин из коробки. Мы можем запускать код параллельно. Однако в нашем параллельно выполняющемся коде мы можем работать с общими переменными, и не совсем понятно, как именно Go обрабатывает такие ситуации.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/golang-data-handling-concurrent-programs.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/golang-data-handling-concurrent-programs/kanat.svg"
+                             style="max-height: 300px;" alt="Обработка данных в конкурентных программах"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/golang-data-handling-concurrent-programs.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/map/" class="badge">Map</a>
+              <a href="/ru/tags/sources/" class="badge">Sources</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  2 апреля 2020 г.
+
+
+</span>
+        <h2 class="card-title">Принципы работы типа map в GO</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Программный интерфейс map в Go описан в блоге Go. Нам просто нужно вспомнить, что map — это хранилище ключ-значение, и оно должно извлекать значения по ключу как можно быстрее.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/map-principles-golang.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/map-principles-golang/map.svg"
+                             style="max-height: 300px;" alt="Принципы работы типа map в GO"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/map-principles-golang.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/map/" class="badge">Map</a>
+              <a href="/ru/tags/sources/" class="badge">Sources</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  30 марта 2020 г.
+
+
+</span>
+        <h2 class="card-title">Golang regexp: сопоставление символа новой строки</h2>
+
+        
+        
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="card-text">
+                        <p>Почему регулярные выражения с точкой (&quot;.&quot;) работают по-другому в Go по сравнению с PHP и JavaScript.</p>
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <a href="/ru/post/golang-regexp-matching-newline.html">
+                        <img class="card-img-top mb-4"
+                             src="/en/post/golang-regexp-matching-newline/regular.svg"
+                             style="max-height: 300px;" alt="Golang regexp: сопоставление символа новой строки"/></a>
+                </div>
+            </div>
+        </div>
+        
+
+        <a href="/ru/post/golang-regexp-matching-newline.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/regular-expressions/" class="badge">Regular Expressions</a>
+              <a href="/ru/tags/sources/" class="badge">Sources</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  30 марта 2020 г.
+
+
+</span>
+        <h2 class="card-title">GORM: фильтрация сущности по связанной сущности</h2>
+
+        
+        
+        <p class="card-text">
+            <p>Эта задача не так проста, особенно с GORM.</p>
+        </p>
+        
+
+        <a href="/ru/post/gorm-filter-entity-by-linked-entity.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/gorm/" class="badge">Gorm</a>
+              <a href="/ru/tags/sql/" class="badge">Sql</a>
+              <a href="/ru/tags/postgresql/" class="badge">Postgresql</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  30 марта 2020 г.
+
+
+</span>
+        <h2 class="card-title">Создание простого TCP чата на Go</h2>
+
+        
+        
+        <p class="card-text">
+            <p>Пример простого TCP чата на Go с объяснением логики.</p>
+        </p>
+        
+
+        <a href="/ru/post/golang-tcp-server-chat.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/tcp/" class="badge">Tcp</a>
+              <a href="/ru/tags/server/" class="badge">Server</a>
+              <a href="/ru/tags/chat/" class="badge">Chat</a>
+    </div>
+</div>
+</div>
+  
+<div class="col-md-12 mt-4">
+<div class="card mb-4 bg-light rounded container" style="border: none;">
+    <div class="card-body">
+        <span style="color: #aaa; float:right;">
+
+
+  24 марта 2020 г.
+
+
+</span>
+        <h2 class="card-title">Как и зачем использовать дебаггер с GO</h2>
+
+        
+        
+        <p class="card-text">
+            <p>Отладчик — это очень полезный и мощный инструмент. Он может помочь вам точно понять, что происходит в вашем коде, изучить новые проекты и избежать ненужных изменений отладочного кода.</p>
+        </p>
+        
+
+        <a href="/ru/post/goland-debugger.html" class="btn btn-primary">Читать далее →</a>
+        
+        
+              <a href="/ru/tags/debugger/" class="badge">Debugger</a>
+              <a href="/ru/tags/goland/" class="badge">Goland</a>
+    </div>
+</div>
+</div>
+  
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

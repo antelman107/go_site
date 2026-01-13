@@ -1,0 +1,828 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Remote debugging with Delve | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Previously we discussed local debugging with GoLand IDE. Now we&rsquo;ll discuss how to remotely debug a program running inside a Docker container using Visual …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/en/post/go-docker-delve-remote-debug.html">
+<meta property="og:title" content="Remote debugging with Delve | Golang for all">
+<meta property="og:description" content="Previously we discussed local debugging with GoLand IDE. Now we&rsquo;ll discuss how to remotely debug a program running inside a Docker container using Visual …">
+<meta property="og:image" content="http://localhost:51376//gopher.png">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2020-07-01T09:00:00-07:00">
+  
+  
+    <meta property="article:modified_time" content="2020-07-01T09:00:00-07:00">
+  
+  
+    
+      <meta property="article:tag" content="Docker">
+    
+      <meta property="article:tag" content="Debugger">
+    
+      <meta property="article:tag" content="Delve">
+    
+      <meta property="article:tag" content="Vscode">
+    
+      <meta property="article:tag" content="Goland">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/en/post/go-docker-delve-remote-debug.html">
+<meta name="twitter:title" content="Remote debugging with Delve | Golang for all">
+<meta name="twitter:description" content="Previously we discussed local debugging with GoLand IDE. Now we&rsquo;ll discuss how to remotely debug a program running inside a Docker container using Visual …">
+<meta name="twitter:image" content="http://localhost:51376//gopher.png">
+
+
+
+<link rel="canonical" href="http://localhost:51376/en/post/go-docker-delve-remote-debug.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="http://localhost:51376/ru/post/go-docker-delve-remote-debug.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Remote debugging with Delve</h1>
+
+    
+    <p>
+
+
+  July 1, 2020
+
+
+
+            <a href="/tags/docker/" class="badge">Docker</a>
+            <a href="/tags/debugger/" class="badge">Debugger</a>
+            <a href="/tags/delve/" class="badge">Delve</a>
+            <a href="/tags/vscode/" class="badge">Vscode</a>
+            <a href="/tags/goland/" class="badge">Goland</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="float-right">
+        <div>
+            
+            
+            <nav id="toc">
+                <h5>Contents</h5>
+                <nav id="TableOfContents">
+  <ul>
+    <li><a href="#why-do-we-need-remote-debugging">Why do we need remote debugging?</a></li>
+    <li><a href="#delve">Delve</a></li>
+    <li><a href="#the-sources">The sources</a></li>
+    <li><a href="#docker">Docker</a></li>
+    <li><a href="#container-run">Container run</a></li>
+    <li><a href="#visual-studio-code">Visual Studio Code</a></li>
+    <li><a href="#goland-ide">GoLand IDE</a></li>
+  </ul>
+</nav>
+            </nav>
+            
+        </div>
+        <div>
+        </div>
+    </div>
+    
+
+    <div id="post-content">
+    <p>Previously we discussed local debugging with GoLand IDE. Now we&rsquo;ll discuss how to remotely debug a program running inside a Docker container using Visual Studio Code and GoLand IDE.</p>
+<p>In local debugging, the IDE manages everything — it compiles the program, starts it, and connects to it.</p>
+<p>However, sometimes you may need to perform remote debugging. In this case, your program should be started independently of the IDE. It will be the developer&rsquo;s or DevOps engineer&rsquo;s responsibility to prepare the program for remote debugging.</p>
+<h2 id="why-do-we-need-remote-debugging">Why do we need remote debugging?</h2>
+<p>It may seem like a rare use case, but here are situations where you might need it:</p>
+<ul>
+<li>The program can&rsquo;t be tested locally, only in a specific remote environment</li>
+<li>You need to analyze a bug that is only reproducible in a remote environment — during integration testing, for example</li>
+</ul>
+<p>Before starting to implement remote debugging, you must understand that bugs can be fixed more easily in the early stages of development. When debugging locally, you can run the program with <code>go run</code>, <code>delve debug</code>, or any IDE. With remote debugging, you have to wait for the program to be deployed to the remote environment.</p>
+<h2 id="delve">Delve</h2>
+<p>The debug tool used in GoLand IDE or Visual Studio Code is Delve.</p>
+<p>Delve + IDE debugging always works like this:</p>
+<ol>
+<li>Delve is started as a server application, listening for network connections on a specific port</li>
+<li>Delve runs our program (compiled binary or Go source code)</li>
+<li>Delve allows GoLand IDE or Visual Studio Code to connect to it and receives breakpoint data</li>
+<li>At a breakpoint, Delve pauses the program and sends variable data to the IDE</li>
+</ol>
+<p>Delve is a command-line tool. All its CLI parameters are defined <a href="https://github.com/go-delve/delve/tree/master/Documentation/cli">here</a>.</p>
+<p>Besides having a network API, Delve also has command-line debugging options to debug directly from the command line (without an IDE). However, we are not going to use this option.</p>
+<p>So we need to start Delve and provide a remote connection to it from our IDE.</p>
+<h2 id="the-sources">The sources</h2>
+<p>For better understanding of this article, I&rsquo;ve created a GitHub repository with all related code.</p>
+<h2 id="docker">Docker</h2>
+<p>Docker containers are a popular type of deployment. Recently we discussed minimal Docker image building and Docker Swarm deployment. Docker containers can be used here to demonstrate remote connection.</p>
+<p>Let&rsquo;s set up the Dockerfile:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-dockerfile" data-lang="dockerfile"><span style="display:flex;"><span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> rhaps1071/golang-1.14-alpine-git AS build</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">WORKDIR</span><span style="color:#e6db74"> /</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> . .<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> CGO_ENABLED<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span> go get -ldflags <span style="color:#e6db74">&#34;-s -w -extldflags &#39;-static&#39;&#34;</span> github.com/go-delve/delve/cmd/dlv<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">RUN</span> CGO_ENABLED<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span> go build -gcflags <span style="color:#e6db74">&#34;all=-N -l&#34;</span> -o ./app<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">FROM</span><span style="color:#e6db74"> scratch</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> --from<span style="color:#f92672">=</span>build /go/bin/dlv /dlv<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">COPY</span> --from<span style="color:#f92672">=</span>build /app /app<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">ENTRYPOINT</span> [ <span style="color:#e6db74">&#34;/dlv&#34;</span> ]<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>Here I used a two-stage build and static compilation to create a minimal Docker image <code>FROM scratch</code>. There are two files in the resulting Docker image: <code>/dlv</code> — Delve; <code>/app</code> — our program.</p>
+<p>Go compilation flags are supported by many Go tools: <code>build</code>, <code>clean</code>, <code>get</code>, <code>install</code>, <code>list</code>, <code>run</code>, <code>test</code>. Due to this, the Delve binary obtained with <code>go get</code> is also statically compiled. By default, a Delve binary compiled in an Alpine Linux environment depends on two libraries. You can check this with the <code>ldd</code> tool:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>ldd /go/bin/dlv
+</span></span><span style="display:flex;"><span>/lib/ld-musl-x86_64.so.1 <span style="color:#f92672">(</span>0x7f761f8b7000<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>libc.musl-x86_64.so.1 <span style="color:#f92672">=</span>&gt; /lib/ld-musl-x86_64.so.1 <span style="color:#f92672">(</span>0x7f761f8b7000<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>The <code>-gcflags &quot;all=-N -l&quot;</code> flags, which are used to compile the main program, are required to make Delve debug our program properly.</p>
+<p>To build the container, you may use <code>docker build -f ./docker/debug/Dockerfile -t debug .</code>, which is implemented as a Makefile command <code>docker-build-debug</code>, so the same command will work as <code>make docker-build-debug</code>.</p>
+<h2 id="container-run">Container run</h2>
+<p>Let&rsquo;s start our image as a container using docker-compose.</p>
+<p>The <code>docker-compose.yml</code> contents are below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">version</span>: <span style="color:#e6db74">&#34;3&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">services</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">debug</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">build</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">dockerfile</span>: <span style="color:#ae81ff">docker/debug/Dockerfile</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">context</span>: <span style="color:#ae81ff">../../</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#ae81ff">2345</span>:<span style="color:#ae81ff">2345</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">command</span>: <span style="color:#e6db74">&#34;--listen=:2345 --headless=true --log=true --log-output=debugger,debuglineerr,gdbwire,lldbout,rpc --accept-multiclient --api-version=2 exec ./app&#34;</span>
+</span></span></code></pre></div><p>Previously we set up the <code>ENTRYPOINT</code> in our image as <code>/dlv</code>, so now in the <code>command</code> parameter we pass Delve arguments only. The parameters above are passed to make Delve work as a network server and to enable rich logging.</p>
+<p>Let&rsquo;s call <code>docker-compose -f ./docker/debug/docker-compose.yml up</code> and check the logs. This command is also available as <code>make docker-run-debug</code>.</p>
+<pre tabindex="0"><code>Starting debug_debug_1 ... done
+Attaching to debug_debug_1
+debug_1  | API server listening at: [::]:2345
+debug_1  | 2020-07-10T13:36:06Z debug layer=rpc API server pid = 1
+debug_1  | 2020-07-10T13:36:06Z info layer=debugger launching process with args: [./app]
+</code></pre><p>The logs indicate that the debug server is started on port 2345 and is ready to accept connections.</p>
+<p>Let&rsquo;s connect to it from IDEs.</p>
+<h2 id="visual-studio-code">Visual Studio Code</h2>
+<p>We need to open our project in the IDE. The source code represents the program in our container.</p>
+<p>Let&rsquo;s create/modify the <code>.vscode/launch.json</code> file with the following configuration:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;version&#34;</span>: <span style="color:#e6db74">&#34;0.2.0&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;configurations&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;Attach&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;type&#34;</span>: <span style="color:#e6db74">&#34;go&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;request&#34;</span>: <span style="color:#e6db74">&#34;attach&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;mode&#34;</span>: <span style="color:#e6db74">&#34;remote&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;remotePath&#34;</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;port&#34;</span>: <span style="color:#ae81ff">2345</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;host&#34;</span>: <span style="color:#e6db74">&#34;127.0.0.1&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;showLog&#34;</span>: <span style="color:#66d9ef">true</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;trace&#34;</span>: <span style="color:#e6db74">&#34;log&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">&#34;logOutput&#34;</span>: <span style="color:#e6db74">&#34;rpc&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li><code>&quot;request&quot;: &quot;attach&quot;</code> — allows VS Code to attach to a running Delve instance, instead of starting a new debug session locally</li>
+<li><code>port</code>, <code>host</code> — the network host and port of our Delve. By using docker-compose, we started the Docker container locally and published its port 2345 to the host (localhost)</li>
+<li><code>remotePath</code> — one of the critical parameters that affects successful breakpoint setting. It is the path to the sources folder that was used during the compile stage. We compiled our binary in the Dockerfile using <code>WORKDIR /</code>, so our directory is the root directory — let&rsquo;s leave <code>remotePath</code> blank</li>
+</ul>
+<p>Before doing anything in the IDE, let&rsquo;s check that our Docker container is currently running.</p>
+<p>Next, run the &ldquo;Attach&rdquo; debug task. We should set breakpoints and ensure they stay in place (visually in the IDE). Each breakpoint setting is reflected in the Docker container logs — there should be no errors.</p>
+<h2 id="goland-ide">GoLand IDE</h2>
+<p>All settings in this IDE can be changed in the graphical interface, without editing configuration files. An important thing — enable modules integration:</p>
+<p>Click <strong>Run → Edit configurations</strong>, add a new debug configuration, and select &ldquo;Go Remote&rdquo;:</p>
+<p>Same as in VS Code, we should set breakpoints and ensure they are in place. We should check the Docker container logs. If there are any errors like <code>could not find file somedir/main.go</code>, you need to enable Go modules integration.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/docker/">Docker</a></li>
+        <li><a href="/tags/debugger/">Debugger</a></li>
+        <li><a href="/tags/delve/">Delve</a></li>
+        <li><a href="/tags/vscode/">Vscode</a></li>
+        <li><a href="/tags/goland/">Goland</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;A debugger tool for Go&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;A testing framework&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;A code formatter&#34;}],&#34;question&#34;:&#34;What is Delve?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;When the program can&#39;t be tested locally&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;When bugs only reproduce in remote environment&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;When you want faster debugging&#34;}],&#34;question&#34;:&#34;When is remote debugging useful?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;-gcflags &#39;all=-N -l&#39;&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;-ldflags &#39;-s -w&#39;&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;-tags debug&#34;}],&#34;question&#34;:&#34;What compilation flags are needed for Delve to debug properly?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Delve runs as a server and IDE connects to it&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;IDE runs Delve directly&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Delve is embedded in IDE&#34;}],&#34;question&#34;:&#34;How does Delve work with IDEs?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. What is Delve?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            A debugger tool for Go
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            A testing framework
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            A code formatter
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. When is remote debugging useful?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            When the program can&#39;t be tested locally
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            When bugs only reproduce in remote environment
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            When you want faster debugging
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. What compilation flags are needed for Delve to debug properly?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            -gcflags &#39;all=-N -l&#39;
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            -ldflags &#39;-s -w&#39;
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            -tags debug
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. How does Delve work with IDEs?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Delve runs as a server and IDE connects to it
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            IDE runs Delve directly
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Delve is embedded in IDE
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  July 1, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/deploy-docker-swarm-gitlab.html" style="text-decoration: none; color: inherit;">Deploy docker swarm from Gitlab CI</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/deploy-docker-swarm-gitlab.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/deploy-docker-swarm-gitlab/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Deploy docker swarm from Gitlab CI"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Docker container deployment has many advantages over binary deployment. Let&rsquo;s dive into advantages and see how we can implement docker container deployment from Gitlab CI.
+Let&rsquo;s talk about how standard docker can help us. Any docker orchestration tools (Kubernetes, for example) will be observed in future articles.</p></p>
+            
+            <a href="/en/post/deploy-docker-swarm-gitlab.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/docker/" class="badge">Docker</a>
+                  <a href="/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/tags/gitlab/" class="badge">Gitlab</a>
+                  <a href="/tags/ci/cd/" class="badge">Ci/Cd</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  June 30, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/net-wait-go.html" style="text-decoration: none; color: inherit;">net-wait-go utility / library</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/net-wait-go.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/net-wait-go/tube2.svg"
+                   style="max-height: 200px;"
+                   alt="net-wait-go utility / library"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Both utility and Go package to wait for ports to open (TCP, UDP).</p></p>
+            
+            <a href="/en/post/net-wait-go.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/tcp/" class="badge">Tcp</a>
+                  <a href="/tags/udp/" class="badge">Udp</a>
+                  <a href="/tags/docker/" class="badge">Docker</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  June 29, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-minimum-docker-image.html" style="text-decoration: none; color: inherit;">Building Minimal Docker Images for Go Applications</a>
+            </h4>
+            
+            
+            
+            <a href="/ru/post/go-minimum-docker-image.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/ru/post/go-minimum-docker-image/docker.svg"
+                   style="max-height: 200px;"
+                   alt="Building Minimal Docker Images for Go Applications"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Let&rsquo;s discuss how to build a minimal Docker image for a Go program.</p></p>
+            
+            <a href="/ru/post/go-minimum-docker-image.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/docker/" class="badge">Docker</a>
+                  <a href="/tags/compilation/" class="badge">Compilation</a>
+                  <a href="/tags/upx/" class="badge">Upx</a>
+                  <a href="/tags/ldflags/" class="badge">Ldflags</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  March 24, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/goland-debugger.html" style="text-decoration: none; color: inherit;">Why and how to use a debugger with Go</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>A debugger is a very helpful and powerful tool. It can help you understand exactly what is happening in your code, explore new projects, and avoid unnecessary debug code changes.</p></p>
+            
+            <a href="/en/post/goland-debugger.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/debugger/" class="badge">Debugger</a>
+                  <a href="/tags/goland/" class="badge">Goland</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/post/go-docker-delve-remote-debug.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

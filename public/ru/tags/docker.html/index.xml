@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Docker on Golang for all</title>
+    <link>http://localhost:51048/ru/tags/docker.html.html</link>
+    <description>Recent content in Docker on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Wed, 01 Jul 2020 09:00:00 -0700</lastBuildDate>
+    <atom:link href="http://localhost:51048/ru/tags/docker.html/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Удалённая отладка с Delve</title>
+      <link>http://localhost:51048/ru/post/go-docker-delve-remote-debug.html</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 -0700</pubDate>
+      <guid>http://localhost:51048/ru/post/go-docker-delve-remote-debug.html</guid>
+      <description>&lt;p&gt;Ранее мы обсуждали локальную отладку с помощью IDE GoLand. Теперь мы обсудим, как удалённо отлаживать программу, работающую внутри Docker-контейнера, используя Visual Studio Code и GoLand IDE.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Деплой docker swarm из Gitlab CI</title>
+      <link>http://localhost:51048/ru/post/deploy-docker-swarm-gitlab.html</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/deploy-docker-swarm-gitlab.html</guid>
+      <description>&lt;p&gt;Ранее мы рассматривали деплой бинарного файла программы через SSH на сервер&lt;/p&gt;&#xA;&lt;p&gt;Сейчас мы рассмотрим как реализовать деплой Docker контейнера из Gitlab CI.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Утилита и библиотека net-wait-go</title>
+      <link>http://localhost:51048/ru/post/net-wait-go.html</link>
+      <pubDate>Tue, 30 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/net-wait-go.html</guid>
+      <description>&lt;p&gt;Утилита и пакет Go для ожидания открытия портов (TCP, UDP).&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Создание минимального Docker образа для Go приложений</title>
+      <link>http://localhost:51048/en/post/go-minimum-docker-image.html</link>
+      <pubDate>Mon, 29 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/en/post/go-minimum-docker-image.html</guid>
+      <description>&lt;p&gt;Давайте обсудим, как создать минимальный Docker образ для Go программы.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

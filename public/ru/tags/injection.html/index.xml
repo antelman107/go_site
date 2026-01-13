@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Injection on Golang for all</title>
+    <link>http://localhost:51048/ru/tags/injection.html.html</link>
+    <description>Recent content in Injection on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Tue, 21 Apr 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51048/ru/tags/injection.html/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Внедрение зависимостей в GO</title>
+      <link>http://localhost:51048/ru/post/dependency-injection.html</link>
+      <pubDate>Tue, 21 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/dependency-injection.html</guid>
+      <description>&lt;p&gt;Давайте поговорим о паттерне внедрения зависимостей и управлении зависимостями в больших программах.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

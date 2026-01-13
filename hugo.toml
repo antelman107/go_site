@@ -1,0 +1,19 @@
+baseURL = 'https://golangforall.com'
+languageCode = 'en-us'
+title = 'Golang for all'
+theme = 'my'
+defaultContentLanguage = 'en'
+
+# Site description for SEO (used in meta tags and Open Graph)
+# description = 'Golang for all - Articles about Go programming language'
+
+# Twitter username (optional, format: @username)
+# twitter = '@yourusername'
+
+[languages]
+  [languages.en]
+    weight = 1
+    languageCode = 'en-us'
+  [languages.ru]
+    weight = 2
+    languageCode = 'ru-ru'

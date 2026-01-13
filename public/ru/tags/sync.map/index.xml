@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sync.map on Golang for all</title>
+    <link>http://localhost:51376/ru/tags/sync.map/</link>
+    <description>Recent content in Sync.map on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Sat, 02 May 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/ru/tags/sync.map/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>sync.Map</title>
+      <link>http://localhost:51376/ru/post/sync-map.html</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/ru/post/sync-map.html</guid>
+      <description>&lt;p&gt;Давайте рассмотрим использование &lt;code&gt;sync.Map&lt;/code&gt; и его исходный код.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

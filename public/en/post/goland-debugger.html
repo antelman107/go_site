@@ -1,0 +1,628 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Why and how to use a debugger with Go | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="A debugger is a very helpful and powerful tool. It can help you understand exactly what is happening in your code, explore new projects, and avoid unnecessary …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/en/post/goland-debugger.html">
+<meta property="og:title" content="Why and how to use a debugger with Go | Golang for all">
+<meta property="og:description" content="A debugger is a very helpful and powerful tool. It can help you understand exactly what is happening in your code, explore new projects, and avoid unnecessary …">
+<meta property="og:image" content="http://localhost:51376//gopher.png">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2020-03-24T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-03-24T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Debugger">
+    
+      <meta property="article:tag" content="Goland">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/en/post/goland-debugger.html">
+<meta name="twitter:title" content="Why and how to use a debugger with Go | Golang for all">
+<meta name="twitter:description" content="A debugger is a very helpful and powerful tool. It can help you understand exactly what is happening in your code, explore new projects, and avoid unnecessary …">
+<meta name="twitter:image" content="http://localhost:51376//gopher.png">
+
+
+
+<link rel="canonical" href="http://localhost:51376/en/post/goland-debugger.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="http://localhost:51376/ru/post/goland-debugger.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Why and how to use a debugger with Go</h1>
+
+    
+    <p>
+
+
+  March 24, 2020
+
+
+
+            <a href="/tags/debugger/" class="badge">Debugger</a>
+            <a href="/tags/goland/" class="badge">Goland</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="float-right">
+        <div>
+            
+            
+            <nav id="toc">
+                <h5>Contents</h5>
+                <nav id="TableOfContents">
+  <ul>
+    <li><a href="#what-is-a-debugger">What is a debugger?</a></li>
+    <li><a href="#why-should-one-use-a-debugger">Why should one use a debugger?</a>
+      <ul>
+        <li><a href="#1-no-code-modifications">1. No code modifications</a></li>
+        <li><a href="#2-simple-way-to-explore-any-kind-of-variable">2. Simple way to explore any kind of variable</a></li>
+      </ul>
+    </li>
+    <li><a href="#drawbacks">Drawbacks</a></li>
+  </ul>
+</nav>
+            </nav>
+            
+        </div>
+        <div>
+        </div>
+    </div>
+    
+
+    <div id="post-content">
+    <p>A debugger is a very helpful and powerful tool. It can help you understand exactly what is happening in your code, explore new projects, and avoid unnecessary debug code changes.</p>
+<p>The time we need to fix any issue depends on the stage where it is found:</p>
+<p><img src="/en/post/goland-debugger/img.png" alt="img.png"></p>
+<p>The best way to fix any issue is to fix it before any code is written (during the planning stage).
+But if we already have a bug in the code, it&rsquo;s better to deal with it during the development stage.</p>
+<p>So, the earlier we fix bugs, the more efficient we are as developers and as a team.</p>
+<p>A debugger is extremely helpful here.
+It is a very common tool in many programming languages, but it seems to me that Go developers are not using it.
+I will describe why it is helpful and why I recommend using it with examples in GoLand IDE.</p>
+<h2 id="what-is-a-debugger">What is a debugger?</h2>
+<p>A debugger is all about breakpoints.
+You set up points where you want your program to stop, so you will be able to monitor the program&rsquo;s state.</p>
+<p>First, you set up a breakpoint:</p>
+<p><img src="/en/post/goland-debugger/img_1.png" alt="img_1.png"></p>
+<p>The program will stop <em>before</em> the line you selected.</p>
+<p>Next, you run your program or test and it stops:</p>
+<p><img src="/en/post/goland-debugger/img_2.png" alt="img_2.png"></p>
+<p>On the left side of the debug toolbar, you can see the stack trace (all functions called before the breakpoint is reached).
+This trace is very informative if you explore a new repo and want to understand if particular code executes and what other instructions are involved. Yes, there are function usage tools in GoLand. You can see all usage cases of any function, but it can take time, because you&rsquo;ll need to check many function usages until you find main.go.
+A debugger simply shows you the full trace.
+On the right side, you can see any variables that are accessible in the scope of the breakpoint.
+On the left toolbar, there are buttons to move between breakpoints.</p>
+<h2 id="why-should-one-use-a-debugger">Why should one use a debugger?</h2>
+<h3 id="1-no-code-modifications">1. No code modifications</h3>
+<p>To see what is happening in the program, you don&rsquo;t need to add any debug code (<code>fmt.Print</code>, etc.).
+If you choose to add debug code, this code will be located in the same files you want to debug, so it could be in all possible files of the project. There is no way to separate what code is for debugging and what is for production. You&rsquo;ll have to manually check any changes you made before committing to find and remove debug code. And even after that, there is a high probability of pushing debug code to the repo (which is a mistake you don&rsquo;t want to happen).</p>
+<h3 id="2-simple-way-to-explore-any-kind-of-variable">2. Simple way to explore any kind of variable</h3>
+<p>The debugger&rsquo;s variables view is also much more user-friendly than any output you can program to list variables.
+For example, look how simple it is to view any complex structs or lists:</p>
+<p><img src="/en/post/goland-debugger/img_3.png" alt="img_3.png"></p>
+<p>You can see a byte array created from a string, and you can also see it as text by clicking the &ldquo;View&rdquo; link.
+How much time will you spend trying to display that data? It won&rsquo;t be one line of code, and that code depends on the variable type you want to explore. A debugger displays any variable gracefully.</p>
+<h2 id="drawbacks">Drawbacks</h2>
+<p>A debugger changes the behavior of the program.
+Go is known for its concurrency patterns, so you probably have a lot of goroutines in your program. A breakpoint is set in code that relates to one or some of all goroutines, but what happens in other goroutines is the responsibility of the debugger. In GoLand, all goroutines are stopped. But there can be situations when you want to collect debug data but don&rsquo;t want the program to stop. In that case, you&rsquo;ll still need to get this debug info without a debugger.</p>
+<p>That is basically all on the current topic.
+Feel free to comment on this post here on the website, or join our telegram group.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/debugger/">Debugger</a></li>
+        <li><a href="/tags/goland/">Goland</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;A tool for debugging code that allows you to set breakpoints and monitor program state&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;A programming language&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;A database management system&#34;}],&#34;question&#34;:&#34;What is a debugger?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;You can debug without modifying code&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;It makes your code run faster&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;It automatically fixes bugs&#34;}],&#34;question&#34;:&#34;What is the main advantage of using a debugger?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;The program stops at that point&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;You can see the stack trace&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;You can inspect variables&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;All goroutines continue running&#34;}],&#34;question&#34;:&#34;What happens when a breakpoint is reached in GoLand?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. What is a debugger?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            A tool for debugging code that allows you to set breakpoints and monitor program state
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            A programming language
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            A database management system
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. What is the main advantage of using a debugger?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            You can debug without modifying code
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            It makes your code run faster
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            It automatically fixes bugs
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. What happens when a breakpoint is reached in GoLand?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            The program stops at that point
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            You can see the stack trace
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            You can inspect variables
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="3"
+                 id="q2-a3">
+          <label class="form-check-label" for="q2-a3">
+            All goroutines continue running
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  July 1, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-docker-delve-remote-debug.html" style="text-decoration: none; color: inherit;">Remote debugging with Delve</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Previously we discussed local debugging with GoLand IDE. Now we&rsquo;ll discuss how to remotely debug a program running inside a Docker container using Visual Studio Code and GoLand IDE.</p></p>
+            
+            <a href="/en/post/go-docker-delve-remote-debug.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/docker/" class="badge">Docker</a>
+                  <a href="/tags/debugger/" class="badge">Debugger</a>
+                  <a href="/tags/delve/" class="badge">Delve</a>
+                  <a href="/tags/vscode/" class="badge">Vscode</a>
+                  <a href="/tags/goland/" class="badge">Goland</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/post/goland-debugger.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

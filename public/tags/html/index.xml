@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Html on Golang for all</title>
+    <link>http://localhost:51376/tags/html/</link>
+    <description>Recent content in Html on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 09 Apr 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/html/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GO Templates: Principles and Usage</title>
+      <link>http://localhost:51376/en/post/templates.html</link>
+      <pubDate>Thu, 09 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/templates.html</guid>
+      <description>&lt;p&gt;Packages &lt;code&gt;text/template&lt;/code&gt; and &lt;code&gt;html/template&lt;/code&gt; are part of the Go standard library. Go templates are used in many Go-programmed software — Docker, Kubernetes, Helm. Many third-party libraries are integrated with Go templates, for example Echo. Knowing Go template syntax is very useful.&lt;/p&gt;&#xA;&lt;p&gt;This article consists of &lt;code&gt;text/template&lt;/code&gt; package documentation and a couple of author&amp;rsquo;s solutions. After describing Go template syntax, we&amp;rsquo;ll dive into &lt;code&gt;text/template&lt;/code&gt; and &lt;code&gt;html/template&lt;/code&gt; sources.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

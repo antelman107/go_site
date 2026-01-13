@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Gitlab on Golang for all</title>
+    <link>http://localhost:51376/tags/gitlab/</link>
+    <description>Recent content in Gitlab on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 01 Jul 2020 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/gitlab/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Deploy docker swarm from Gitlab CI</title>
+      <link>http://localhost:51376/en/post/deploy-docker-swarm-gitlab.html</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/deploy-docker-swarm-gitlab.html</guid>
+      <description>&lt;p&gt;Docker container deployment has many advantages over binary deployment. Let&amp;rsquo;s dive into advantages and see how we can implement docker container deployment from Gitlab CI.&#xA;Let&amp;rsquo;s talk about how standard docker can help us. Any docker orchestration tools (Kubernetes, for example) will be observed in future articles.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Compilation and deploy via SSH in Gitlab CI</title>
+      <link>http://localhost:51376/en/post/go-build-and-deploy-ssh-gitlab.html</link>
+      <pubDate>Fri, 08 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/go-build-and-deploy-ssh-gitlab.html</guid>
+      <description>&lt;p&gt;Let&amp;rsquo;s take a look at how Go compilation works and how to use GitLab CI for that.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

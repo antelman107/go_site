@@ -1,0 +1,1381 @@
+
+
+<!DOCTYPE html>
+<html lang="ru-ru" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Создание AI-телеграм бота на Go с Gemini API и AWS Lambda | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="В этой статье мы рассмотрим, как создать интеллектуального Telegram бота на Go, который выступает в роли прокси между пользователями и API Google Gemini. Бот …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html">
+<meta property="og:title" content="Создание AI-телеграм бота на Go с Gemini API и AWS Lambda | Golang for all">
+<meta property="og:description" content="В этой статье мы рассмотрим, как создать интеллектуального Telegram бота на Go, который выступает в роли прокси между пользователями и API Google Gemini. Бот …">
+<meta property="og:image" content="http://localhost:51376//gopher.png">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="ru">
+
+  
+    <meta property="article:published_time" content="2024-12-19T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2024-12-19T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Go">
+    
+      <meta property="article:tag" content="Telegram">
+    
+      <meta property="article:tag" content="Gemini">
+    
+      <meta property="article:tag" content="Ai">
+    
+      <meta property="article:tag" content="Aws">
+    
+      <meta property="article:tag" content="Lambda">
+    
+      <meta property="article:tag" content="Bot">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html">
+<meta name="twitter:title" content="Создание AI-телеграм бота на Go с Gemini API и AWS Lambda | Golang for all">
+<meta name="twitter:description" content="В этой статье мы рассмотрим, как создать интеллектуального Telegram бота на Go, который выступает в роли прокси между пользователями и API Google Gemini. Бот …">
+<meta name="twitter:image" content="http://localhost:51376//gopher.png">
+
+
+
+<link rel="canonical" href="http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html">
+
+
+
+  <link rel="alternate" hreflang="en" href="http://localhost:51376/en/post/go-telegram-gemini-ai-bot.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+</script>
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/ru/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/ru/" style="color:#000;"><span class="gopherchat">Golang для всех</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/ru/about.html">О сайте</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Создание AI-телеграм бота на Go с Gemini API и AWS Lambda</h1>
+
+    
+    <p>
+
+
+  19 декабря 2024 г.
+
+
+
+            <a href="/ru/tags/go/" class="badge">Go</a>
+            <a href="/ru/tags/telegram/" class="badge">Telegram</a>
+            <a href="/ru/tags/gemini/" class="badge">Gemini</a>
+            <a href="/ru/tags/ai/" class="badge">Ai</a>
+            <a href="/ru/tags/aws/" class="badge">Aws</a>
+            <a href="/ru/tags/lambda/" class="badge">Lambda</a>
+            <a href="/ru/tags/bot/" class="badge">Bot</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="float-right">
+        <div>
+            
+            
+            <nav id="toc">
+                <h5>Содержание</h5>
+                <nav id="TableOfContents">
+  <ul>
+    <li><a href="#обзор-архитектуры">Обзор архитектуры</a></li>
+    <li><a href="#структура-проекта">Структура проекта</a></li>
+    <li><a href="#конфигурация">Конфигурация</a></li>
+    <li><a href="#реализация-роутера">Реализация роутера</a></li>
+    <li><a href="#обработка-сообщений">Обработка сообщений</a></li>
+    <li><a href="#обработчик-текстовых-ответов">Обработчик текстовых ответов</a></li>
+    <li><a href="#обработчик-генерации-изображений">Обработчик генерации изображений</a></li>
+    <li><a href="#главный-цикл-бота">Главный цикл бота</a></li>
+    <li><a href="#примеры-системных-промптов">Примеры системных промптов</a></li>
+    <li><a href="#расширяемость">Расширяемость</a></li>
+    <li><a href="#история-сообщений-и-управление-контекстом">История сообщений и управление контекстом</a>
+      <ul>
+        <li><a href="#почему-важна-история-сообщений">Почему важна история сообщений</a></li>
+        <li><a href="#хранение-разговоров-в-s3">Хранение разговоров в S3</a></li>
+      </ul>
+    </li>
+    <li><a href="#деплой-на-aws-lambda">Деплой на AWS Lambda</a>
+      <ul>
+        <li><a href="#почему-lambda-выгоден-для-telegram-ботов">Почему Lambda выгоден для Telegram ботов</a></li>
+      </ul>
+    </li>
+    <li><a href="#детальная-инструкция-по-деплою">Детальная инструкция по деплою</a></li>
+    <li><a href="#заключение">Заключение</a></li>
+  </ul>
+</nav>
+            </nav>
+            
+        </div>
+        <div>
+        </div>
+    </div>
+    
+
+    <div id="post-content">
+    <p>В этой статье мы рассмотрим, как создать интеллектуального Telegram бота на Go, который выступает в роли прокси между пользователями и API Google Gemini. Бот будет выполнять две основные функции: отвечать на сообщения пользователей и генерировать изображения. Хотя этот механизм может быть существенно расширен дополнительными возможностями, такими как генерация голоса и видео, мы сосредоточимся на этих двух типах запросов для простоты.</p>
+<h2 id="обзор-архитектуры">Обзор архитектуры</h2>
+<p>Бот использует интеллектуальный механизм маршрутизации, где первый запрос к AI действует как роутер для определения типа запроса пользователя. AI инструктируется либо вернуть обычный ответ в виде диалога, либо структурированный вывод, который может быть передан специализированной модели для генерации изображений.</p>
+<pre class="mermaid">
+  graph TD
+    A[Сообщение пользователя] --&gt; B[Обработчик Telegram бота]
+    B --&gt; C[Запрос к роутеру AI]
+    C --&gt; D{Тип запроса?}
+    D --&gt;|Текстовый ответ| E[Gemini Chat API]
+    D --&gt;|Генерация изображения| F[Gemini Image Generation API]
+    E --&gt; G[Отправить текст пользователю]
+    F --&gt; H[Отправить изображение пользователю]
+</pre>
+<h2 id="структура-проекта">Структура проекта</h2>
+<p>Начнём с настройки базовой структуры проекта:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;bytes&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;context&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;encoding/json&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;fmt&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;os&#34;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;github.com/aws/aws-sdk-go-v2/aws&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;github.com/aws/aws-sdk-go-v2/service/s3&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">tgbotapi</span> <span style="color:#e6db74">&#34;github.com/go-telegram-bot-api/telegram-bot-api/v5&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;google.golang.org/api/option&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;google.golang.org/api/generativeai&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><h2 id="конфигурация">Конфигурация</h2>
+<p>Сначала нам нужно настроить бота с API ключами:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Config</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">TelegramToken</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">GeminiAPIKey</span>  <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">loadConfig</span>() <span style="color:#f92672">*</span><span style="color:#a6e22e">Config</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Config</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">TelegramToken</span>: <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Getenv</span>(<span style="color:#e6db74">&#34;TELEGRAM_TOKEN&#34;</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">GeminiAPIKey</span>:  <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Getenv</span>(<span style="color:#e6db74">&#34;GEMINI_API_KEY&#34;</span>),
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="реализация-роутера">Реализация роутера</h2>
+<p>Роутер использует Gemini для анализа сообщения пользователя и определения соответствующего действия:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">RequestType</span> <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">const</span> (
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">RequestTypeText</span>  <span style="color:#a6e22e">RequestType</span> = <span style="color:#e6db74">&#34;text&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">RequestTypeImage</span> <span style="color:#a6e22e">RequestType</span> = <span style="color:#e6db74">&#34;image&#34;</span>
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">RouterResponse</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Type</span>    <span style="color:#a6e22e">RequestType</span> <span style="color:#e6db74">`json:&#34;type&#34;`</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Prompt</span>  <span style="color:#66d9ef">string</span>      <span style="color:#e6db74">`json:&#34;prompt,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Message</span> <span style="color:#66d9ef">string</span>      <span style="color:#e6db74">`json:&#34;message,omitempty&#34;`</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Промпт роутера должен быть лаконичным и понятным:</p>
+<pre tabindex="0"><code>Вы роутер запросов для Telegram бота. Анализируйте сообщения пользователей и отвечайте JSON:
+- Если пользователь хочет сгенерировать изображение, верните: {&#34;type&#34;:&#34;image&#34;,&#34;prompt&#34;:&#34;описание&#34;}
+- В противном случае верните: {&#34;type&#34;:&#34;text&#34;,&#34;message&#34;:&#34;ваш ответ&#34;}
+</code></pre><p>Вот реализация роутера:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">routeRequest</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">client</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">generativeai</span>.<span style="color:#a6e22e">Client</span>, 
+</span></span><span style="display:flex;"><span>                  <span style="color:#a6e22e">userMsg</span> <span style="color:#66d9ef">string</span>) <span style="color:#a6e22e">RouterResponse</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">model</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">GenerativeModel</span>(<span style="color:#e6db74">&#34;gemini-3-pro-preview&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">SystemInstruction</span> = <span style="color:#e6db74">&#34;Маршрутизируйте запросы: возвращайте JSON с типом и prompt/message&#34;</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">resp</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">GenerateContent</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">userMsg</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">routerResp</span> <span style="color:#a6e22e">RouterResponse</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Unmarshal</span>([]byte(<span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">Text</span>), <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">routerResp</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">routerResp</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="обработка-сообщений">Обработка сообщений</h2>
+<p>Вот как мы обрабатываем входящие сообщения Telegram:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">handleMessage</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">bot</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">BotAPI</span>, 
+</span></span><span style="display:flex;"><span>                   <span style="color:#a6e22e">client</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">generativeai</span>.<span style="color:#a6e22e">Client</span>, <span style="color:#a6e22e">update</span> <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">Update</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">userMsg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">update</span>.<span style="color:#a6e22e">Message</span>.<span style="color:#a6e22e">Text</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">routerResp</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">routeRequest</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">client</span>, <span style="color:#a6e22e">userMsg</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">switch</span> <span style="color:#a6e22e">routerResp</span>.<span style="color:#a6e22e">Type</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">RequestTypeImage</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">generateAndSendImage</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">bot</span>, <span style="color:#a6e22e">client</span>, <span style="color:#a6e22e">update</span>, <span style="color:#a6e22e">routerResp</span>.<span style="color:#a6e22e">Prompt</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">case</span> <span style="color:#a6e22e">RequestTypeText</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">sendTextResponse</span>(<span style="color:#a6e22e">bot</span>, <span style="color:#a6e22e">update</span>, <span style="color:#a6e22e">routerResp</span>.<span style="color:#a6e22e">Message</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="обработчик-текстовых-ответов">Обработчик текстовых ответов</h2>
+<p>Для обычных текстовых ответов мы используем chat API Gemini:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">sendTextResponse</span>(<span style="color:#a6e22e">bot</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">BotAPI</span>, 
+</span></span><span style="display:flex;"><span>                      <span style="color:#a6e22e">update</span> <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">Update</span>, <span style="color:#a6e22e">message</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">msg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">NewMessage</span>(<span style="color:#a6e22e">update</span>.<span style="color:#a6e22e">Message</span>.<span style="color:#a6e22e">Chat</span>.<span style="color:#a6e22e">ID</span>, <span style="color:#a6e22e">message</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">msg</span>.<span style="color:#a6e22e">ReplyToMessageID</span> = <span style="color:#a6e22e">update</span>.<span style="color:#a6e22e">Message</span>.<span style="color:#a6e22e">MessageID</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bot</span>.<span style="color:#a6e22e">Send</span>(<span style="color:#a6e22e">msg</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="обработчик-генерации-изображений">Обработчик генерации изображений</h2>
+<p>Для генерации изображений мы вызываем endpoint генерации изображений Gemini:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">generateAndSendImage</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">bot</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">BotAPI</span>,
+</span></span><span style="display:flex;"><span>                          <span style="color:#a6e22e">client</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">generativeai</span>.<span style="color:#a6e22e">Client</span>, 
+</span></span><span style="display:flex;"><span>                          <span style="color:#a6e22e">update</span> <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">Update</span>, <span style="color:#a6e22e">prompt</span> <span style="color:#66d9ef">string</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">model</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">client</span>.<span style="color:#a6e22e">GenerativeModel</span>(<span style="color:#e6db74">&#34;gemini-2.5-flash-image&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">resp</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">model</span>.<span style="color:#a6e22e">GenerateContent</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">prompt</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">sendTextResponse</span>(<span style="color:#a6e22e">bot</span>, <span style="color:#a6e22e">update</span>, <span style="color:#e6db74">&#34;Ошибка генерации изображения&#34;</span>)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">photo</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">NewPhoto</span>(<span style="color:#a6e22e">update</span>.<span style="color:#a6e22e">Message</span>.<span style="color:#a6e22e">Chat</span>.<span style="color:#a6e22e">ID</span>, 
+</span></span><span style="display:flex;"><span>                               <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">FileBytes</span>{
+</span></span><span style="display:flex;"><span>                                   <span style="color:#a6e22e">Name</span>: <span style="color:#e6db74">&#34;image.png&#34;</span>,
+</span></span><span style="display:flex;"><span>                                   <span style="color:#a6e22e">Bytes</span>: <span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">ImageData</span>,
+</span></span><span style="display:flex;"><span>                               })
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bot</span>.<span style="color:#a6e22e">Send</span>(<span style="color:#a6e22e">photo</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="главный-цикл-бота">Главный цикл бота</h2>
+<p>Функция main настраивает бота и начинает прослушивание:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">cfg</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">loadConfig</span>()
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">bot</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">NewBotAPI</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">TelegramToken</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">client</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">generativeai</span>.<span style="color:#a6e22e">NewClient</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>(),
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">option</span>.<span style="color:#a6e22e">WithAPIKey</span>(<span style="color:#a6e22e">cfg</span>.<span style="color:#a6e22e">GeminiAPIKey</span>))
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">u</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">tgbotapi</span>.<span style="color:#a6e22e">NewUpdate</span>(<span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">updates</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bot</span>.<span style="color:#a6e22e">GetUpdatesChan</span>(<span style="color:#a6e22e">u</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">update</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">updates</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">update</span>.<span style="color:#a6e22e">Message</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">go</span> <span style="color:#a6e22e">handleMessage</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Background</span>(), <span style="color:#a6e22e">bot</span>, <span style="color:#a6e22e">client</span>, <span style="color:#a6e22e">update</span>)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="примеры-системных-промптов">Примеры системных промптов</h2>
+<p>Вот лаконичные системные промпты для различных сценариев:</p>
+<p><strong>Промпт роутера:</strong></p>
+<pre tabindex="0"><code>Маршрутизируйте запросы пользователей: возвращайте JSON с &#34;type&#34;:&#34;image&#34; и &#34;prompt&#34; для запросов изображений,
+или &#34;type&#34;:&#34;text&#34; с &#34;message&#34; для разговоров.
+</code></pre><p><strong>Промпт ассистента для чата:</strong></p>
+<pre tabindex="0"><code>Вы полезный ассистент. Предоставляйте ясные, лаконичные ответы на вопросы пользователей.
+</code></pre><p><strong>Шаблон промпта для генерации изображений:</strong></p>
+<pre tabindex="0"><code>Сгенерируйте высококачественное изображение на основе: {user_prompt}
+</code></pre><h2 id="расширяемость">Расширяемость</h2>
+<p>Эта архитектура может быть легко расширена для поддержки дополнительных возможностей:</p>
+<ul>
+<li><strong>Генерация голоса</strong>: Добавьте <code>RequestTypeVoice</code> и используйте text-to-speech API</li>
+<li><strong>Генерация видео</strong>: Добавьте <code>RequestTypeVideo</code> и интегрируйте сервисы генерации видео</li>
+<li><strong>Мультимодальный ввод</strong>: Обрабатывайте изображения, голосовые сообщения и документы от пользователей</li>
+</ul>
+<p>Паттерн роутера позволяет добавлять новые типы запросов без изменения основной логики обработки сообщений.</p>
+<h2 id="история-сообщений-и-управление-контекстом">История сообщений и управление контекстом</h2>
+<p>Для того чтобы бот понимал контекст и поддерживал связные диалоги, ему необходим доступ к истории сообщений. Поскольку Lambda функции не имеют состояния, нам нужно внешнее хранилище для истории разговоров. AWS S3 отлично подходит для этой цели, так как он легко интегрируется с Lambda и предоставляет надёжное, масштабируемое хранилище.</p>
+<h3 id="почему-важна-история-сообщений">Почему важна история сообщений</h3>
+<p>AI модели, такие как Gemini, работают значительно лучше, когда у них есть доступ к контексту разговора. Без истории каждое сообщение обрабатывается независимо, что делает невозможным для бота:</p>
+<ul>
+<li>Помнить ранее обсуждаемые темы</li>
+<li>Ссылаться на предыдущие части разговора</li>
+<li>Поддерживать личность и последовательность</li>
+<li>Предоставлять контекстные ответы на основе предпочтений пользователя</li>
+</ul>
+<h3 id="хранение-разговоров-в-s3">Хранение разговоров в S3</h3>
+<p>Мы можем хранить каждый разговор как JSON файл в S3, используя ID чата в качестве ключа. Этот подход позволяет нам:</p>
+<ul>
+<li><strong>Изолировать разговоры</strong>: История чата каждого пользователя хранится отдельно</li>
+<li><strong>Легкая загрузка</strong>: Загрузить всю историю разговора одним S3 GET запросом</li>
+<li><strong>Экономичность</strong>: Хранение в S3 крайне дёшево для текстовых данных</li>
+<li><strong>Масштабируемость</strong>: S3 обрабатывает миллионы разговоров без деградации производительности</li>
+</ul>
+<p>Вот как реализовать хранение разговоров:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">saveConversation</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">s3Client</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">s3</span>.<span style="color:#a6e22e">Client</span>, 
+</span></span><span style="display:flex;"><span>                     <span style="color:#a6e22e">chatID</span> <span style="color:#66d9ef">int64</span>, <span style="color:#a6e22e">messages</span> []<span style="color:#a6e22e">Message</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">key</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#e6db74">&#34;conversations/%d.json&#34;</span>, <span style="color:#a6e22e">chatID</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Marshal</span>(<span style="color:#a6e22e">messages</span>)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">s3Client</span>.<span style="color:#a6e22e">PutObject</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">s3</span>.<span style="color:#a6e22e">PutObjectInput</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Bucket</span>: <span style="color:#a6e22e">aws</span>.<span style="color:#a6e22e">String</span>(<span style="color:#e6db74">&#34;bot-conversations&#34;</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Key</span>:    <span style="color:#a6e22e">aws</span>.<span style="color:#a6e22e">String</span>(<span style="color:#a6e22e">key</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Body</span>:   <span style="color:#a6e22e">bytes</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#a6e22e">data</span>),
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Загрузка истории разговора:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">loadConversation</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">s3Client</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">s3</span>.<span style="color:#a6e22e">Client</span>, 
+</span></span><span style="display:flex;"><span>                     <span style="color:#a6e22e">chatID</span> <span style="color:#66d9ef">int64</span>) ([]<span style="color:#a6e22e">Message</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">key</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Sprintf</span>(<span style="color:#e6db74">&#34;conversations/%d.json&#34;</span>, <span style="color:#a6e22e">chatID</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">resp</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">s3Client</span>.<span style="color:#a6e22e">GetObject</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">s3</span>.<span style="color:#a6e22e">GetObjectInput</span>{
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Bucket</span>: <span style="color:#a6e22e">aws</span>.<span style="color:#a6e22e">String</span>(<span style="color:#e6db74">&#34;bot-conversations&#34;</span>),
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">Key</span>:    <span style="color:#a6e22e">aws</span>.<span style="color:#a6e22e">String</span>(<span style="color:#a6e22e">key</span>),
+</span></span><span style="display:flex;"><span>    })
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> []<span style="color:#a6e22e">Message</span>{}, <span style="color:#66d9ef">nil</span> <span style="color:#75715e">// Вернуть пустой, если не найдено</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">Body</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">messages</span> []<span style="color:#a6e22e">Message</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">NewDecoder</span>(<span style="color:#a6e22e">resp</span>.<span style="color:#a6e22e">Body</span>).<span style="color:#a6e22e">Decode</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">messages</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">messages</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>При обработке сообщения загрузите историю, добавьте новое сообщение, отправьте полный контекст в Gemini и сохраните обновлённый разговор обратно в S3. Это обеспечивает поддержку контекста ботом в нескольких взаимодействиях, используя при этом stateless архитектуру Lambda.</p>
+<h2 id="деплой-на-aws-lambda">Деплой на AWS Lambda</h2>
+<p>Деплой этого бота как AWS Lambda функции предоставляет несколько значительных преимуществ по сравнению с традиционными серверными решениями. Давайте разберём, почему Lambda особенно хорошо подходит для Telegram ботов:</p>
+<h3 id="почему-lambda-выгоден-для-telegram-ботов">Почему Lambda выгоден для Telegram ботов</h3>
+<p><strong>1. Экономическая эффективность</strong></p>
+<ul>
+<li><strong>Модель оплаты за использование</strong>: Вы платите только за фактическое время выполнения вашего бота. Если ваш бот получает 1000 сообщений в день, вы платите за обработку этих 1000 сообщений, а не за работу сервера 24/7.</li>
+<li><strong>Нет затрат на простой</strong>: В отличие от традиционного сервера, который работает постоянно (стоит денег даже в простое), Lambda функции потребляют ресурсы только при обработке запросов.</li>
+<li><strong>Бесплатный тариф</strong>: AWS Lambda предлагает щедрый бесплатный тариф (1 миллион запросов и 400,000 GB-секунд вычислительного времени в месяц), что часто достаточно для небольших и средних ботов.</li>
+</ul>
+<p><strong>2. Автоматическое масштабирование</strong></p>
+<ul>
+<li><strong>Обработка всплесков трафика</strong>: Если ваш бот внезапно получает сотни сообщений одновременно (вирусный момент, маркетинговая кампания), Lambda автоматически масштабируется для обработки нагрузки без ручного вмешательства.</li>
+<li><strong>Не нужно планировать мощность</strong>: Вам не нужно оценивать серверную мощность или беспокоиться о выделении ресурсов. Lambda делает это автоматически.</li>
+<li><strong>Параллельные выполнения</strong>: Lambda может обрабатывать тысячи параллельных запросов, что делает её идеальной для ботов с непредсказуемыми паттернами трафика.</li>
+</ul>
+<p><strong>3. Нулевое управление инфраструктурой</strong></p>
+<ul>
+<li><strong>Нет обслуживания серверов</strong>: Не нужно устанавливать обновления операционной системы, управлять обновлениями безопасности или мониторить состояние сервера.</li>
+<li><strong>Простота деплоя</strong>: Разверните вашего бота как простой ZIP файл - не нужно настраивать веб-серверы, обратные прокси или балансировщики нагрузки.</li>
+<li><strong>Встроенный мониторинг</strong>: AWS CloudWatch автоматически отслеживает вызовы функций, ошибки и метрики производительности.</li>
+</ul>
+<p><strong>4. Высокая доступность и надёжность</strong></p>
+<ul>
+<li><strong>Развёртывание в нескольких зонах доступности</strong>: Lambda функции автоматически работают в нескольких зонах доступности, обеспечивая встроенную избыточность.</li>
+<li><strong>Автоматические повторы</strong>: Lambda может автоматически повторять неудачные вызовы, повышая надёжность.</li>
+<li><strong>Нет единой точки отказа</strong>: В отличие от одного сервера, распределённая природа Lambda устраняет единые точки отказа.</li>
+</ul>
+<p><strong>5. Идеальное соответствие архитектуре webhook</strong></p>
+<ul>
+<li><strong>Событийно-ориентированная</strong>: Telegram боты работают через webhook, которые по своей природе событийно-ориентированы - именно то, для чего предназначена Lambda.</li>
+<li><strong>Быстрый холодный старт</strong>: Lambda функции на Go имеют минимальное время холодного старта (обычно менее 100 мс), обеспечивая быстрые времена отклика.</li>
+<li><strong>Без состояния</strong>: Lambda функции по дизайну не имеют состояния, что идеально соответствует архитектуре ботов на основе webhook.</li>
+</ul>
+<p><strong>6. Преимущества разработки и деплоя</strong></p>
+<ul>
+<li><strong>Контроль версий</strong>: Легко развернуть разные версии и откатиться при необходимости.</li>
+<li><strong>Изоляция окружений</strong>: Каждая Lambda функция может иметь свои переменные окружения и конфигурацию.</li>
+<li><strong>Интеграция с экосистемой AWS</strong>: Легкая интеграция с другими сервисами AWS (S3 для хранения файлов, DynamoDB для управления состоянием и т.д.), если нужно расширить функциональность.</li>
+</ul>
+<p>Для Telegram бота с переменными паттернами трафика, которому не нужна постоянная доступность, Lambda обеспечивает оптимальный баланс стоимости, производительности и операционной простоты.</p>
+<h2 id="детальная-инструкция-по-деплою">Детальная инструкция по деплою</h2>
+<p>Детальные инструкции по настройке AWS CLI, созданию Lambda функции, настройке Function URL и автоматизации деплоя вынесены в отдельную статью: <strong><a href="/ru/post/go-telegram-bot-aws-lambda-deploy.html">Деплой Telegram бота на AWS Lambda с Function URL</a></strong>.</p>
+<p>В этой статье вы найдёте:</p>
+<ul>
+<li>Настройку AWS CLI и аутентификацию (SSO и IAM)</li>
+<li>Пошаговое создание Lambda функции через AWS CLI</li>
+<li>Настройку Lambda Function URL для Telegram webhook</li>
+<li>Автоматизацию деплоя с помощью Makefile</li>
+<li>Мониторинг и логирование через CloudWatch</li>
+<li>Sequence диаграмму обработки запросов</li>
+</ul>
+<h2 id="заключение">Заключение</h2>
+<p>Эта архитектура предоставляет гибкую основу для создания AI-телеграм ботов. Паттерн роутера позволяет легко расширять функциональность для новых возможностей, сохраняя при этом поддерживаемость кодовой базы. Деплой на AWS Lambda обеспечивает масштабируемость и экономическую эффективность для использования в продакшене.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/ru/tags/go/">Go</a></li>
+        <li><a href="/ru/tags/telegram/">Telegram</a></li>
+        <li><a href="/ru/tags/gemini/">Gemini</a></li>
+        <li><a href="/ru/tags/ai/">Ai</a></li>
+        <li><a href="/ru/tags/aws/">Aws</a></li>
+        <li><a href="/ru/tags/lambda/">Lambda</a></li>
+        <li><a href="/ru/tags/bot/">Bot</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="ru">
+  <hr class="mb-4">
+  <h3 class="mb-4">Проверьте свои знания</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Определить тип запроса пользователя и направить его к соответствующему обработчику&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Генерировать изображения напрямую&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Обрабатывать webhook запросы от Telegram&#34;}],&#34;question&#34;:&#34;Какова основная роль роутера AI в архитектуре этого бота?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Gemini Image Generation API (gemini-2.5-flash-image)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;OpenAI DALL-E API&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Stable Diffusion API&#34;}],&#34;question&#34;:&#34;Какой API используется для генерации изображений в этом боте?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Serverless архитектура&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Автоматическое масштабирование&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Экономическая эффективность&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Требует ручного управления сервером&#34;}],&#34;question&#34;:&#34;Какое основное преимущество деплоя бота как AWS Lambda функции?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Паттерн роутера&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Паттерн Singleton&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Паттерн Factory&#34;}],&#34;question&#34;:&#34;Какой паттерн позволяет легко расширять функциональность для новых типов запросов, таких как генерация голоса или видео?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Lambda функции не имеют состояния, поэтому требуется внешнее хранилище&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;S3 быстрее чем база данных&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;S3 предоставляет встроенную индексацию&#34;}],&#34;question&#34;:&#34;Почему AWS S3 используется для хранения истории разговоров в Lambda-боте?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Каждый разговор как JSON файл, ключ - ID чата&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Все разговоры в одном файле&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;В виде бинарных данных&#34;}],&#34;question&#34;:&#34;Как хранятся разговоры в S3?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Обычно менее 100 мс&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Около 1 секунды&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Более 5 секунд&#34;}],&#34;question&#34;:&#34;Какое время холодного старта у Lambda функций на Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Оплата за фактическое время выполнения&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Фиксированная месячная плата&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Оплата за выделенные ресурсы&#34;}],&#34;question&#34;:&#34;Какая модель оплаты используется в AWS Lambda?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;1 миллион запросов в месяц&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;400,000 GB-секунд вычислительного времени в месяц&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Неограниченное количество запросов&#34;}],&#34;question&#34;:&#34;Что включает бесплатный тариф AWS Lambda?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Через webhook, который отправляет события в Lambda через API Gateway&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Через постоянное соединение&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Через polling каждую секунду&#34;}],&#34;question&#34;:&#34;Как работает интеграция Telegram бота с Lambda?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Для понимания контекста разговора&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Для поддержания связности диалога&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Для запоминания ранее обсуждаемых тем&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Для увеличения скорости ответа&#34;}],&#34;question&#34;:&#34;Зачем нужна история сообщений для AI бота?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Из переменных окружения Lambda функции&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Хардкодятся в коде&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Из конфигурационного файла в S3&#34;}],&#34;question&#34;:&#34;Откуда берутся API ключи для бота (Telegram токен и Gemini API ключ)?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;RequestTypeText с полем message&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;RequestTypeImage с полем prompt&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;RequestTypeVoice&#34;}],&#34;question&#34;:&#34;Какой тип запроса возвращает роутер для обычного текстового диалога?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Событийно-ориентированная архитектура соответствует webhook модели&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Stateless дизайн соответствует архитектуре ботов на основе webhook&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Автоматическое масштабирование для обработки всплесков трафика&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Требуют постоянного подключения к интернету&#34;}],&#34;question&#34;:&#34;Почему Lambda функции идеально подходят для Telegram ботов?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Загружается история из S3, добавляется новое сообщение, отправляется полный контекст в Gemini, сохраняется обновлённый разговор обратно в S3&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;История загружается один раз при старте Lambda&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;История хранится в памяти Lambda функции&#34;}],&#34;question&#34;:&#34;Что происходит при обработке сообщения с учётом истории разговора?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Какова основная роль роутера AI в архитектуре этого бота?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            Определить тип запроса пользователя и направить его к соответствующему обработчику
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            Генерировать изображения напрямую
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            Обрабатывать webhook запросы от Telegram
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. Какой API используется для генерации изображений в этом боте?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Gemini Image Generation API (gemini-2.5-flash-image)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            OpenAI DALL-E API
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Stable Diffusion API
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Какое основное преимущество деплоя бота как AWS Lambda функции?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Serverless архитектура
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Автоматическое масштабирование
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Экономическая эффективность
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="3"
+                 id="q2-a3">
+          <label class="form-check-label" for="q2-a3">
+            Требует ручного управления сервером
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. Какой паттерн позволяет легко расширять функциональность для новых типов запросов, таких как генерация голоса или видео?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Паттерн роутера
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Паттерн Singleton
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Паттерн Factory
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. Почему AWS S3 используется для хранения истории разговоров в Lambda-боте?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            Lambda функции не имеют состояния, поэтому требуется внешнее хранилище
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            S3 быстрее чем база данных
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            S3 предоставляет встроенную индексацию
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="5">
+      <h5 class="mb-3">6. Как хранятся разговоры в S3?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="0"
+                 id="q5-a0">
+          <label class="form-check-label" for="q5-a0">
+            Каждый разговор как JSON файл, ключ - ID чата
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="1"
+                 id="q5-a1">
+          <label class="form-check-label" for="q5-a1">
+            Все разговоры в одном файле
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-5" 
+                 value="2"
+                 id="q5-a2">
+          <label class="form-check-label" for="q5-a2">
+            В виде бинарных данных
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="6">
+      <h5 class="mb-3">7. Какое время холодного старта у Lambda функций на Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="0"
+                 id="q6-a0">
+          <label class="form-check-label" for="q6-a0">
+            Обычно менее 100 мс
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="1"
+                 id="q6-a1">
+          <label class="form-check-label" for="q6-a1">
+            Около 1 секунды
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-6" 
+                 value="2"
+                 id="q6-a2">
+          <label class="form-check-label" for="q6-a2">
+            Более 5 секунд
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="7">
+      <h5 class="mb-3">8. Какая модель оплаты используется в AWS Lambda?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="0"
+                 id="q7-a0">
+          <label class="form-check-label" for="q7-a0">
+            Оплата за фактическое время выполнения
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="1"
+                 id="q7-a1">
+          <label class="form-check-label" for="q7-a1">
+            Фиксированная месячная плата
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-7" 
+                 value="2"
+                 id="q7-a2">
+          <label class="form-check-label" for="q7-a2">
+            Оплата за выделенные ресурсы
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="8">
+      <h5 class="mb-3">9. Что включает бесплатный тариф AWS Lambda?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-8" 
+                 value="0"
+                 id="q8-a0">
+          <label class="form-check-label" for="q8-a0">
+            1 миллион запросов в месяц
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-8" 
+                 value="1"
+                 id="q8-a1">
+          <label class="form-check-label" for="q8-a1">
+            400,000 GB-секунд вычислительного времени в месяц
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-8" 
+                 value="2"
+                 id="q8-a2">
+          <label class="form-check-label" for="q8-a2">
+            Неограниченное количество запросов
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="9">
+      <h5 class="mb-3">10. Как работает интеграция Telegram бота с Lambda?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="0"
+                 id="q9-a0">
+          <label class="form-check-label" for="q9-a0">
+            Через webhook, который отправляет события в Lambda через API Gateway
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="1"
+                 id="q9-a1">
+          <label class="form-check-label" for="q9-a1">
+            Через постоянное соединение
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-9" 
+                 value="2"
+                 id="q9-a2">
+          <label class="form-check-label" for="q9-a2">
+            Через polling каждую секунду
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="10">
+      <h5 class="mb-3">11. Зачем нужна история сообщений для AI бота?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="0"
+                 id="q10-a0">
+          <label class="form-check-label" for="q10-a0">
+            Для понимания контекста разговора
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="1"
+                 id="q10-a1">
+          <label class="form-check-label" for="q10-a1">
+            Для поддержания связности диалога
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="2"
+                 id="q10-a2">
+          <label class="form-check-label" for="q10-a2">
+            Для запоминания ранее обсуждаемых тем
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-10" 
+                 value="3"
+                 id="q10-a3">
+          <label class="form-check-label" for="q10-a3">
+            Для увеличения скорости ответа
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="11">
+      <h5 class="mb-3">12. Откуда берутся API ключи для бота (Telegram токен и Gemini API ключ)?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="0"
+                 id="q11-a0">
+          <label class="form-check-label" for="q11-a0">
+            Из переменных окружения Lambda функции
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="1"
+                 id="q11-a1">
+          <label class="form-check-label" for="q11-a1">
+            Хардкодятся в коде
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-11" 
+                 value="2"
+                 id="q11-a2">
+          <label class="form-check-label" for="q11-a2">
+            Из конфигурационного файла в S3
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="12">
+      <h5 class="mb-3">13. Какой тип запроса возвращает роутер для обычного текстового диалога?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="0"
+                 id="q12-a0">
+          <label class="form-check-label" for="q12-a0">
+            RequestTypeText с полем message
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="1"
+                 id="q12-a1">
+          <label class="form-check-label" for="q12-a1">
+            RequestTypeImage с полем prompt
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-12" 
+                 value="2"
+                 id="q12-a2">
+          <label class="form-check-label" for="q12-a2">
+            RequestTypeVoice
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="13">
+      <h5 class="mb-3">14. Почему Lambda функции идеально подходят для Telegram ботов?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-13" 
+                 value="0"
+                 id="q13-a0">
+          <label class="form-check-label" for="q13-a0">
+            Событийно-ориентированная архитектура соответствует webhook модели
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-13" 
+                 value="1"
+                 id="q13-a1">
+          <label class="form-check-label" for="q13-a1">
+            Stateless дизайн соответствует архитектуре ботов на основе webhook
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-13" 
+                 value="2"
+                 id="q13-a2">
+          <label class="form-check-label" for="q13-a2">
+            Автоматическое масштабирование для обработки всплесков трафика
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-13" 
+                 value="3"
+                 id="q13-a3">
+          <label class="form-check-label" for="q13-a3">
+            Требуют постоянного подключения к интернету
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="14">
+      <h5 class="mb-3">15. Что происходит при обработке сообщения с учётом истории разговора?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="0"
+                 id="q14-a0">
+          <label class="form-check-label" for="q14-a0">
+            Загружается история из S3, добавляется новое сообщение, отправляется полный контекст в Gemini, сохраняется обновлённый разговор обратно в S3
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="1"
+                 id="q14-a1">
+          <label class="form-check-label" for="q14-a1">
+            История загружается один раз при старте Lambda
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-14" 
+                 value="2"
+                 id="q14-a2">
+          <label class="form-check-label" for="q14-a2">
+            История хранится в памяти Lambda функции
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Проверить ответы
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Сбросить
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Похожие статьи</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  20 декабря 2024 г.
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/ru/post/go-telegram-bot-aws-lambda-deploy.html" style="text-decoration: none; color: inherit;">Деплой Telegram бота на AWS Lambda с Function URL</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>Эта статья является продолжением статьи <a href="/ru/post/go-telegram-gemini-ai-bot.html">&ldquo;Создание AI-телеграм бота на Go с Gemini API и AWS Lambda&rdquo;</a> и содержит детальные инструкции по настройке и деплою Telegram бота на AWS Lambda с использованием Function URL.</p></p>
+            
+            <a href="/ru/post/go-telegram-bot-aws-lambda-deploy.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/ru/tags/go/" class="badge">Go</a>
+                  <a href="/ru/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/ru/tags/aws/" class="badge">Aws</a>
+                  <a href="/ru/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/ru/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/ru/tags/function-url/" class="badge">Function-Url</a>
+                  <a href="/ru/tags/cli/" class="badge">Cli</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/en/post/go-telegram-gemini-ai-bot.html'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

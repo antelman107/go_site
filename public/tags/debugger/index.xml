@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Debugger on Golang for all</title>
+    <link>http://localhost:51376/tags/debugger/</link>
+    <description>Recent content in Debugger on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 01 Jul 2020 09:00:00 -0700</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/debugger/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Remote debugging with Delve</title>
+      <link>http://localhost:51376/en/post/go-docker-delve-remote-debug.html</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 -0700</pubDate>
+      <guid>http://localhost:51376/en/post/go-docker-delve-remote-debug.html</guid>
+      <description>&lt;p&gt;Previously we discussed local debugging with GoLand IDE. Now we&amp;rsquo;ll discuss how to remotely debug a program running inside a Docker container using Visual Studio Code and GoLand IDE.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Why and how to use a debugger with Go</title>
+      <link>http://localhost:51376/en/post/goland-debugger.html</link>
+      <pubDate>Tue, 24 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/en/post/goland-debugger.html</guid>
+      <description>&lt;p&gt;A debugger is a very helpful and powerful tool. It can help you understand exactly what is happening in your code, explore new projects, and avoid unnecessary debug code changes.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

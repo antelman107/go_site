@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on Golang for all</title>
+    <link>http://localhost:51376/tags/</link>
+    <description>Recent content in Tags on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 20 Dec 2024 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51376/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Aws</title>
+      <link>http://localhost:51376/tags/aws/</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/aws/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Cli</title>
+      <link>http://localhost:51376/tags/cli/</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/cli/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Deploy</title>
+      <link>http://localhost:51376/tags/deploy/</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/deploy/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Function-Url</title>
+      <link>http://localhost:51376/tags/function-url/</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/function-url/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Go</title>
+      <link>http://localhost:51376/tags/go/</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/go/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Lambda</title>
+      <link>http://localhost:51376/tags/lambda/</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/lambda/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Telegram</title>
+      <link>http://localhost:51376/tags/telegram/</link>
+      <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/telegram/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Ai</title>
+      <link>http://localhost:51376/tags/ai/</link>
+      <pubDate>Thu, 19 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/ai/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Bot</title>
+      <link>http://localhost:51376/tags/bot/</link>
+      <pubDate>Thu, 19 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/bot/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Gemini</title>
+      <link>http://localhost:51376/tags/gemini/</link>
+      <pubDate>Thu, 19 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/gemini/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Debugger</title>
+      <link>http://localhost:51376/tags/debugger/</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 -0700</pubDate>
+      <guid>http://localhost:51376/tags/debugger/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Delve</title>
+      <link>http://localhost:51376/tags/delve/</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 -0700</pubDate>
+      <guid>http://localhost:51376/tags/delve/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Docker</title>
+      <link>http://localhost:51376/tags/docker/</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 -0700</pubDate>
+      <guid>http://localhost:51376/tags/docker/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Goland</title>
+      <link>http://localhost:51376/tags/goland/</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 -0700</pubDate>
+      <guid>http://localhost:51376/tags/goland/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Vscode</title>
+      <link>http://localhost:51376/tags/vscode/</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 -0700</pubDate>
+      <guid>http://localhost:51376/tags/vscode/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Ci/Cd</title>
+      <link>http://localhost:51376/tags/ci/cd/</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/ci/cd/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Gitlab</title>
+      <link>http://localhost:51376/tags/gitlab/</link>
+      <pubDate>Wed, 01 Jul 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/gitlab/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Tcp</title>
+      <link>http://localhost:51376/tags/tcp/</link>
+      <pubDate>Tue, 30 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/tcp/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Udp</title>
+      <link>http://localhost:51376/tags/udp/</link>
+      <pubDate>Tue, 30 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/udp/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Compilation</title>
+      <link>http://localhost:51376/tags/compilation/</link>
+      <pubDate>Mon, 29 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/compilation/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Ldflags</title>
+      <link>http://localhost:51376/tags/ldflags/</link>
+      <pubDate>Mon, 29 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/ldflags/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Upx</title>
+      <link>http://localhost:51376/tags/upx/</link>
+      <pubDate>Mon, 29 Jun 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/upx/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Modules</title>
+      <link>http://localhost:51376/tags/modules/</link>
+      <pubDate>Fri, 08 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/modules/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Ssh</title>
+      <link>http://localhost:51376/tags/ssh/</link>
+      <pubDate>Fri, 08 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/ssh/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Vendor</title>
+      <link>http://localhost:51376/tags/vendor/</link>
+      <pubDate>Fri, 08 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/vendor/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Client</title>
+      <link>http://localhost:51376/tags/client/</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/client/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Concurrency</title>
+      <link>http://localhost:51376/tags/concurrency/</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/concurrency/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Http</title>
+      <link>http://localhost:51376/tags/http/</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/http/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Map</title>
+      <link>http://localhost:51376/tags/map/</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/map/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Middleware</title>
+      <link>http://localhost:51376/tags/middleware/</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/middleware/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Server</title>
+      <link>http://localhost:51376/tags/server/</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/server/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Sync.map</title>
+      <link>http://localhost:51376/tags/sync.map/</link>
+      <pubDate>Sat, 02 May 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/sync.map/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Ab</title>
+      <link>http://localhost:51376/tags/ab/</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/ab/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Allocation</title>
+      <link>http://localhost:51376/tags/allocation/</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/allocation/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Benchmark</title>
+      <link>http://localhost:51376/tags/benchmark/</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/benchmark/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Cpu</title>
+      <link>http://localhost:51376/tags/cpu/</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/cpu/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Pprof</title>
+      <link>http://localhost:51376/tags/pprof/</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/pprof/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Profiling</title>
+      <link>http://localhost:51376/tags/profiling/</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/profiling/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Remote</title>
+      <link>http://localhost:51376/tags/remote/</link>
+      <pubDate>Thu, 23 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/remote/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Container</title>
+      <link>http://localhost:51376/tags/container/</link>
+      <pubDate>Tue, 21 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/container/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Dependency</title>
+      <link>http://localhost:51376/tags/dependency/</link>
+      <pubDate>Tue, 21 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/dependency/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Injection</title>
+      <link>http://localhost:51376/tags/injection/</link>
+      <pubDate>Tue, 21 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/injection/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Multiton</title>
+      <link>http://localhost:51376/tags/multiton/</link>
+      <pubDate>Tue, 21 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/multiton/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Singleton</title>
+      <link>http://localhost:51376/tags/singleton/</link>
+      <pubDate>Tue, 21 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/singleton/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Html</title>
+      <link>http://localhost:51376/tags/html/</link>
+      <pubDate>Thu, 09 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/html/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Sources</title>
+      <link>http://localhost:51376/tags/sources/</link>
+      <pubDate>Thu, 09 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/sources/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Templates</title>
+      <link>http://localhost:51376/tags/templates/</link>
+      <pubDate>Thu, 09 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/templates/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Text</title>
+      <link>http://localhost:51376/tags/text/</link>
+      <pubDate>Thu, 09 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/text/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Gorm</title>
+      <link>http://localhost:51376/tags/gorm/</link>
+      <pubDate>Tue, 07 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/gorm/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Postgresql</title>
+      <link>http://localhost:51376/tags/postgresql/</link>
+      <pubDate>Tue, 07 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/postgresql/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Sql</title>
+      <link>http://localhost:51376/tags/sql/</link>
+      <pubDate>Tue, 07 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/sql/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Slice</title>
+      <link>http://localhost:51376/tags/slice/</link>
+      <pubDate>Sat, 04 Apr 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/slice/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Chat</title>
+      <link>http://localhost:51376/tags/chat/</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/chat/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Regular Expressions</title>
+      <link>http://localhost:51376/tags/regular-expressions/</link>
+      <pubDate>Mon, 30 Mar 2020 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51376/tags/regular-expressions/</guid>
+      <description></description>
+    </item>
+  </channel>
+</rss>

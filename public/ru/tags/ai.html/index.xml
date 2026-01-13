@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ai on Golang for all</title>
+    <link>http://localhost:51048/ru/tags/ai.html.html</link>
+    <description>Recent content in Ai on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Thu, 19 Dec 2024 09:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:51048/ru/tags/ai.html/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Создание AI-телеграм бота на Go с Gemini API и AWS Lambda</title>
+      <link>http://localhost:51048/ru/post/go-telegram-gemini-ai-bot.html</link>
+      <pubDate>Thu, 19 Dec 2024 09:00:00 +0300</pubDate>
+      <guid>http://localhost:51048/ru/post/go-telegram-gemini-ai-bot.html</guid>
+      <description>&lt;p&gt;В этой статье мы рассмотрим, как создать интеллектуального Telegram бота на Go, который выступает в роли прокси между пользователями и API Google Gemini. Бот будет выполнять две основные функции: отвечать на сообщения пользователей и генерировать изображения. Хотя этот механизм может быть существенно расширен дополнительными возможностями, такими как генерация голоса и видео, мы сосредоточимся на этих двух типах запросов для простоты.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,767 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=51376&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>Golang regexp: matching newline | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="Why regular expressions with dot (&quot;.&quot;) work differently in Go compared to PHP and JavaScript.
+">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="http://localhost:51376/en/post/golang-regexp-matching-newline.html">
+<meta property="og:title" content="Golang regexp: matching newline | Golang for all">
+<meta property="og:description" content="Why regular expressions with dot (&quot;.&quot;) work differently in Go compared to PHP and JavaScript.
+">
+<meta property="og:image" content="http://localhost:51376/en/post/golang-regexp-matching-newline/regular.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2020-03-30T09:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2020-03-30T09:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Regular Expressions">
+    
+      <meta property="article:tag" content="Sources">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="http://localhost:51376/en/post/golang-regexp-matching-newline.html">
+<meta name="twitter:title" content="Golang regexp: matching newline | Golang for all">
+<meta name="twitter:description" content="Why regular expressions with dot (&quot;.&quot;) work differently in Go compared to PHP and JavaScript.
+">
+<meta name="twitter:image" content="http://localhost:51376/en/post/golang-regexp-matching-newline/regular.svg">
+
+
+
+<link rel="canonical" href="http://localhost:51376/en/post/golang-regexp-matching-newline.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="http://localhost:51376/ru/post/golang-regexp-matching-newline.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+    <link rel="stylesheet" href="/css/main.css">
+
+
+      <script src="/js/main.js"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">Golang regexp: matching newline</h1>
+
+    
+    <p>
+
+
+  March 30, 2020
+
+
+
+            <a href="/tags/regular-expressions/" class="badge">Regular Expressions</a>
+            <a href="/tags/sources/" class="badge">Sources</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/golang-regexp-matching-newline/regular.svg"
+                     alt="Golang regexp: matching newline"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>Why regular expressions with dot (&quot;.&quot;) work differently in Go compared to PHP and JavaScript.</p>
+<p>To enable code syntax highlighting on this website, I use regular expressions. The logic is simple — I put source code into special HTML tags. When a post loads, I process these tags — search for them using regular expressions, and replace the source code with highlighted versions.</p>
+<p>I spent a lot of time trying to understand why some code examples were not matched by regular expressions. I used the dot &ldquo;.&rdquo; special character to match any symbol inside my tag.
+Look at the following regexp and text example and guess if it matches or not:</p>
+<p><strong>Regexp:</strong></p>
+<pre tabindex="0"><code class="language-regexp" data-lang="regexp">&lt;tag&gt;(.*?)&lt;/tag&gt;
+</code></pre><p><strong>Text:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-html" data-lang="html"><span style="display:flex;"><span>&lt;<span style="color:#f92672">tag</span>&gt;1
+</span></span><span style="display:flex;"><span>2
+</span></span><span style="display:flex;"><span>3&lt;/<span style="color:#f92672">tag</span>&gt;
+</span></span></code></pre></div><p>If you have PHP experience, your answer will probably be &ldquo;yes&rdquo;.</p>
+<p>However, a simple example from the Go Playground makes it clear that the answer is actually &ldquo;no&rdquo;:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">match</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">regexp</span>.<span style="color:#a6e22e">MatchString</span>(<span style="color:#e6db74">&#34;&lt;tag&gt;(.*)&lt;/tag&gt;&#34;</span>, <span style="color:#e6db74">&#34;&lt;tag&gt;1\n2\n3&lt;/tag&gt;&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">match</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// false</span>
+</span></span></code></pre></div><p>Then I searched Go sources trying to understand how Go deals with character classes, and I found the following list of flags:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> (
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">FoldCase</span>      <span style="color:#a6e22e">Flags</span> = <span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#66d9ef">iota</span> <span style="color:#75715e">// case-insensitive match</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Literal</span>                         <span style="color:#75715e">// treat pattern as literal string</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ClassNL</span>                         <span style="color:#75715e">// allow character classes like [^a-z] and [[:space:]] to match newline</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">DotNL</span>                           <span style="color:#75715e">// allow . to match newline</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">OneLine</span>                         <span style="color:#75715e">// treat ^ and $ as only matching at beginning and end of text</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">NonGreedy</span>                       <span style="color:#75715e">// make repetition operators default to non-greedy</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">PerlX</span>                           <span style="color:#75715e">// allow Perl extensions</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">UnicodeGroups</span>                   <span style="color:#75715e">// allow \p{Han}, \P{Han} for Unicode group and negation</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">WasDollar</span>                       <span style="color:#75715e">// regexp OpEndText was $, not \z</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Simple</span>                          <span style="color:#75715e">// regexp contains no counted repetition</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">MatchNL</span> = <span style="color:#a6e22e">ClassNL</span> | <span style="color:#a6e22e">DotNL</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Perl</span>        = <span style="color:#a6e22e">ClassNL</span> | <span style="color:#a6e22e">OneLine</span> | <span style="color:#a6e22e">PerlX</span> | <span style="color:#a6e22e">UnicodeGroups</span> <span style="color:#75715e">// as close to Perl as possible</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">POSIX</span> <span style="color:#a6e22e">Flags</span> = <span style="color:#ae81ff">0</span>                                         <span style="color:#75715e">// POSIX syntax</span>
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><p>According to the sources, Go works in the following way:</p>
+<ul>
+<li>It compiles regexp using <code>syntax.Parse</code></li>
+<li><code>syntax.Parse</code> uses Flags to &ldquo;plan&rdquo; regular expression execution (to match regexp symbols to operations)</li>
+<li><code>regexp.Regexp</code> (a public struct) is created using the results of <code>syntax.Parse</code></li>
+</ul>
+<p>So we need to compile the regexp with the <code>DotNL</code> flag.</p>
+<p>When I searched all <code>regexp.Compile</code> function use cases, I found that there were only two regexp flag options available — POSIX and Perl. That means there is no option in Go to match newlines with dot.</p>
+<p>So, the regexp that actually works is below:</p>
+<pre tabindex="0"><code class="language-regexp" data-lang="regexp">&lt;tag&gt;([[:graph:]\\s]*?)&lt;/tag&gt;
+</code></pre><p>There are also a lot of predefined character classes, documented <a href="https://golang.org/pkg/regexp/syntax/">here</a>. I used two of them to cover all characters in the <code>[]</code> brackets.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/regular-expressions/">Regular Expressions</a></li>
+        <li><a href="/tags/sources/">Sources</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;No, unlike PHP and JavaScript&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Yes, just like PHP and JavaScript&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Only in POSIX mode&#34;}],&#34;question&#34;:&#34;In Go, does the dot (.) character in regular expressions match newline characters by default?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;DotNL flag&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;ClassNL flag&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;OneLine flag&#34;}],&#34;question&#34;:&#34;What flag is needed to allow the dot (.) to match newline characters in Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Two: POSIX and Perl&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;One: POSIX only&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Three: POSIX, Perl, and DotNL&#34;}],&#34;question&#34;:&#34;How many regexp flag options are available in Go&#39;s `regexp.Compile` function?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Using character classes like [[:graph:]\\s]&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Using the dot (.) character&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Using \\n explicitly&#34;}],&#34;question&#34;:&#34;What is the recommended regexp pattern to match all characters including newlines in Go?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. In Go, does the dot (.) character in regular expressions match newline characters by default?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            No, unlike PHP and JavaScript
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            Yes, just like PHP and JavaScript
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            Only in POSIX mode
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. What flag is needed to allow the dot (.) to match newline characters in Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            DotNL flag
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            ClassNL flag
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            OneLine flag
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. How many regexp flag options are available in Go&#39;s `regexp.Compile` function?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Two: POSIX and Perl
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            One: POSIX only
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Three: POSIX, Perl, and DotNL
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. What is the recommended regexp pattern to match all characters including newlines in Go?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            Using character classes like [[:graph:]\s]
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Using the dot (.) character
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Using \n explicitly
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 9, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/templates.html" style="text-decoration: none; color: inherit;">GO Templates: Principles and Usage</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/templates.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/templates/lis.svg"
+                   style="max-height: 200px;"
+                   alt="GO Templates: Principles and Usage"/>
+            </a>
+            
+            
+            <p class="card-text"><p>Packages <code>text/template</code> and <code>html/template</code> are part of the Go standard library. Go templates are used in many Go-programmed software — Docker, Kubernetes, Helm. Many third-party libraries are integrated with Go templates, for example Echo. Knowing Go template syntax is very useful.</p>
+<p>This article consists of <code>text/template</code> package documentation and a couple of author&rsquo;s solutions. After describing Go template syntax, we&rsquo;ll dive into <code>text/template</code> and <code>html/template</code> sources.</p></p>
+            
+            <a href="/en/post/templates.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/templates/" class="badge">Templates</a>
+                  <a href="/tags/html/" class="badge">Html</a>
+                  <a href="/tags/text/" class="badge">Text</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 4, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/golang-slice.html" style="text-decoration: none; color: inherit;">Principles of slice type in GO</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/golang-slice.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-slice/gophslice.svg"
+                   style="max-height: 200px;"
+                   alt="Principles of slice type in GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>The Go blog describes how to use slices. Let&rsquo;s take a look at slice internals.</p></p>
+            
+            <a href="/en/post/golang-slice.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/slice/" class="badge">Slice</a>
+                  <a href="/tags/allocation/" class="badge">Allocation</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 2, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/golang-data-handling-concurrent-programs.html" style="text-decoration: none; color: inherit;">Data handling in concurrent programs</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/golang-data-handling-concurrent-programs.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/golang-data-handling-concurrent-programs/kanat.svg"
+                   style="max-height: 200px;"
+                   alt="Data handling in concurrent programs"/>
+            </a>
+            
+            
+            <p class="card-text"><p>In Go, we have goroutines functionality out of the box. We can run code in parallel. However, in our parallel running code we can work with shared variables, and it is not clear how exactly Go handles such situations.</p></p>
+            
+            <a href="/en/post/golang-data-handling-concurrent-programs.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/map/" class="badge">Map</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  April 2, 2020
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/map-principles-golang.html" style="text-decoration: none; color: inherit;">Principles of map type in GO</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/map-principles-golang.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/map-principles-golang/map.svg"
+                   style="max-height: 200px;"
+                   alt="Principles of map type in GO"/>
+            </a>
+            
+            
+            <p class="card-text"><p>The map programming interface in Go is described in the Go blog. We just need to recall that a map is a key-value storage and it should retrieve values by key as fast as possible.</p></p>
+            
+            <a href="/en/post/map-principles-golang.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/map/" class="badge">Map</a>
+                  <a href="/tags/sources/" class="badge">Sources</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/post/golang-regexp-matching-newline.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

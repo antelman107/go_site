@@ -1,0 +1,27 @@
+<div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            {{ if eq .Lang "ru" }}
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            {{ $currentPath := .RelPermalink }}
+            {{ $targetPath := cond (hasPrefix $currentPath "/ru/") (replace $currentPath "/ru/" "/en/") (printf "/en%s" $currentPath) }}
+            <a href='{{ $targetPath }}'>
+            <span class="flag-icon flag-icon-us"></span>
+            </a>
+            {{ else }}
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            {{ $currentPath := .RelPermalink }}
+            {{ $targetPath := cond (hasPrefix $currentPath "/en/") (replace $currentPath "/en/" "/ru/") (printf "/ru%s" $currentPath) }}
+            <a href='{{ $targetPath }}'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            {{ end }}
+        </div>
+
+    </div>
+</div>
