@@ -1,8 +1,8 @@
 +++
-title = 'Как я задеплоил Telegram-бота в AWS забесплатно'
+title = 'Как я задеплоил Telegram-бота c ИИ в AWS забесплатно'
 date = 2026-02-28T12:00:00+03:00
 draft = false
-tags = ['telegram', 'aws', 'lambda', 's3']
+tags = ['telegram', 'aws', 'lambda', 's3', 'ai']
 url = '/ru/post/telegram-bots-zero-cost-aws.html'
 featured_image = 'featured.png'
 

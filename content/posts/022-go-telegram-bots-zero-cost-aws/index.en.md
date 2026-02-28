@@ -1,8 +1,8 @@
 +++
-title = 'How I Deployed a Telegram Bot to AWS for Free'
+title = 'How I Deployed an AI Telegram Bot to AWS for Free'
 date = 2026-02-28T12:00:00+03:00
 draft = false
-tags = ['telegram', 'aws', 'lambda', 's3']
+tags = ['telegram', 'aws', 'lambda', 's3', 'ai']
 url = '/en/post/telegram-bots-zero-cost-aws.html'
 featured_image = 'featured.png'
 
@@ -49,9 +49,9 @@ featured_image = 'featured.png'
 
 For over three years, I have been organizing volleyball games in our Telegram community. At first, we used standard Telegram polls, but the routine kept growing, so I decided to automate the process. That is how an AI-powered organizer bot was born, and the whole architecture is built around it.
 
-In this article, I will explain how this bot is designed, how I deployed it to AWS, and how I brought infrastructure cost down to zero by using AWS Free Tier and optimizing the app architecture. I have several similar bots for personal use and small communities. They all use the same techniques described below.
-
 <!--more-->
+
+In this article, I will explain how this bot is designed, how I deployed it to AWS, and how I brought infrastructure cost down to zero by using AWS Free Tier and optimizing the app architecture. I have several similar bots for personal use and small communities. They all use the same techniques described below.
 
 ![img_1.png](img_1.png)
 
