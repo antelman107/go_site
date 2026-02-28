@@ -1,5 +1,5 @@
 +++
-title = 'How I Deployed a Telegram Bot at Zero Cost'
+title = 'How I Deployed a Telegram Bot to AWS for Free'
 date = 2026-02-28T12:00:00+03:00
 draft = false
 tags = ['telegram', 'aws', 'lambda', 's3']
@@ -52,6 +52,8 @@ For over three years, I have been organizing volleyball games in our Telegram co
 In this article, I will explain how this bot is designed, how I deployed it to AWS, and how I brought infrastructure cost down to zero by using AWS Free Tier and optimizing the app architecture. I have several similar bots for personal use and small communities. They all use the same techniques described below.
 
 <!--more-->
+
+![img_1.png](img_1.png)
 
 ## Organizer Bot Lifecycle
 
@@ -121,10 +123,17 @@ AI is also used in payment recognition. The flow is: someone from the team (usua
 Then AI receives a specialized request: based on the participant list and payment description, it must detect the most likely payer and return a confidence score from `0` to `1`. If confidence is `>= 0.6`, the payment is considered matched: the participant is marked as paid in game data, and the actual paid amount is saved (important because people sometimes underpay or overpay).
 
 One more context detail: if there is an active game poll in a chat, AI always receives full game data in its system prompt.
+For example, the bot can split participants into two teams on request or generate a targeted announcement when needed.
 
 ### Response formatting
 
 One practical detail: models tend to output Markdown by default, but Telegram `MarkdownV2` is fragile and often breaks on unescaped symbols. So I explicitly instruct the model to format replies in HTML (`<b>`, `<i>`, `<code>`), which significantly reduces formatting errors.
+
+### Gemini API pricing
+
+At the moment, `gemini-3-flash-preview` is used in paid tier billing, where cost is calculated mainly by input and output tokens (rough reference: about `$0.50` per 1M input tokens and `$3.00` per 1M output tokens, plus cheaper cached input - a reused part of chat context that is billed at a lower rate). For up-to-date rates and changes, I always rely on Google's official pricing page: [Gemini Developer API Pricing](https://ai.google.dev/gemini-api/docs/pricing).
+
+In my case, monthly AI spending is usually small because requests are relatively infrequent. In many months, usage still fits into the Gemini API free tier for Flash models (Google AI Studio free tier), and paid usage appears mostly during more active periods.
 
 ## Optimizing Telegram Interaction
 
