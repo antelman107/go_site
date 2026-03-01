@@ -67,7 +67,7 @@ Before diving into hosting details, here is a quick overview of what the bot act
 
 3. **Voting:** Participants tap buttons to join the game. AI is not involved at this stage - button clicks only update game state in cloud storage. Since we rent sports halls, the cost is split equally among participants. During voting, the bot recalculates per-person cost, sends updates to the chat, and keeps the main poll message up to date.
 
-4. **Poll checks:** Several times per day, a scheduled task scans upcoming games and checks participant count. Every game has minimum and maximum thresholds. If there are not enough people, the bot asks AI to generate a motivating message. If enough people have joined, it sends a regular reminder. If there are too many participants, it alerts the organizer.
+4. **Poll checks:** Several times per day, a scheduled task scans upcoming games and checks participant count. Every game has minimum and maximum thresholds. If there are  enough people, the bot asks AI to generate a motivating message. If enough people have joined, it sends a regular reminder. If there are too many participants, it alerts the organizer.
 
 5. **Game completion:** After a game ends, if it did not reach the required participant count and was not canceled, the bot sends a thank-you message and reminds participants about payment details.
 
