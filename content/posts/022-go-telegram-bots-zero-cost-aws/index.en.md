@@ -45,6 +45,19 @@ featured_image = 'featured.png'
     [[quiz.questions.answers]]
       text = "Caching the whole S3 bucket in memory"
       correct = false
+
+  [[quiz.questions]]
+    question = "How does the bot store standing group facts (venue, schedule, IBANs)?"
+    type = "single-choice"
+    [[quiz.questions.answers]]
+      text = "As keyed facts in a separate S3 chat-memory file, distinct from recent message history"
+      correct = true
+    [[quiz.questions.answers]]
+      text = "Only inside the last 50 chat messages"
+      correct = false
+    [[quiz.questions.answers]]
+      text = "Hardcoded forever in the system prompt"
+      correct = false
 +++
 
 For over three years, I have been organizing volleyball games in our Telegram community. At first, we used standard Telegram polls, but the routine kept growing, so I decided to automate the process. That is how an AI-powered organizer bot was born, and the whole architecture is built around it.
@@ -59,7 +72,7 @@ In this article, I will explain how this bot is designed, how I deployed it to A
 
 Before diving into hosting details, here is a quick overview of what the bot actually does. Its lifecycle consists of several stages:
 
-1. **Creating a game poll with AI:** In chat, I can send a simple message asking the bot to create a game poll (for example, "let's play on Saturday"). In the system prompt (via Gemini API), the bot already knows where and when we usually play, so even a short hint is enough. It fills in time, location, pricing, and other details automatically, builds a poll-style message with action buttons, and posts it to the same chat/topic.
+1. **Creating a game poll with AI:** In chat, I can send a simple message asking the bot to create a game poll (for example, "let's play on Saturday"). Standing group facts live in long-term chat memory (venue, usual weekdays and time, price, known IBANs), so even a short hint is enough. Gemini fills in the rest from that memory, builds a poll-style message with action buttons, and posts it to the same chat/topic.
 
 ![img.en.png](./img.en.png)
 
@@ -80,7 +93,7 @@ All this logic requires compute, storage, and background jobs. But I wanted the 
 The project is written in **Go** and consists of several components:
 1. **Telegram Webhook Lambda** - the main function that handles incoming Telegram messages and poll button clicks.
 2. **Cron Lambdas** - background jobs (for example, mail polling, pre-game and post-game notifications).
-3. **AWS S3** - bot state storage (game data, participants, message history, and so on).
+3. **AWS S3** - bot state storage (game data, participants, recent message history, and long-term chat memory).
 
 Instead of clicking everything manually in the AWS console or scripting with **AWS CLI**, I used **Terraform**. It lets me define infrastructure as declarative code: Lambdas, Lambda schedules (EventBridge), IAM roles and access policies, and S3 buckets. I maintain two environments: `dev` and `prod`. A full environment can be provisioned from scratch with a single `terraform apply` command in a few minutes.
 
@@ -98,19 +111,49 @@ Communication with the bot works through a Telegram webhook: when a user sends a
 
 AI acts as a router in this bot: based on an incoming message, it determines what the user wants and returns a strictly structured result.
 
-I use prompts for three request types:
-1. **Create a game poll** (date, time, location, limits, price, etc.).
+I use prompts for several request types:
+1. **Create a game poll** (date, time, location, limits, price, etc.), including a batch "new games" variant.
 2. **Modify an existing game** (add/remove participant, mark payment, cancel game, and so on).
 3. **Regular conversation** (when no game action is needed).
+4. **Memory update** (remember or forget a standing group fact).
+5. **No reply** (acknowledgements and other noise the bot should swallow).
 
-For each type, the system prompt defines its own JSON format. AI must return only one of three JSON variants depending on the situation. Then the code parses that JSON into the matching Go structure and decides what to do next: create a game, update a game, or send a regular text reply.
+For each type, the system prompt defines its own JSON format. AI must return only one JSON variant depending on the situation. Then the code parses that JSON into the matching Go structure and decides what to do next: create a game, update a game, persist memory, send a regular text reply, or stay silent.
 
 ### Context and model
 
-AI gets context from the latest 50 bot-related messages in each chat (mentions of the bot username or replies to bot messages). This history is stored in a separate S3 bucket as a JSON array and then decoded into a Gemini-friendly structure.
+AI gets context from the latest 50 bot-related messages in each chat (mentions of the bot username or replies to bot messages). This history is stored in S3 as a JSON array and then decoded into a Gemini-friendly structure. It is a *working window* of the conversation, not a knowledge base: facts in it go stale, and you cannot update or forget a single group rule without rewriting the transcript.
 
 The bot did not always run on Gemini - I originally used ChatGPT. Later I switched to Gemini because Google's offering became more attractive: a free tier for Flash models and a more convenient API.
 Right now the model is `gemini-3-flash-preview`.
+
+### Dynamic chat memory
+
+I used to bake standing group knowledge into the system prompt: indoor venue, Monday and Wednesday at 20:15, default price, known IBANs. That worked for one chat and fell apart as soon as a second group appeared or the hall changed.
+
+Now each Telegram chat has its own long-term memory in S3 (`state/chat_memory.json`), separate from the 50-message window. A fact is a snake_case `key`, human-readable `text` (HTML links are allowed), and `updated_at`. There is a cap of 40 facts per chat; the oldest one is dropped when the limit is hit. Reads and writes reuse the same lazy GET, in-memory mutation queue, and ETag CAS pattern as game state, so an extra JSON file does not blow the S3 quota.
+
+Gemini sees a `CHAT MEMORY` block in every prompt that needs group knowledge: creating and editing games, ordinary replies, payment matching from bank emails, pre-game team variants, and post-game reminders. If the user omits a detail, the model fills it from memory instead of inventing a venue or IBAN. If memory is empty, it uses conservative fallbacks (8-14 players, 20:00, empty location and price).
+
+Memory changes in two ways:
+
+1. **Explicit remember/forget.** If someone writes "запомни", "forget", or "теперь зал вот этот", Gemini returns a `"memory update"` JSON with a short confirmation and a list of `memory_ops`.
+2. **Silent inference.** If it notices a durable group rule while creating a game, or even when no reply is needed, it attaches `memory_ops` to the main JSON (`new game`, `modified game`, `no reply`) and does not send a separate "I remembered" message. One-off votes and one-off payments are not stored.
+
+Operations are only `upsert` and `delete`. The Go handler sanitizes keys, applies the ops to that chat's fact list, and saves once at the end of the Lambda.
+
+```json
+{
+  "type": "memory update",
+  "message": "Got it, I'll remember the beach venue.",
+  "memory_ops": [
+    {"op": "upsert", "key": "beach_location", "text": "Beach volleyball: Kilyos Beach"},
+    {"op": "delete", "key": "old_key"}
+  ]
+}
+```
+
+The original Volleyball #1 chat was bootstrapped with a one-time seed of the old hardcoded defaults. After that, those defaults left the prompt, and the group can change them in chat.
 
 ### More "human" responses
 
@@ -210,4 +253,4 @@ To stay within free limits and reduce S3 calls, I use two main patterns:
 
 Moving bots to a serverless stack fully paid off. Infrastructure on AWS Lambda + S3 + Terraform runs fast, does not require server maintenance, and in my case stays around ~$0 per month.
 
-AI plays a central role in this system: it routes incoming requests (create game, edit game, or regular chat), helps recognize payments from bank notifications with confidence scoring, and makes messages feel more alive through varied generation. Combined with Telegram webhook filtering (`allowed_updates`), idempotent request handling, topic support, and efficient S3 state management (lazy loading + ETag), the bot evolved from a simple "poll button" into an autonomous game organizer assistant.
+AI plays a central role in this system: it routes incoming requests (create game, edit game, remember a fact, or regular chat), helps recognize payments from bank notifications with confidence scoring, and makes messages feel more alive through varied generation. Combined with Telegram webhook filtering (`allowed_updates`), idempotent request handling, topic support, long-term chat memory in S3, and efficient state management (lazy loading + ETag), the bot evolved from a simple "poll button" into an autonomous game organizer assistant.
