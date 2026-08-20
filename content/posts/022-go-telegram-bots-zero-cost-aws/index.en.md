@@ -118,7 +118,7 @@ AWS Lambda has a very generous free tier that is available continuously, not onl
 - **1,000,000 free requests** per month.
 - **400,000 GB-seconds** of compute time per month.
 
-Communication with the bot works through a Telegram webhook: when a user sends a message, Telegram makes an HTTP request to the Function URL, Lambda starts, processes the message, responds, and "goes to sleep" again. With these limits, my function execution cost remains zero. For background tasks, I use **Amazon EventBridge** to trigger Lambdas on schedule.
+Communication with the bot works through a Telegram webhook: when a user sends a message, Telegram makes an HTTP request to the Function URL. Lambda acknowledges the update with `200 OK` right away, then continues the real work on a second invocation with a longer timeout. With these limits, my function execution cost remains zero. For background tasks, I use **Amazon EventBridge** to trigger Lambdas on schedule.
 
 ## How AI Works in My Bot
 
@@ -126,7 +126,7 @@ The webhook chat path is a small agent, not a JSON parser.
 
 For a long time Gemini was a **router**: one `GenerateContent` call, one JSON document (`new game`, `modified game`, `memory update`, `no reply`, or plain HTML). Go parsed that document and did the side effects. Later I switched the same idea to Gemini function calling, but still as a **one-iteration** loop: execute every tool from that single response, then stop. That cannot do "create a poll and sign me up" — the model never sees the new poll `message_id`.
 
-Now chat uses **[Google ADK for Go v2](https://pkg.go.dev/google.golang.org/adk/v2)** (`LlmAgent` + `Runner`). The runner calls Gemini, runs tools against Telegram and S3 immediately, sends the function result back (including the new poll `message_id`), and lets the model call more tools. I cap this at **6** `GenerateContent` rounds so a stuck loop cannot blow the 60s Lambda timeout. Several tool calls in one model response are executed in order.
+Now chat uses **[Google ADK for Go v2](https://pkg.go.dev/google.golang.org/adk/v2)** (`LlmAgent` + `Runner`). The runner calls Gemini, runs tools against Telegram and S3 immediately, sends the function result back (including the new poll `message_id`), and lets the model call more tools. I cap this at **6** `GenerateContent` rounds so a stuck loop cannot blow the **120s** webhook Lambda timeout. Several tool calls in one model response are executed in order.
 
 The agent has five tools:
 
@@ -212,7 +212,13 @@ More details about `allowed_updates` are available in the [official Telegram Bot
 
 Now Telegram filters "noise" on its side, and my function runs only for meaningful events.
 
-Also, keep HTTP status behavior in mind: for Telegram, only `2xx` means successful delivery. If your function returns `4xx/5xx` or times out, Telegram will retry the update many times. That is why the handler should be idempotent and return `200 OK` quickly, otherwise you can easily create a retry loop.
+Also, keep HTTP status behavior in mind: for Telegram, only `2xx` means successful delivery. If your function returns `4xx/5xx` or times out, Telegram will retry the update many times. Telegram waits about **60 seconds** for that HTTP response. An ADK turn with several Gemini rounds plus Telegram API calls can easily exceed that, even though AWS Lambda itself can run much longer.
+
+The Function URL handler therefore does not process the update on the HTTP request. It wraps the Telegram body in a small envelope (`type: telegram-update`) and **asynchronously invokes the same Lambda** (`InvocationTypeEvent`). Then it returns `200 OK` to Telegram immediately. The second invocation is not bound by Telegram's wait: it has a **120 second** timeout, runs the ADK loop, writes S3, and talks to Telegram Bot API. If self-invoke fails, the first invocation falls back to processing inline so updates are not dropped.
+
+That extra invoke still counts as one Lambda request, which is cheap under the 1 million free calls. The IAM role allows `lambda:InvokeFunction` only on this function's own ARN.
+
+The worker still returns `200` after handling (and on invalid Telegram JSON too), so a rare inline fallback never triggers Telegram retries.
 
 At the time I built this bot, the most popular Go Telegram bot library did not support forum topics, while our chat relies on topics heavily. So I forked it and added topic support in my version: [github.com/antelman107/telegram-bot-api](https://github.com/antelman107/telegram-bot-api).
 
