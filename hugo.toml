@@ -17,3 +17,8 @@ defaultContentLanguage = 'en'
   [languages.ru]
     weight = 2
     languageCode = 'ru-ru'
+
+# Hugo >= 0.162 denies HTML content files by default (GHSA-c54g-xjwj-8g82).
+# About pages are trusted .html files under /content; allow them to build.
+[security]
+  allowContent = ['.*']
