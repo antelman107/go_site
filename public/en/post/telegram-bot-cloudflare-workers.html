@@ -97,7 +97,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
 
 
-      <link rel="stylesheet" href="/css/main.min.c70ed306492694511d29f5a3c8b1024c2abc757d096e22287aa107cb031c8c8a.css" integrity="sha256-xw7TBkkmlFEdKfWjyLECTCq8dX0JbiIoeqEHywMcjIo=" crossorigin="anonymous">
+      <link rel="stylesheet" href="/css/main.min.c5ac1465e668c45206c1cce448d1e00c1bd8d1f19c0fb6856806c60b7e04672a.css" integrity="sha256-xawUZeZoxFIGwczkSNHgDBvY0fGcD7aFaAbGC34EZyo=" crossorigin="anonymous">
 
 
         <script src="/js/main.23cd0c7d837263b9eaeb96ee2d9ccfa2969daa3fa00fa1c1fe8701a9b87251a1.js" integrity="sha256-I80MfYNyY7nq65buLZzPopadqj&#43;gD6HB/ocBqbhyUaE=" crossorigin="anonymous"></script>
@@ -218,6 +218,7 @@
 </ol>
 <p>Workers have no one-shot “wake me on 12 September at 15:30”. They also have no zoo of functions: webhook and cron are the same binary with two entrypoints.</p>
 <h2 id="compute-lambda-like-services">Compute: Lambda-like services</h2>
+<div class="table-wrap">
 <table>
   <thead>
       <tr>
@@ -266,6 +267,7 @@
       </tr>
   </tbody>
 </table>
+</div>
 <p>Sources: <a href="https://aws.amazon.com/lambda/pricing/">AWS Lambda pricing</a>, <a href="https://docs.cloud.google.com/free/docs/free-cloud-features">Google Cloud Free Tier</a>, <a href="https://azure.microsoft.com/pricing/details/functions/">Azure Functions pricing</a>, <a href="https://developers.cloudflare.com/workers/platform/pricing/">Workers pricing</a>, <a href="https://developers.cloudflare.com/workers/platform/limits/">Workers limits</a>.</p>
 <p>The three hyperscalers look alike: millions of requests and hundreds of thousands of GB-seconds. That is enough for a small bot. The real difference is <strong>how the runtime wakes up</strong>, and whether the storage free tier expires after a year.</p>
 <h3 id="cold-start">Cold start</h3>
@@ -278,6 +280,7 @@
 <p>Paid at $5 is worth it if you hit the 10 ms CPU cap or 100k requests/day. I have not needed it yet.</p>
 <p>R2 may show up as its own product (<code>R2 Paid</code>) — that is how Cloudflare turns storage billing on. The always-free allowance remains: 10 GB, 1M Class A, 10M Class B. For JSON bot state that is still zero dollars.</p>
 <h2 id="object-storage-s3-and-cousins">Object storage: S3 and cousins</h2>
+<div class="table-wrap">
 <table>
   <thead>
       <tr>
@@ -326,6 +329,7 @@
       </tr>
   </tbody>
 </table>
+</div>
 <p>Sources: <a href="https://aws.amazon.com/s3/pricing/">AWS S3 pricing</a>, <a href="https://docs.cloud.google.com/free/docs/free-cloud-features">GCP Free Tier</a>, <a href="https://azure.microsoft.com/pricing/details/functions/">Azure Functions pricing</a> (storage billed separately), <a href="https://developers.cloudflare.com/r2/pricing/">R2 pricing</a>.</p>
 <p>In the AWS article the S3 bottleneck was <strong>2,000 PUT requests in year one</strong>. Lazy load and a single write at the end of the handler existed because of that. R2 allows <strong>a million Class A operations every month</strong>, always free. A bot that writes a few JSON files per update lives in a different order of magnitude.</p>
 <p>Azure’s catch: the Functions grant <strong>does not cover</strong> the storage account created with every Function App. “Free functions” can still drip Blob charges.</p>

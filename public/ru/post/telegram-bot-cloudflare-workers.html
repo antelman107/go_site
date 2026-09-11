@@ -97,7 +97,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
 
 
-      <link rel="stylesheet" href="/css/main.min.c70ed306492694511d29f5a3c8b1024c2abc757d096e22287aa107cb031c8c8a.css" integrity="sha256-xw7TBkkmlFEdKfWjyLECTCq8dX0JbiIoeqEHywMcjIo=" crossorigin="anonymous">
+      <link rel="stylesheet" href="/css/main.min.c5ac1465e668c45206c1cce448d1e00c1bd8d1f19c0fb6856806c60b7e04672a.css" integrity="sha256-xawUZeZoxFIGwczkSNHgDBvY0fGcD7aFaAbGC34EZyo=" crossorigin="anonymous">
 
 
         <script src="/js/main.23cd0c7d837263b9eaeb96ee2d9ccfa2969daa3fa00fa1c1fe8701a9b87251a1.js" integrity="sha256-I80MfYNyY7nq65buLZzPopadqj&#43;gD6HB/ocBqbhyUaE=" crossorigin="anonymous"></script>
@@ -218,6 +218,7 @@
 </ol>
 <p>One-shot «разбуди меня 12 сентября в 15:30» у Workers нет. Зато нет и отдельного зоопарка функций: webhook и cron — один бинарник, разные входы.</p>
 <h2 id="compute-lambda-подобные-сервисы">Compute: Lambda-подобные сервисы</h2>
+<div class="table-wrap">
 <table>
   <thead>
       <tr>
@@ -266,6 +267,7 @@
       </tr>
   </tbody>
 </table>
+</div>
 <p>Источники: <a href="https://aws.amazon.com/lambda/pricing/">AWS Lambda pricing</a>, <a href="https://docs.cloud.google.com/free/docs/free-cloud-features">Google Cloud Free Tier</a>, <a href="https://azure.microsoft.com/pricing/details/functions/">Azure Functions pricing</a>, <a href="https://developers.cloudflare.com/workers/platform/pricing/">Workers pricing</a>, <a href="https://developers.cloudflare.com/workers/platform/limits/">Workers limits</a>.</p>
 <p>Три больших облака устроены похоже: миллионы запросов и сотни тысяч GB-секунд. Этого хватает маленькому боту. Разница не в «влезу / не влезу», а в <strong>как просыпается рантайм</strong> и не кончится ли бесплатность через год.</p>
 <h3 id="холодный-старт">Холодный старт</h3>
@@ -278,6 +280,7 @@
 <p>Paid за $5 имеет смысл, если упрётесь в 10 ms CPU или 100k запросов в день. Мне пока не нужен.</p>
 <p>R2 в подписках может отображаться как отдельный продукт (<code>R2 Paid</code>) — так Cloudflare включает биллинг хранилища. Always-free квота при этом остаётся: 10 ГБ, 1 млн Class A, 10 млн Class B. Для JSON-стейта бота это по-прежнему ноль долларов.</p>
 <h2 id="object-storage-s3-и-аналоги">Object storage: S3 и аналоги</h2>
+<div class="table-wrap">
 <table>
   <thead>
       <tr>
@@ -326,6 +329,7 @@
       </tr>
   </tbody>
 </table>
+</div>
 <p>Источники: <a href="https://aws.amazon.com/s3/pricing/">AWS S3 pricing</a>, <a href="https://docs.cloud.google.com/free/docs/free-cloud-features">GCP Free Tier</a>, <a href="https://azure.microsoft.com/pricing/details/functions/">Azure Functions pricing</a> (storage billed separately), <a href="https://developers.cloudflare.com/r2/pricing/">R2 pricing</a>.</p>
 <p>В прошлой статье узким местом S3 были <strong>2 000 PUT в первый год</strong>. Ленивая загрузка и запись только в конце запроса как раз про это. На R2 лимит записи — <strong>миллион Class A в месяц</strong>, always free. Для бота, который пишет несколько JSON-файлов на апдейт, это другой порядок.</p>
 <p>Второй сюрприз Azure: grant Functions <strong>не покрывает</strong> storage account, который создаётся вместе с Function App. «Бесплатные лямбды» легко начинают капать из-за Blob.</p>
