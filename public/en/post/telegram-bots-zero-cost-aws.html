@@ -179,6 +179,7 @@
     <li><a href="#how-ai-works-in-my-bot">How AI Works in My Bot</a>
       <ul>
         <li><a href="#context-and-model">Context and model</a></li>
+        <li><a href="#dynamic-chat-memory">Dynamic chat memory</a></li>
         <li><a href="#more-human-responses">More &ldquo;human&rdquo; responses</a></li>
         <li><a href="#ai-for-payment-recognition">AI for payment recognition</a></li>
         <li><a href="#response-formatting">Response formatting</a></li>
@@ -215,7 +216,7 @@
 <h2 id="organizer-bot-lifecycle">Organizer Bot Lifecycle</h2>
 <p>Before diving into hosting details, here is a quick overview of what the bot actually does. Its lifecycle consists of several stages:</p>
 <ol>
-<li><strong>Creating a game poll with AI:</strong> In chat, I can send a simple message asking the bot to create a game poll (for example, &ldquo;let&rsquo;s play on Saturday&rdquo;). In the system prompt (via Gemini API), the bot already knows where and when we usually play, so even a short hint is enough. It fills in time, location, pricing, and other details automatically, builds a poll-style message with action buttons, and posts it to the same chat/topic.</li>
+<li><strong>Creating a game poll with AI:</strong> In chat, I can send a simple message asking the bot to create a game poll (for example, &ldquo;let&rsquo;s play on Saturday&rdquo;). Standing group facts live in long-term chat memory (venue, usual weekdays and time, price, known IBANs), so even a short hint is enough. Gemini fills in the rest from that memory, builds a poll-style message with action buttons, and posts it to the same chat/topic.</li>
 </ol>
 <p><img src="/en/post/telegram-bots-zero-cost-aws/img.en.png" alt="img.en.png"></p>
 <ol start="2">
@@ -241,7 +242,7 @@
 <ol>
 <li><strong>Telegram Webhook Lambda</strong> - the main function that handles incoming Telegram messages and poll button clicks.</li>
 <li><strong>Cron Lambdas</strong> - background jobs (for example, mail polling, pre-game and post-game notifications).</li>
-<li><strong>AWS S3</strong> - bot state storage (game data, participants, message history, and so on).</li>
+<li><strong>AWS S3</strong> - bot state storage (game data, participants, recent message history, and long-term chat memory).</li>
 </ol>
 <p>Instead of clicking everything manually in the AWS console or scripting with <strong>AWS CLI</strong>, I used <strong>Terraform</strong>. It lets me define infrastructure as declarative code: Lambdas, Lambda schedules (EventBridge), IAM roles and access policies, and S3 buckets. I maintain two environments: <code>dev</code> and <code>prod</code>. A full environment can be provisioned from scratch with a single <code>terraform apply</code> command in a few minutes.</p>
 <h2 id="aws-lambda-instead-of-a-persistent-server">AWS Lambda Instead of a Persistent Server</h2>
@@ -251,20 +252,36 @@
 <li><strong>1,000,000 free requests</strong> per month.</li>
 <li><strong>400,000 GB-seconds</strong> of compute time per month.</li>
 </ul>
-<p>Communication with the bot works through a Telegram webhook: when a user sends a message, Telegram makes an HTTP request to the Function URL, Lambda starts, processes the message, responds, and &ldquo;goes to sleep&rdquo; again. With these limits, my function execution cost remains zero. For background tasks, I use <strong>Amazon EventBridge</strong> to trigger Lambdas on schedule.</p>
+<p>Communication with the bot works through a Telegram webhook: when a user sends a message, Telegram makes an HTTP request to the Function URL. Lambda acknowledges the update with <code>200 OK</code> right away, then continues the real work on a second invocation with a longer timeout. With these limits, my function execution cost remains zero. For background tasks, I use <strong>Amazon EventBridge</strong> to trigger Lambdas on schedule.</p>
 <h2 id="how-ai-works-in-my-bot">How AI Works in My Bot</h2>
-<p>AI acts as a router in this bot: based on an incoming message, it determines what the user wants and returns a strictly structured result.</p>
-<p>I use prompts for three request types:</p>
+<p>The webhook chat path is a small agent, not a JSON parser.</p>
+<p>For a long time Gemini was a <strong>router</strong>: one <code>GenerateContent</code> call, one JSON document (<code>new game</code>, <code>modified game</code>, <code>memory update</code>, <code>no reply</code>, or plain HTML). Go parsed that document and did the side effects. Later I switched the same idea to Gemini function calling, but still as a <strong>one-iteration</strong> loop: execute every tool from that single response, then stop. That cannot do &ldquo;create a poll and sign me up&rdquo; — the model never sees the new poll <code>message_id</code>.</p>
+<p>Now chat uses <strong><a href="https://pkg.go.dev/google.golang.org/adk/v2">Google ADK for Go v2</a></strong> (<code>LlmAgent</code> + <code>Runner</code>). The runner calls Gemini, runs tools against Telegram and S3 immediately, sends the function result back (including the new poll <code>message_id</code>), and lets the model call more tools. I cap this at <strong>6</strong> <code>GenerateContent</code> rounds so a stuck loop cannot blow the <strong>120s</strong> webhook Lambda timeout. Several tool calls in one model response are executed in order.</p>
+<p>The agent has five tools:</p>
 <ol>
-<li><strong>Create a game poll</strong> (date, time, location, limits, price, etc.).</li>
-<li><strong>Modify an existing game</strong> (add/remove participant, mark payment, cancel game, and so on).</li>
-<li><strong>Regular conversation</strong> (when no game action is needed).</li>
+<li><strong><code>create_game</code></strong> — post one volleyball poll to Telegram, store it in S3, return <code>message_id</code>. Call once per game; several calls schedule a week.</li>
+<li><strong><code>update_game</code></strong> — patch one existing poll (<code>message_id</code> required): full participant list after the change, cancel/uncancel, paid flags, time, venue. Call once per game you change. After <code>create_game</code>, the next round can <code>update_game</code> the returned <code>message_id</code> (for example to sign the requester up).</li>
+<li><strong><code>upsert_memory</code></strong> — persist a standing group fact (venue, weekly schedule, default price/time, known IBAN, nickname). Not for one-off votes or this match&rsquo;s roster.</li>
+<li><strong><code>delete_memory</code></strong> — forget a fact by the existing CHAT MEMORY <code>key</code>.</li>
+<li><strong><code>send_reply</code></strong> — one Telegram HTML message covering the whole turn. At most once, and only after create/update/memory tools. Skip it for pure reactions.</li>
 </ol>
-<p>For each type, the system prompt defines its own JSON format. AI must return only one of three JSON variants depending on the situation. Then the code parses that JSON into the matching Go structure and decides what to do next: create a game, update a game, or send a regular text reply.</p>
+<p>No tools and no text means swallow the update. If the model still answers with a JSON blob or plain HTML instead of tools, that path is kept as a fallback.</p>
+<p>Scheduled Lambdas (payment matching, unpaid reminders, team variants, &ldquo;human&rdquo; post-game texts) still use a single <code>GenerateContent</code> JSON/text call. They do not need a multi-step Telegram loop.</p>
 <h3 id="context-and-model">Context and model</h3>
-<p>AI gets context from the latest 50 bot-related messages in each chat (mentions of the bot username or replies to bot messages). This history is stored in a separate S3 bucket as a JSON array and then decoded into a Gemini-friendly structure.</p>
+<p>AI gets context from the latest 50 bot-related messages in each chat (mentions of the bot username or replies to bot messages). This history is stored in S3 as a JSON array, decoded into Gemini content, and <strong>seeded into an in-memory ADK session</strong> for that Lambda invocation. It is a <em>working window</em> of the conversation, not a knowledge base: facts in it go stale, and you cannot update or forget a single group rule without rewriting the transcript.</p>
 <p>The bot did not always run on Gemini - I originally used ChatGPT. Later I switched to Gemini because Google&rsquo;s offering became more attractive: a free tier for Flash models and a more convenient API.
 Right now the model is <code>gemini-3-flash-preview</code>.</p>
+<h3 id="dynamic-chat-memory">Dynamic chat memory</h3>
+<p>I used to bake standing group knowledge into the system prompt: indoor venue, Monday and Wednesday at 20:15, default price, known IBANs. That worked for one chat and fell apart as soon as a second group appeared or the hall changed.</p>
+<p>Now each Telegram chat has its own long-term memory in S3 (<code>state/chat_memory.json</code>), separate from the 50-message window. A fact is a snake_case <code>key</code>, human-readable <code>text</code> (HTML links are allowed), and <code>updated_at</code>. There is a cap of 40 facts per chat; the oldest one is dropped when the limit is hit. Reads and writes reuse the same lazy GET, in-memory mutation queue, and ETag CAS pattern as game state, so an extra JSON file does not blow the S3 quota.</p>
+<p>Gemini sees a <code>CHAT MEMORY</code> block in every prompt that needs group knowledge: creating and editing games, ordinary replies, payment matching from bank emails, pre-game team variants, and post-game reminders. If the user omits a detail, the model fills it from memory instead of inventing a venue or IBAN. If memory is empty, it uses conservative fallbacks (8-14 players, 20:00, empty location and price).</p>
+<p>Memory changes through the same ADK tools, not through a separate JSON type:</p>
+<ol>
+<li><strong>Explicit remember/forget.</strong> If someone writes &ldquo;запомни&rdquo;, &ldquo;forget&rdquo;, or &ldquo;теперь зал вот этот&rdquo;, the model calls <code>upsert_memory</code> or <code>delete_memory</code> and may <code>send_reply</code> with a short confirmation.</li>
+<li><strong>Silent inference.</strong> If it notices a durable group rule while creating a game, it can call <code>upsert_memory</code> in the same turn without a separate &ldquo;I remembered&rdquo; message. One-off votes and one-off payments are not stored.</li>
+</ol>
+<p>The Go handler sanitizes keys, applies the ops to that chat&rsquo;s fact list, and saves once at the end of the Lambda.</p>
+<p>The original Volleyball #1 chat was bootstrapped with a one-time seed of the old hardcoded defaults. After that, those defaults left the prompt, and the group can change them in chat.</p>
 <h3 id="more-human-responses">More &ldquo;human&rdquo; responses</h3>
 <p>To avoid robotic replies, different Lambda functions generate varied texts from templates. For example, after a game ends, the bot sends a summary message and sometimes adds a short joke (usually not very funny).</p>
 <h3 id="ai-for-payment-recognition">AI for payment recognition</h3>
@@ -291,7 +308,10 @@ For example, the bot can split participants into two teams on request or generat
 </span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
 </span></span></code></pre></div><p>More details about <code>allowed_updates</code> are available in the <a href="https://core.telegram.org/bots/api#setwebhook">official Telegram Bot API docs</a>.</p>
 <p>Now Telegram filters &ldquo;noise&rdquo; on its side, and my function runs only for meaningful events.</p>
-<p>Also, keep HTTP status behavior in mind: for Telegram, only <code>2xx</code> means successful delivery. If your function returns <code>4xx/5xx</code> or times out, Telegram will retry the update many times. That is why the handler should be idempotent and return <code>200 OK</code> quickly, otherwise you can easily create a retry loop.</p>
+<p>Also, keep HTTP status behavior in mind: for Telegram, only <code>2xx</code> means successful delivery. If your function returns <code>4xx/5xx</code> or times out, Telegram will retry the update many times. Telegram waits about <strong>60 seconds</strong> for that HTTP response. An ADK turn with several Gemini rounds plus Telegram API calls can easily exceed that, even though AWS Lambda itself can run much longer.</p>
+<p>The Function URL handler therefore does not process the update on the HTTP request. It wraps the Telegram body in a small envelope (<code>type: telegram-update</code>) and <strong>asynchronously invokes the same Lambda</strong> (<code>InvocationTypeEvent</code>). Then it returns <code>200 OK</code> to Telegram immediately. The second invocation is not bound by Telegram&rsquo;s wait: it has a <strong>120 second</strong> timeout, runs the ADK loop, writes S3, and talks to Telegram Bot API. If self-invoke fails, the first invocation falls back to processing inline so updates are not dropped.</p>
+<p>That extra invoke still counts as one Lambda request, which is cheap under the 1 million free calls. The IAM role allows <code>lambda:InvokeFunction</code> only on this function&rsquo;s own ARN.</p>
+<p>The worker still returns <code>200</code> after handling (and on invalid Telegram JSON too), so a rare inline fallback never triggers Telegram retries.</p>
 <p>At the time I built this bot, the most popular Go Telegram bot library did not support forum topics, while our chat relies on topics heavily. So I forked it and added topic support in my version: <a href="https://github.com/antelman107/telegram-bot-api">github.com/antelman107/telegram-bot-api</a>.</p>
 <h3 id="2-privacy-mode">2. Privacy Mode</h3>
 <p>Many users add bots to group chats. Without proper configuration, a bot can receive updates for <em>every</em> message posted by anyone in the group. This can burn through your Lambda quota very quickly.</p>
@@ -334,7 +354,7 @@ When state changes in memory, the bot does not immediately write to S3. Save hap
 </ol>
 <h2 id="conclusion">Conclusion</h2>
 <p>Moving bots to a serverless stack fully paid off. Infrastructure on AWS Lambda + S3 + Terraform runs fast, does not require server maintenance, and in my case stays around ~$0 per month.</p>
-<p>AI plays a central role in this system: it routes incoming requests (create game, edit game, or regular chat), helps recognize payments from bank notifications with confidence scoring, and makes messages feel more alive through varied generation. Combined with Telegram webhook filtering (<code>allowed_updates</code>), idempotent request handling, topic support, and efficient S3 state management (lazy loading + ETag), the bot evolved from a simple &ldquo;poll button&rdquo; into an autonomous game organizer assistant.</p>
+<p>AI plays a central role in this system: Google ADK drives chat with real tools (<code>create_game</code>, <code>update_game</code>, <code>upsert_memory</code>, <code>delete_memory</code>, <code>send_reply</code>), payment matching still uses a scored JSON call, and scheduled Lambdas keep messages from sounding robotic. Combined with Telegram webhook filtering (<code>allowed_updates</code>), idempotent request handling, topic support, long-term chat memory in S3, and efficient state management (lazy loading + ETag), the bot evolved from a simple &ldquo;poll button&rdquo; into an autonomous game organizer assistant.</p>
     
   <div>
     <div>Tags:</div>
@@ -353,7 +373,7 @@ When state changes in memory, the bot does not immediately write to S3. Save hap
   <hr class="mb-4">
   <h3 class="mb-4">Test Your Knowledge</h3>
   
-  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;1 million requests&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;100 thousand requests&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Unlimited&#34;}],&#34;question&#34;:&#34;How many free requests does AWS Lambda Free Tier provide per month?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Set the allowed_updates parameter when registering the webhook&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Configure filters in AWS API Gateway&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Enable Privacy Mode&#34;}],&#34;question&#34;:&#34;How do you make a Telegram webhook send only required events?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Lazy initialization (read only when needed)&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Optimistic locking and save batching&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Caching the whole S3 bucket in memory&#34;}],&#34;question&#34;:&#34;Which patterns help minimize the number of AWS S3 requests?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;}]}">
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;1 million requests&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;100 thousand requests&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Unlimited&#34;}],&#34;question&#34;:&#34;How many free requests does AWS Lambda Free Tier provide per month?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Set the allowed_updates parameter when registering the webhook&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Configure filters in AWS API Gateway&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Enable Privacy Mode&#34;}],&#34;question&#34;:&#34;How do you make a Telegram webhook send only required events?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Lazy initialization (read only when needed)&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Optimistic locking and save batching&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Caching the whole S3 bucket in memory&#34;}],&#34;question&#34;:&#34;Which patterns help minimize the number of AWS S3 requests?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;As keyed facts in a separate S3 chat-memory file, distinct from recent message history&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Only inside the last 50 chat messages&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Hardcoded forever in the system prompt&#34;}],&#34;question&#34;:&#34;How does the bot store standing group facts (venue, schedule, IBANs)?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Google ADK LlmAgent with tools that run against Telegram and S3, then feed results back for more rounds&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;One JSON object per message, parsed once in Go, with no tool results returned to the model&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Native Telegram Bot API slash commands only&#34;}],&#34;question&#34;:&#34;How does the webhook chat path act on a user message?&#34;,&#34;type&#34;:&#34;single-choice&#34;}]}">
     
     <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
       <h5 class="mb-3">1. How many free requests does AWS Lambda Free Tier provide per month?</h5>
@@ -467,6 +487,86 @@ When state changes in memory, the bot does not immediately write to S3. Save hap
                  id="q2-a2">
           <label class="form-check-label" for="q2-a2">
             Caching the whole S3 bucket in memory
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="3">
+      <h5 class="mb-3">4. How does the bot store standing group facts (venue, schedule, IBANs)?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="0"
+                 id="q3-a0">
+          <label class="form-check-label" for="q3-a0">
+            As keyed facts in a separate S3 chat-memory file, distinct from recent message history
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="1"
+                 id="q3-a1">
+          <label class="form-check-label" for="q3-a1">
+            Only inside the last 50 chat messages
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-3" 
+                 value="2"
+                 id="q3-a2">
+          <label class="form-check-label" for="q3-a2">
+            Hardcoded forever in the system prompt
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="4">
+      <h5 class="mb-3">5. How does the webhook chat path act on a user message?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="0"
+                 id="q4-a0">
+          <label class="form-check-label" for="q4-a0">
+            Google ADK LlmAgent with tools that run against Telegram and S3, then feed results back for more rounds
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="1"
+                 id="q4-a1">
+          <label class="form-check-label" for="q4-a1">
+            One JSON object per message, parsed once in Go, with no tool results returned to the model
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-4" 
+                 value="2"
+                 id="q4-a2">
+          <label class="form-check-label" for="q4-a2">
+            Native Telegram Bot API slash commands only
           </label>
         </div>
         

@@ -186,7 +186,7 @@
     <li><a href="#compute-lambda-like-services">Compute: Lambda-like services</a>
       <ul>
         <li><a href="#cold-start">Cold start</a></li>
-        <li><a href="#honest-note-on-the-workers-free-plan">Honest note on the Workers Free plan</a></li>
+        <li><a href="#this-bot-runs-on-workers-free">This bot runs on Workers Free</a></li>
       </ul>
     </li>
     <li><a href="#object-storage-s3-and-cousins">Object storage: S3 and cousins</a></li>
@@ -271,14 +271,12 @@
 <h3 id="cold-start">Cold start</h3>
 <p>Classic Lambda boots a micro-VM, pulls a runtime, then your zip/image. For Go on <code>provided.al2023</code> that is usually <strong>hundreds of milliseconds</strong>. GCP Gen2 is closer to Cloud Run: better than first-gen Functions, still a container cold start. Azure Consumption is the worst of the four: after idle, the first request often lands in seconds.</p>
 <p>Workers are not containers. They are <strong>V8 isolates</strong>. Cloudflare’s startup limit is one second; my Wasm worker actually started in <strong>16–37 ms</strong>. Warm isolates are faster still. For a chat bot that matters more than the “1 million requests” row: people notice a pause, not GB-seconds.</p>
-<p>Billing is different too. While the Worker waits on Gemini, wall-clock passes and <strong>CPU barely moves</strong>. Lambda charges for the whole time the function is alive. Workers Paid counts CPU-ms, not seconds spent waiting on HTTP.</p>
-<h3 id="honest-note-on-the-workers-free-plan">Honest note on the Workers Free plan</h3>
-<p>Workers Free is generous on <strong>request count</strong> (100k/day is more than always-free Lambda). It does not fit this bot:</p>
-<ul>
-<li>Free worker size is <strong>3 MB</strong>; my Wasm gzip is ~8 MB;</li>
-<li><strong>10 ms CPU</strong> per invocation is not enough for Go Wasm + Gemini.</li>
-</ul>
-<p>So production runs on <strong>Workers Paid at $5 / month</strong>: 10 million requests and usable CPU. That is still cheaper than a VPS, and more predictable than “free until the 12-month clock runs out”. The <strong>R2 free tier stays</strong>.</p>
+<p>Billing is different too. While the Worker waits on Gemini, wall-clock passes and <strong>CPU barely moves</strong>. Lambda charges for the whole time the function is alive. Workers count CPU time, not seconds spent waiting on HTTP.</p>
+<h3 id="this-bot-runs-on-workers-free">This bot runs on Workers Free</h3>
+<p>Workers Free is generous on <strong>request count</strong>: 100k/day is already more than always-free Lambda (1M/month). Since 4 September 2026, Free and Paid share one size limit: <strong>64 MiB uncompressed</strong>. My Go Wasm is about 39 MiB <code>Total Upload</code>, so it deploys without an upgrade.</p>
+<p><strong>10 ms CPU</strong> per Free invocation sounds tight for a Gemini bot, but waiting on HTTP barely burns CPU. While the model thinks, the isolate is idle on the network. Production for this bot stays on <strong>Workers Free</strong>: Subscriptions shows <code>Workers Free</code>, not <code>$5/month</code>.</p>
+<p>Paid at $5 is worth it if you hit the 10 ms CPU cap or 100k requests/day. I have not needed it yet.</p>
+<p>R2 may show up as its own product (<code>R2 Paid</code>) — that is how Cloudflare turns storage billing on. The always-free allowance remains: 10 GB, 1M Class A, 10M Class B. For JSON bot state that is still zero dollars.</p>
 <h2 id="object-storage-s3-and-cousins">Object storage: S3 and cousins</h2>
 <table>
   <thead>
@@ -348,7 +346,7 @@
 <li><strong>AWS</strong> — strong always-free Lambda and familiar S3, but S3 generosity lasts a year, and Go Lambda cold start is noticeable.</li>
 <li><strong>GCP</strong> — more free function invocations; always-free storage only in three US regions.</li>
 <li><strong>Azure</strong> — similar Functions grant, Blob is extra, Consumption cold start is often the longest.</li>
-<li><strong>Cloudflare Workers</strong> — shortest start of the four (isolates; 16–37 ms on my deploy). The Free plan is strong on requests; a heavy Go Wasm worker needs Paid at $5. <strong>R2</strong> is the best always-free object tier: 10 GB, a million writes, ten million reads, no egress.</li>
+<li><strong>Cloudflare Workers</strong> — shortest start of the four (isolates; 16–37 ms on my deploy). The Free plan covers both requests and, since September 2026, a large Wasm bundle. <strong>R2</strong> is the best always-free object tier: 10 GB, a million writes, ten million reads, no egress.</li>
 </ul>
 <p>I parked this bot on Workers + R2. Not because AWS stopped being free, but because the first update after a pause no longer waits for Lambda to wake up.</p>
     
