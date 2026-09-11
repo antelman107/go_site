@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Workers on Golang for all</title>
+    <link>https://golangforall.com/ru/tags/workers/</link>
+    <description>Recent content in Workers on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Fri, 11 Sep 2026 23:00:00 +0300</lastBuildDate>
+    <atom:link href="https://golangforall.com/ru/tags/workers/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>С AWS на Cloudflare Workers: сравнение бесплатных тиров и холодного старта</title>
+      <link>https://golangforall.com/ru/post/telegram-bot-cloudflare-workers.html</link>
+      <pubDate>Fri, 11 Sep 2026 23:00:00 +0300</pubDate>
+      <guid>https://golangforall.com/ru/post/telegram-bot-cloudflare-workers.html</guid>
+      <description>&lt;p&gt;В &lt;a href=&#34;https://golangforall.com/ru/post/telegram-bots-zero-cost-aws.html&#34;&gt;прошлой статье&lt;/a&gt; я рассказывал, как уложил Telegram-бота-организатора волейбольных игр в AWS Free Tier: Lambda + S3 + EventBridge и счёт около нуля долларов. Схема жила месяцами. Потом я перенёс того же бота на &lt;strong&gt;Cloudflare Workers&lt;/strong&gt; и &lt;strong&gt;R2&lt;/strong&gt; — тот же Go, те же JSON-файлы стейта, тот же Gemini.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

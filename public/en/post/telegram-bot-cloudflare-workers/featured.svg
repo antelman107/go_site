@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 280" role="img" aria-label="Cold start comparison">
+  <rect width="720" height="280" fill="#0f172a"/>
+  <text x="36" y="42" fill="#e2e8f0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700">Cold start</text>
+  <text x="36" y="68" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">Lambda-like compute, typical first request</text>
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#cbd5e1">
+    <text x="36" y="118">Azure Functions</text>
+    <rect x="200" y="102" width="460" height="22" rx="4" fill="#7f1d1d"/>
+    <text x="670" y="118" text-anchor="end" fill="#fecaca">seconds</text>
+    <text x="36" y="158">GCP Functions</text>
+    <rect x="200" y="142" width="280" height="22" rx="4" fill="#9a3412"/>
+    <text x="490" y="158" fill="#fed7aa">hundreds of ms</text>
+    <text x="36" y="198">AWS Lambda</text>
+    <rect x="200" y="182" width="220" height="22" rx="4" fill="#a16207"/>
+    <text x="430" y="198" fill="#fde68a">hundreds of ms</text>
+    <text x="36" y="238">CF Workers</text>
+    <rect x="200" y="222" width="36" height="22" rx="4" fill="#0f766e"/>
+    <text x="246" y="238" fill="#99f6e4">tens of ms</text>
+  </g>
+</svg>

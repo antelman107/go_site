@@ -1,0 +1,831 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>From AWS Lambda to Cloudflare Workers: free tiers and cold starts | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="In the previous article I described how I fitted a Telegram volleyball organizer bot into the AWS Free Tier: Lambda &#43; S3 &#43; EventBridge, at about zero dollars. …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://golangforall.com/en/post/telegram-bot-cloudflare-workers.html">
+<meta property="og:title" content="From AWS Lambda to Cloudflare Workers: free tiers and cold starts | Golang for all">
+<meta property="og:description" content="In the previous article I described how I fitted a Telegram volleyball organizer bot into the AWS Free Tier: Lambda &#43; S3 &#43; EventBridge, at about zero dollars. …">
+<meta property="og:image" content="https://golangforall.com/en/post/telegram-bot-cloudflare-workers/featured.svg">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2026-09-11T23:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2026-09-11T23:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Telegram">
+    
+      <meta property="article:tag" content="Aws">
+    
+      <meta property="article:tag" content="Lambda">
+    
+      <meta property="article:tag" content="S3">
+    
+      <meta property="article:tag" content="Cloudflare">
+    
+      <meta property="article:tag" content="Workers">
+    
+      <meta property="article:tag" content="R2">
+    
+      <meta property="article:tag" content="Go">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://golangforall.com/en/post/telegram-bot-cloudflare-workers.html">
+<meta name="twitter:title" content="From AWS Lambda to Cloudflare Workers: free tiers and cold starts | Golang for all">
+<meta name="twitter:description" content="In the previous article I described how I fitted a Telegram volleyball organizer bot into the AWS Free Tier: Lambda &#43; S3 &#43; EventBridge, at about zero dollars. …">
+<meta name="twitter:image" content="https://golangforall.com/en/post/telegram-bot-cloudflare-workers/featured.svg">
+
+
+
+<link rel="canonical" href="https://golangforall.com/en/post/telegram-bot-cloudflare-workers.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="https://golangforall.com/ru/post/telegram-bot-cloudflare-workers.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+      <link rel="stylesheet" href="/css/main.min.c70ed306492694511d29f5a3c8b1024c2abc757d096e22287aa107cb031c8c8a.css" integrity="sha256-xw7TBkkmlFEdKfWjyLECTCq8dX0JbiIoeqEHywMcjIo=" crossorigin="anonymous">
+
+
+        <script src="/js/main.23cd0c7d837263b9eaeb96ee2d9ccfa2969daa3fa00fa1c1fe8701a9b87251a1.js" integrity="sha256-I80MfYNyY7nq65buLZzPopadqj&#43;gD6HB/ocBqbhyUaE=" crossorigin="anonymous"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">From AWS Lambda to Cloudflare Workers: free tiers and cold starts</h1>
+
+    
+    <p>
+
+
+  September 11, 2026
+
+
+
+            <a href="/tags/telegram/" class="badge">Telegram</a>
+            <a href="/tags/aws/" class="badge">Aws</a>
+            <a href="/tags/lambda/" class="badge">Lambda</a>
+            <a href="/tags/s3/" class="badge">S3</a>
+            <a href="/tags/cloudflare/" class="badge">Cloudflare</a>
+            <a href="/tags/workers/" class="badge">Workers</a>
+            <a href="/tags/r2/" class="badge">R2</a>
+            <a href="/tags/go/" class="badge">Go</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/telegram-bot-cloudflare-workers/featured.svg"
+                     alt="From AWS Lambda to Cloudflare Workers: free tiers and cold starts"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Contents</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#same-bot-different-runtime">Same bot, different runtime</a></li>
+    <li><a href="#compute-lambda-like-services">Compute: Lambda-like services</a>
+      <ul>
+        <li><a href="#cold-start">Cold start</a></li>
+        <li><a href="#honest-note-on-the-workers-free-plan">Honest note on the Workers Free plan</a></li>
+      </ul>
+    </li>
+    <li><a href="#object-storage-s3-and-cousins">Object storage: S3 and cousins</a></li>
+    <li><a href="#what-the-migration-actually-changed">What the migration actually changed</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>In the <a href="/en/post/telegram-bots-zero-cost-aws.html">previous article</a> I described how I fitted a Telegram volleyball organizer bot into the AWS Free Tier: Lambda + S3 + EventBridge, at about zero dollars. That setup ran for months. Then I moved the same bot to <strong>Cloudflare Workers</strong> and <strong>R2</strong> — the same Go, the same JSON state files, the same Gemini router.</p>
+<p>Why touch something that was already free? <strong>Cold start.</strong> A Lambda on the <code>provided.al2023</code> custom runtime wakes up in hundreds of milliseconds after idle time, sometimes more than a second. You feel that on a Telegram webhook: the first update after a quiet stretch is slower than the next one. A Workers isolate comes up in <strong>tens of milliseconds</strong>. On a real deploy of this bot, Wrangler reported Worker Startup Time of <strong>16–37 ms</strong>.</p>
+<p>Below is a practical comparison of AWS, GCP, Azure, and Cloudflare free tiers for the two things this bot needs: <strong>Lambda-style compute</strong> and <strong>S3-style object storage</strong>. Numbers are a snapshot for September 2026 — I always re-check the official pages before production.</p>
+<p><img src="/en/post/telegram-bot-cloudflare-workers/featured.svg" alt="Cold start comparison"></p>
+<h2 id="same-bot-different-runtime">Same bot, different runtime</h2>
+<p>The product did not change: Telegram webhook, Gemini as a router, JSON state for games and chat memory, pre/after-game jobs, and a Gmail poll for rent payments.</p>
+<p>On AWS that meant several Lambdas and EventBridge one-shots (<code>at(...)</code>) per game. On Cloudflare:</p>
+<ol>
+<li>One Go Worker compiled to Wasm with <a href="https://github.com/syumai/workers-go">syumai/workers-go</a>.</li>
+<li>The same object keys in <strong>R2</strong> that used to live in S3 (<code>state/game_state.json</code> and friends).</li>
+<li>Instead of EventBridge, a JSON job calendar in R2 and a <strong>cron every 10 minutes</strong> that runs whatever is due.</li>
+</ol>
+<p>Workers have no one-shot “wake me on 12 September at 15:30”. They also have no zoo of functions: webhook and cron are the same binary with two entrypoints.</p>
+<h2 id="compute-lambda-like-services">Compute: Lambda-like services</h2>
+<table>
+  <thead>
+      <tr>
+          <th></th>
+          <th>AWS Lambda</th>
+          <th>GCP Cloud Run functions</th>
+          <th>Azure Functions (Consumption)</th>
+          <th>Cloudflare Workers</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Free invocations</td>
+          <td><strong>1M / month</strong>, always free</td>
+          <td><strong>2M / month</strong>, always free</td>
+          <td><strong>1M / month</strong> (Consumption grant)</td>
+          <td>Free: <strong>100,000 / day</strong> (~3M / month). Paid: 10M / month in the $5 plan</td>
+      </tr>
+      <tr>
+          <td>Compute</td>
+          <td>400,000 GB-s / month</td>
+          <td>400,000 GB-s + 200,000 GHz-s</td>
+          <td>400,000 GB-s</td>
+          <td>Free: <strong>10 ms CPU</strong> per invocation. Paid: 30M CPU-ms / month</td>
+      </tr>
+      <tr>
+          <td>What “duration” means</td>
+          <td>wall-clock × memory</td>
+          <td>wall-clock × memory/CPU</td>
+          <td>wall-clock × memory</td>
+          <td><strong>CPU time</strong>, not HTTP wait</td>
+      </tr>
+      <tr>
+          <td>Cold start</td>
+          <td>hundreds of ms (Go custom runtime)</td>
+          <td>hundreds of ms … seconds</td>
+          <td>often <strong>seconds</strong></td>
+          <td><strong>tens of ms</strong> (isolate)</td>
+      </tr>
+      <tr>
+          <td>Go</td>
+          <td>native <code>provided.al2023</code></td>
+          <td>native</td>
+          <td>custom handler</td>
+          <td><strong>Wasm</strong> (<code>GOOS=js</code>)</td>
+      </tr>
+  </tbody>
+</table>
+<p>Sources: <a href="https://aws.amazon.com/lambda/pricing/">AWS Lambda pricing</a>, <a href="https://docs.cloud.google.com/free/docs/free-cloud-features">Google Cloud Free Tier</a>, <a href="https://azure.microsoft.com/pricing/details/functions/">Azure Functions pricing</a>, <a href="https://developers.cloudflare.com/workers/platform/pricing/">Workers pricing</a>, <a href="https://developers.cloudflare.com/workers/platform/limits/">Workers limits</a>.</p>
+<p>The three hyperscalers look alike: millions of requests and hundreds of thousands of GB-seconds. That is enough for a small bot. The real difference is <strong>how the runtime wakes up</strong>, and whether the storage free tier expires after a year.</p>
+<h3 id="cold-start">Cold start</h3>
+<p>Classic Lambda boots a micro-VM, pulls a runtime, then your zip/image. For Go on <code>provided.al2023</code> that is usually <strong>hundreds of milliseconds</strong>. GCP Gen2 is closer to Cloud Run: better than first-gen Functions, still a container cold start. Azure Consumption is the worst of the four: after idle, the first request often lands in seconds.</p>
+<p>Workers are not containers. They are <strong>V8 isolates</strong>. Cloudflare’s startup limit is one second; my Wasm worker actually started in <strong>16–37 ms</strong>. Warm isolates are faster still. For a chat bot that matters more than the “1 million requests” row: people notice a pause, not GB-seconds.</p>
+<p>Billing is different too. While the Worker waits on Gemini, wall-clock passes and <strong>CPU barely moves</strong>. Lambda charges for the whole time the function is alive. Workers Paid counts CPU-ms, not seconds spent waiting on HTTP.</p>
+<h3 id="honest-note-on-the-workers-free-plan">Honest note on the Workers Free plan</h3>
+<p>Workers Free is generous on <strong>request count</strong> (100k/day is more than always-free Lambda). It does not fit this bot:</p>
+<ul>
+<li>Free worker size is <strong>3 MB</strong>; my Wasm gzip is ~8 MB;</li>
+<li><strong>10 ms CPU</strong> per invocation is not enough for Go Wasm + Gemini.</li>
+</ul>
+<p>So production runs on <strong>Workers Paid at $5 / month</strong>: 10 million requests and usable CPU. That is still cheaper than a VPS, and more predictable than “free until the 12-month clock runs out”. The <strong>R2 free tier stays</strong>.</p>
+<h2 id="object-storage-s3-and-cousins">Object storage: S3 and cousins</h2>
+<table>
+  <thead>
+      <tr>
+          <th></th>
+          <th>AWS S3</th>
+          <th>GCP Cloud Storage</th>
+          <th>Azure Blob</th>
+          <th>Cloudflare R2</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Free storage</td>
+          <td>5 GB for the <strong>first 12 months</strong></td>
+          <td>5 GB-month always free, only <code>us-central1</code> / <code>us-east1</code> / <code>us-west1</code></td>
+          <td>5 GB LRS for the <strong>first 12 months</strong> (Free Account)</td>
+          <td><strong>10 GB / month, always free</strong></td>
+      </tr>
+      <tr>
+          <td>Reads</td>
+          <td>20,000 GET / month (year 1)</td>
+          <td>50,000 Class B</td>
+          <td>~20,000 reads (year 1)</td>
+          <td><strong>10M Class B / month</strong></td>
+      </tr>
+      <tr>
+          <td>Writes</td>
+          <td><strong>2,000 PUT</strong> / month (year 1)</td>
+          <td>5,000 Class A</td>
+          <td>~10,000 writes (year 1)</td>
+          <td><strong>1M Class A / month</strong></td>
+      </tr>
+      <tr>
+          <td>Egress</td>
+          <td>capped, then $/GB</td>
+          <td>100 GB (limited regions)</td>
+          <td>billed separately</td>
+          <td><strong>free</strong></td>
+      </tr>
+      <tr>
+          <td>After the grant</td>
+          <td>~$0.023/GB, PUT $0.005/1k</td>
+          <td>normal GCS rates</td>
+          <td>the storage account is <strong>not</strong> in the Functions grant</td>
+          <td>$0.015/GB beyond the grant, still no egress</td>
+      </tr>
+  </tbody>
+</table>
+<p>Sources: <a href="https://aws.amazon.com/s3/pricing/">AWS S3 pricing</a>, <a href="https://docs.cloud.google.com/free/docs/free-cloud-features">GCP Free Tier</a>, <a href="https://azure.microsoft.com/pricing/details/functions/">Azure Functions pricing</a> (storage billed separately), <a href="https://developers.cloudflare.com/r2/pricing/">R2 pricing</a>.</p>
+<p>In the AWS article the S3 bottleneck was <strong>2,000 PUT requests in year one</strong>. Lazy load and a single write at the end of the handler existed because of that. R2 allows <strong>a million Class A operations every month</strong>, always free. A bot that writes a few JSON files per update lives in a different order of magnitude.</p>
+<p>Azure’s catch: the Functions grant <strong>does not cover</strong> the storage account created with every Function App. “Free functions” can still drip Blob charges.</p>
+<p>GCP Cloud Storage is always free, but only in three US regions, and Class A is 5,000/month. Fine for JSON state, tight if you PUT on every message.</p>
+<p>R2 also has no egress fee. For this bot that barely matters (state is tiny). As a free S3 analog it is the most honest line in the table: <strong>10 GB + lots of ops + no “first year” asterisk</strong>.</p>
+<h2 id="what-the-migration-actually-changed">What the migration actually changed</h2>
+<p>I did not rewrite the bot. The runtime and the scheduler changed:</p>
+<ul>
+<li><code>GOOS=js GOARCH=wasm</code> instead of <code>linux/amd64</code>;</li>
+<li><code>http.DefaultClient</code> via Workers <code>fetch</code> (plain <code>net/http</code> on JS dies with <code>Illegal invocation</code>);</li>
+<li><code>Europe/Istanbul</code> via embedded <code>time/tzdata</code> — Wasm has no IANA zoneinfo;</li>
+<li>EventBridge one-shots became a job list in R2 plus cron <code>*/10 * * * *</code>.</li>
+</ul>
+<p>The accuracy trade-off: after-game can be up to 10 minutes late. Fine for “thanks for the game”. The win: one deploy, isolate start <strong>an order of magnitude faster</strong> than a typical Lambda cold start, and object storage whose always-free limits do not need to be massaged around 2,000 PUTs.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>If you only compare “free serverless” by millions of requests, AWS, GCP, and Azure look almost the same. Add <strong>cold start</strong> and <strong>how long the storage grant lives</strong>, and the ranking changes.</p>
+<ul>
+<li><strong>AWS</strong> — strong always-free Lambda and familiar S3, but S3 generosity lasts a year, and Go Lambda cold start is noticeable.</li>
+<li><strong>GCP</strong> — more free function invocations; always-free storage only in three US regions.</li>
+<li><strong>Azure</strong> — similar Functions grant, Blob is extra, Consumption cold start is often the longest.</li>
+<li><strong>Cloudflare Workers</strong> — shortest start of the four (isolates; 16–37 ms on my deploy). The Free plan is strong on requests; a heavy Go Wasm worker needs Paid at $5. <strong>R2</strong> is the best always-free object tier: 10 GB, a million writes, ten million reads, no egress.</li>
+</ul>
+<p>I parked this bot on Workers + R2. Not because AWS stopped being free, but because the first update after a pause no longer waits for Lambda to wake up.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/telegram/">Telegram</a></li>
+        <li><a href="/tags/aws/">Aws</a></li>
+        <li><a href="/tags/lambda/">Lambda</a></li>
+        <li><a href="/tags/s3/">S3</a></li>
+        <li><a href="/tags/cloudflare/">Cloudflare</a></li>
+        <li><a href="/tags/workers/">Workers</a></li>
+        <li><a href="/tags/r2/">R2</a></li>
+        <li><a href="/tags/go/">Go</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Cloudflare Workers (V8 isolate)&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;AWS Lambda on the provided.al2023 custom runtime&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Azure Functions Consumption&#34;}],&#34;question&#34;:&#34;Which serverless runtime usually has the shortest cold start?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;10 GB per month, with no first-year expiry&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;5 GB for the first 12 months only&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Unlimited storage&#34;}],&#34;question&#34;:&#34;What is Cloudflare R2&#39;s always-free storage allowance?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;AWS S3 is generous for a year, but 2,000 PUT requests is the tight limit&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;R2 includes 1M Class A and 10M Class B operations every month&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Azure Blob storage is included in the Azure Functions free grant&#34;}],&#34;question&#34;:&#34;Which statements about object-storage free tiers are true?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. Which serverless runtime usually has the shortest cold start?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            Cloudflare Workers (V8 isolate)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            AWS Lambda on the provided.al2023 custom runtime
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            Azure Functions Consumption
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. What is Cloudflare R2&#39;s always-free storage allowance?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            10 GB per month, with no first-year expiry
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            5 GB for the first 12 months only
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Unlimited storage
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Which statements about object-storage free tiers are true?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            AWS S3 is generous for a year, but 2,000 PUT requests is the tight limit
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            R2 includes 1M Class A and 10M Class B operations every month
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Azure Blob storage is included in the Azure Functions free grant
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  February 28, 2026
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/telegram-bots-zero-cost-aws.html" style="text-decoration: none; color: inherit;">How I Deployed an AI Telegram Bot to AWS for Free</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/telegram-bots-zero-cost-aws.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/telegram-bots-zero-cost-aws/featured.png"
+                   style="max-height: 200px;"
+                   alt="How I Deployed an AI Telegram Bot to AWS for Free"/>
+            </a>
+            
+            
+            <p class="card-text"><p>For over three years, I have been organizing volleyball games in our Telegram community. At first, we used standard Telegram polls, but the routine kept growing, so I decided to automate the process. That is how an AI-powered organizer bot was born, and the whole architecture is built around it.</p></p>
+            
+            <a href="/en/post/telegram-bots-zero-cost-aws.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/tags/aws/" class="badge">Aws</a>
+                  <a href="/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/tags/s3/" class="badge">S3</a>
+                  <a href="/tags/ai/" class="badge">Ai</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  December 20, 2024
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-telegram-bot-aws-lambda-deploy.html" style="text-decoration: none; color: inherit;">Deploying Telegram Bot to AWS Lambda with Function URL</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>This article is a continuation of <a href="/en/post/go-telegram-gemini-ai-bot.html">&ldquo;Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda&rdquo;</a> and contains detailed instructions for setting up and deploying a Telegram bot to AWS Lambda using Function URL.</p></p>
+            
+            <a href="/en/post/go-telegram-bot-aws-lambda-deploy.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/go/" class="badge">Go</a>
+                  <a href="/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/tags/aws/" class="badge">Aws</a>
+                  <a href="/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/tags/function-url/" class="badge">Function-Url</a>
+                  <a href="/tags/cli/" class="badge">Cli</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  December 19, 2024
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-telegram-gemini-ai-bot.html" style="text-decoration: none; color: inherit;">Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>In this article, we&rsquo;ll explore how to build an intelligent Telegram bot using Go that acts as a proxy between users and Google&rsquo;s Gemini API. The bot will handle two primary functions: answering user messages and generating images. While this mechanism can be significantly extended with additional capabilities like voice and video generation, we&rsquo;ll focus on these two request types for simplicity.</p></p>
+            
+            <a href="/en/post/go-telegram-gemini-ai-bot.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/go/" class="badge">Go</a>
+                  <a href="/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/tags/gemini/" class="badge">Gemini</a>
+                  <a href="/tags/ai/" class="badge">Ai</a>
+                  <a href="/tags/aws/" class="badge">Aws</a>
+                  <a href="/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/tags/bot/" class="badge">Bot</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/post/telegram-bot-cloudflare-workers.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

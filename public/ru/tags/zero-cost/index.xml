@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Zero-Cost on Golang for all</title>
+    <link>http://localhost:1313/ru/tags/zero-cost/</link>
+    <description>Recent content in Zero-Cost on Golang for all</description>
+    <generator>Hugo</generator>
+    <language>ru-ru</language>
+    <lastBuildDate>Sat, 28 Feb 2026 12:00:00 +0300</lastBuildDate>
+    <atom:link href="http://localhost:1313/ru/tags/zero-cost/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Как я задеплоил Telegram-ботов в AWS с нулевой стоимостью (Zero Cost)</title>
+      <link>http://localhost:1313/ru/post/telegram-bots-zero-cost-aws.html</link>
+      <pubDate>Sat, 28 Feb 2026 12:00:00 +0300</pubDate>
+      <guid>http://localhost:1313/ru/post/telegram-bots-zero-cost-aws.html</guid>
+      <description>&lt;p&gt;В этой статье я расскажу о том, как я написал несколько Telegram-ботов, задеплоил их в облако AWS и достиг нулевой цены за инфраструктуру, грамотно используя возможности AWS Free Tier и оптимизируя архитектуру приложения.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

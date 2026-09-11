@@ -1,0 +1,815 @@
+
+
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+<title>How I Deployed an AI Telegram Bot to AWS for Free | Golang for all</title>
+
+
+
+
+  
+
+
+
+
+
+
+  
+  
+    
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+<meta name="description" content="For over three years, I have been organizing volleyball games in our Telegram community. At first, we used standard Telegram polls, but the routine kept …">
+
+
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://golangforall.com/en/post/telegram-bots-zero-cost-aws.html">
+<meta property="og:title" content="How I Deployed an AI Telegram Bot to AWS for Free | Golang for all">
+<meta property="og:description" content="For over three years, I have been organizing volleyball games in our Telegram community. At first, we used standard Telegram polls, but the routine kept …">
+<meta property="og:image" content="https://golangforall.com/en/post/telegram-bots-zero-cost-aws/featured.png">
+<meta property="og:site_name" content="Golang for all">
+<meta property="og:locale" content="en">
+
+  
+    <meta property="article:published_time" content="2026-02-28T12:00:00&#43;03:00">
+  
+  
+    <meta property="article:modified_time" content="2026-02-28T12:00:00&#43;03:00">
+  
+  
+    
+      <meta property="article:tag" content="Telegram">
+    
+      <meta property="article:tag" content="Aws">
+    
+      <meta property="article:tag" content="Lambda">
+    
+      <meta property="article:tag" content="S3">
+    
+      <meta property="article:tag" content="Ai">
+    
+  
+
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://golangforall.com/en/post/telegram-bots-zero-cost-aws.html">
+<meta name="twitter:title" content="How I Deployed an AI Telegram Bot to AWS for Free | Golang for all">
+<meta name="twitter:description" content="For over three years, I have been organizing volleyball games in our Telegram community. At first, we used standard Telegram polls, but the routine kept …">
+<meta name="twitter:image" content="https://golangforall.com/en/post/telegram-bots-zero-cost-aws/featured.png">
+
+
+
+<link rel="canonical" href="https://golangforall.com/en/post/telegram-bots-zero-cost-aws.html">
+
+
+
+  <link rel="alternate" hreflang="ru" href="https://golangforall.com/ru/post/telegram-bots-zero-cost-aws.html">
+
+
+<meta name="yandex-verification" content="10233a4b32f4dc29" />
+<meta name="yandex-verification" content="cfa4be404c1af368" />
+
+<link rel="icon" type="image/png" sizes="93x93" href="/gophereye.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="/gophereye32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/gophereye16x16.png">
+
+
+      <link rel="stylesheet" href="/css/main.min.c70ed306492694511d29f5a3c8b1024c2abc757d096e22287aa107cb031c8c8a.css" integrity="sha256-xw7TBkkmlFEdKfWjyLECTCq8dX0JbiIoeqEHywMcjIo=" crossorigin="anonymous">
+
+
+        <script src="/js/main.23cd0c7d837263b9eaeb96ee2d9ccfa2969daa3fa00fa1c1fe8701a9b87251a1.js" integrity="sha256-I80MfYNyY7nq65buLZzPopadqj&#43;gD6HB/ocBqbhyUaE=" crossorigin="anonymous"></script>
+
+
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css" integrity="sha256-YjcCvXkdRVOucibC9I4mBS41lXPrWfqY2BnpskhZPnw=" crossorigin="anonymous" />
+
+
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light" style="padding-bottom: 0;">
+        <div class="container">
+            <a class="navbar-brand" href="/en/" style="padding-bottom: 0">
+                <img src="/verh.svg" alt="gopher eyes" style="height: 50px;"/>
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarResponsive"
+                    aria-controls="navbarResponsive"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <a href="/en/" style="color:#000;"><span class="gopherchat">Golang for all</span></a>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/en/about.html">About</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="bg-light">&nbsp;</div>
+
+<div class="container">
+    
+<div class="col-lg-12">
+    
+    <h1 class="mt-4">How I Deployed an AI Telegram Bot to AWS for Free</h1>
+
+    
+    <p>
+
+
+  February 28, 2026
+
+
+
+            <a href="/tags/telegram/" class="badge">Telegram</a>
+            <a href="/tags/aws/" class="badge">Aws</a>
+            <a href="/tags/lambda/" class="badge">Lambda</a>
+            <a href="/tags/s3/" class="badge">S3</a>
+            <a href="/tags/ai/" class="badge">Ai</a>
+    </p>
+
+    <hr/>
+
+    
+    
+    
+    <div class="container">
+        <div class="row mx-0 my-0">
+            <div class="col-md-8">
+                <img class="img-fluid rounded"
+                     style="max-height: 400px;"
+                     src="/en/post/telegram-bots-zero-cost-aws/featured.png"
+                     alt="How I Deployed an AI Telegram Bot to AWS for Free"/>
+            </div>
+            <div class="col-md-4">
+                
+                
+                <nav id="toc">
+                    <h5>Contents</h5>
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#organizer-bot-lifecycle">Organizer Bot Lifecycle</a></li>
+    <li><a href="#project-architecture">Project Architecture</a></li>
+    <li><a href="#aws-lambda-instead-of-a-persistent-server">AWS Lambda Instead of a Persistent Server</a></li>
+    <li><a href="#how-ai-works-in-my-bot">How AI Works in My Bot</a>
+      <ul>
+        <li><a href="#context-and-model">Context and model</a></li>
+        <li><a href="#more-human-responses">More &ldquo;human&rdquo; responses</a></li>
+        <li><a href="#ai-for-payment-recognition">AI for payment recognition</a></li>
+        <li><a href="#response-formatting">Response formatting</a></li>
+        <li><a href="#gemini-api-pricing">Gemini API pricing</a></li>
+      </ul>
+    </li>
+    <li><a href="#optimizing-telegram-interaction">Optimizing Telegram Interaction</a>
+      <ul>
+        <li><a href="#1-webhook-update-filtering-allowed_updates">1. Webhook update filtering (<code>allowed_updates</code>)</a></li>
+        <li><a href="#2-privacy-mode">2. Privacy Mode</a></li>
+      </ul>
+    </li>
+    <li><a href="#state-storage-in-aws-s3">State Storage in AWS S3</a>
+      <ul>
+        <li><a href="#minimizing-s3-requests">Minimizing S3 Requests</a></li>
+      </ul>
+    </li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
+                </nav>
+                
+            </div>
+        </div>
+    </div>
+    <hr>
+    
+    
+
+    <div id="post-content">
+    <p>For over three years, I have been organizing volleyball games in our Telegram community. At first, we used standard Telegram polls, but the routine kept growing, so I decided to automate the process. That is how an AI-powered organizer bot was born, and the whole architecture is built around it.</p>
+<p>In this article, I will explain how this bot is designed, how I deployed it to AWS, and how I brought infrastructure cost down to zero by using AWS Free Tier and optimizing the app architecture. I have several similar bots for personal use and small communities. They all use the same techniques described below.</p>
+<p><img src="/en/post/telegram-bots-zero-cost-aws/img_1.png" alt="img_1.png"></p>
+<h2 id="organizer-bot-lifecycle">Organizer Bot Lifecycle</h2>
+<p>Before diving into hosting details, here is a quick overview of what the bot actually does. Its lifecycle consists of several stages:</p>
+<ol>
+<li><strong>Creating a game poll with AI:</strong> In chat, I can send a simple message asking the bot to create a game poll (for example, &ldquo;let&rsquo;s play on Saturday&rdquo;). In the system prompt (via Gemini API), the bot already knows where and when we usually play, so even a short hint is enough. It fills in time, location, pricing, and other details automatically, builds a poll-style message with action buttons, and posts it to the same chat/topic.</li>
+</ol>
+<p><img src="/en/post/telegram-bots-zero-cost-aws/img.en.png" alt="img.en.png"></p>
+<ol start="2">
+<li>
+<p><strong>Changing game parameters on request:</strong> Over time, Telegram polls became limiting: changing a vote is inconvenient, you cannot vote for someone else, there is a 10-option limit, and the poll itself cannot be edited. But game state can change (payment received, game canceled, and so on). So I added an edit mode: with a regular chat message, the bot updates participants, payment status, and other game fields.</p>
+</li>
+<li>
+<p><strong>Voting:</strong> Participants tap buttons to join the game. AI is not involved at this stage - button clicks only update game state in cloud storage. Since we rent sports halls, the cost is split equally among participants. During voting, the bot recalculates per-person cost, sends updates to the chat, and keeps the main poll message up to date.</p>
+</li>
+<li>
+<p><strong>Poll checks:</strong> Several times per day, a scheduled task scans upcoming games and checks participant count. Every game has minimum and maximum thresholds. If there are  enough people, the bot asks AI to generate a motivating message. If enough people have joined, it sends a regular reminder. If there are too many participants, it alerts the organizer.</p>
+</li>
+<li>
+<p><strong>Game completion:</strong> After a game ends, if it did not reach the required participant count and was not canceled, the bot sends a thank-you message and reminds participants about payment details.</p>
+</li>
+<li>
+<p><strong>Payment automation:</strong> This is the most interesting part. When someone transfers money to my account for hall rent, a scheduled Lambda function checks my mailbox (via Gmail API) for bank transfer notifications. The bot posts a successful payment update to chat, and AI tries to match the payer name from the bank receipt with a Telegram username, then marks payment status in game storage automatically.</p>
+</li>
+</ol>
+<p>All this logic requires compute, storage, and background jobs. But I wanted the infrastructure to stay completely free.</p>
+<h2 id="project-architecture">Project Architecture</h2>
+<p>The project is written in <strong>Go</strong> and consists of several components:</p>
+<ol>
+<li><strong>Telegram Webhook Lambda</strong> - the main function that handles incoming Telegram messages and poll button clicks.</li>
+<li><strong>Cron Lambdas</strong> - background jobs (for example, mail polling, pre-game and post-game notifications).</li>
+<li><strong>AWS S3</strong> - bot state storage (game data, participants, message history, and so on).</li>
+</ol>
+<p>Instead of clicking everything manually in the AWS console or scripting with <strong>AWS CLI</strong>, I used <strong>Terraform</strong>. It lets me define infrastructure as declarative code: Lambdas, Lambda schedules (EventBridge), IAM roles and access policies, and S3 buckets. I maintain two environments: <code>dev</code> and <code>prod</code>. A full environment can be provisioned from scratch with a single <code>terraform apply</code> command in a few minutes.</p>
+<h2 id="aws-lambda-instead-of-a-persistent-server">AWS Lambda Instead of a Persistent Server</h2>
+<p>The first and most important cost-saving step was replacing a constantly running server (a $2-$5/month VPS) with serverless compute. All bot components are deployed as <strong>Lambda functions</strong>.</p>
+<p>AWS Lambda has a very generous free tier that is available continuously, not only for the first year:</p>
+<ul>
+<li><strong>1,000,000 free requests</strong> per month.</li>
+<li><strong>400,000 GB-seconds</strong> of compute time per month.</li>
+</ul>
+<p>Communication with the bot works through a Telegram webhook: when a user sends a message, Telegram makes an HTTP request to the Function URL, Lambda starts, processes the message, responds, and &ldquo;goes to sleep&rdquo; again. With these limits, my function execution cost remains zero. For background tasks, I use <strong>Amazon EventBridge</strong> to trigger Lambdas on schedule.</p>
+<h2 id="how-ai-works-in-my-bot">How AI Works in My Bot</h2>
+<p>AI acts as a router in this bot: based on an incoming message, it determines what the user wants and returns a strictly structured result.</p>
+<p>I use prompts for three request types:</p>
+<ol>
+<li><strong>Create a game poll</strong> (date, time, location, limits, price, etc.).</li>
+<li><strong>Modify an existing game</strong> (add/remove participant, mark payment, cancel game, and so on).</li>
+<li><strong>Regular conversation</strong> (when no game action is needed).</li>
+</ol>
+<p>For each type, the system prompt defines its own JSON format. AI must return only one of three JSON variants depending on the situation. Then the code parses that JSON into the matching Go structure and decides what to do next: create a game, update a game, or send a regular text reply.</p>
+<h3 id="context-and-model">Context and model</h3>
+<p>AI gets context from the latest 50 bot-related messages in each chat (mentions of the bot username or replies to bot messages). This history is stored in a separate S3 bucket as a JSON array and then decoded into a Gemini-friendly structure.</p>
+<p>The bot did not always run on Gemini - I originally used ChatGPT. Later I switched to Gemini because Google&rsquo;s offering became more attractive: a free tier for Flash models and a more convenient API.
+Right now the model is <code>gemini-3-flash-preview</code>.</p>
+<h3 id="more-human-responses">More &ldquo;human&rdquo; responses</h3>
+<p>To avoid robotic replies, different Lambda functions generate varied texts from templates. For example, after a game ends, the bot sends a summary message and sometimes adds a short joke (usually not very funny).</p>
+<h3 id="ai-for-payment-recognition">AI for payment recognition</h3>
+<p>AI is also used in payment recognition. The flow is: someone from the team (usually me) pays for the hall, then after the game the total is split by the actual number of players, and everyone transfers their share to the person who paid. The bank sends incoming transfer notifications to my Gmail inbox, and a separate scheduled Lambda reads those emails through Gmail API using filtered queries.</p>
+<p>Then AI receives a specialized request: based on the participant list and payment description, it must detect the most likely payer and return a confidence score from <code>0</code> to <code>1</code>. If confidence is <code>&gt;= 0.6</code>, the payment is considered matched: the participant is marked as paid in game data, and the actual paid amount is saved (important because people sometimes underpay or overpay).</p>
+<p>One more context detail: if there is an active game poll in a chat, AI always receives full game data in its system prompt.
+For example, the bot can split participants into two teams on request or generate a targeted announcement when needed.</p>
+<h3 id="response-formatting">Response formatting</h3>
+<p>One practical detail: models tend to output Markdown by default, but Telegram <code>MarkdownV2</code> is fragile and often breaks on unescaped symbols. So I explicitly instruct the model to format replies in HTML (<code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;code&gt;</code>), which significantly reduces formatting errors.</p>
+<h3 id="gemini-api-pricing">Gemini API pricing</h3>
+<p>At the moment, <code>gemini-3-flash-preview</code> is used in paid tier billing, where cost is calculated mainly by input and output tokens (rough reference: about <code>$0.50</code> per 1M input tokens and <code>$3.00</code> per 1M output tokens, plus cheaper cached input - a reused part of chat context that is billed at a lower rate). For up-to-date rates and changes, I always rely on Google&rsquo;s official pricing page: <a href="https://ai.google.dev/gemini-api/docs/pricing">Gemini Developer API Pricing</a>.</p>
+<p>In my case, monthly AI spending is usually small because requests are relatively infrequent. In many months, usage still fits into the Gemini API free tier for Flash models (Google AI Studio free tier), and paid usage appears mostly during more active periods.</p>
+<h2 id="optimizing-telegram-interaction">Optimizing Telegram Interaction</h2>
+<p>Even with 1 million monthly calls, those calls should be used carefully. I reduced Lambda wake-ups as much as possible by configuring Telegram itself.</p>
+<h3 id="1-webhook-update-filtering-allowed_updates">1. Webhook update filtering (<code>allowed_updates</code>)</h3>
+<p>When you set a webhook URL for a Telegram bot, Telegram sends all update types by default: bot added to channel, chat status changes, edited messages, and so on. Each event wakes up Lambda and spends your free quota.</p>
+<p>I fixed this by explicitly listing only relevant event types. In <code>setWebhook</code>, I pass <code>allowed_updates</code> and limit updates to new messages and inline button presses.</p>
+<p>Webhook setup example with <code>curl</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST <span style="color:#e6db74">&#34;https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;/setWebhook&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -H <span style="color:#e6db74">&#34;Content-Type: application/json&#34;</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>  -d <span style="color:#e6db74">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;url&#34;: &#34;https://&lt;your-lambda-url&gt;&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    &#34;allowed_updates&#34;: [&#34;message&#34;, &#34;callback_query&#34;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  }&#39;</span>
+</span></span></code></pre></div><p>More details about <code>allowed_updates</code> are available in the <a href="https://core.telegram.org/bots/api#setwebhook">official Telegram Bot API docs</a>.</p>
+<p>Now Telegram filters &ldquo;noise&rdquo; on its side, and my function runs only for meaningful events.</p>
+<p>Also, keep HTTP status behavior in mind: for Telegram, only <code>2xx</code> means successful delivery. If your function returns <code>4xx/5xx</code> or times out, Telegram will retry the update many times. That is why the handler should be idempotent and return <code>200 OK</code> quickly, otherwise you can easily create a retry loop.</p>
+<p>At the time I built this bot, the most popular Go Telegram bot library did not support forum topics, while our chat relies on topics heavily. So I forked it and added topic support in my version: <a href="https://github.com/antelman107/telegram-bot-api">github.com/antelman107/telegram-bot-api</a>.</p>
+<h3 id="2-privacy-mode">2. Privacy Mode</h3>
+<p>Many users add bots to group chats. Without proper configuration, a bot can receive updates for <em>every</em> message posted by anyone in the group. This can burn through your Lambda quota very quickly.</p>
+<p>To avoid that, I enabled <strong>Privacy Mode</strong> via <code>@BotFather</code>. With this setting, bots do not receive updates for messages that are not directed to them. The bot reacts only to slash commands (<code>/</code>) or explicit mentions (<code>@BotName</code>).</p>
+<h2 id="state-storage-in-aws-s3">State Storage in AWS S3</h2>
+<p>Telegram bots need to store conversation context and user settings. Using a classic database (for example, RDS) for this can be too expensive.</p>
+<p>Instead, I store bot state as regular files in <strong>AWS S3</strong>. S3 also has a good <strong>Free Tier</strong> (valid for the first 12 months for new accounts):</p>
+<ul>
+<li><strong>5 GB</strong> of Standard storage.</li>
+<li><strong>20,000 GET requests</strong> per month.</li>
+<li><strong>2,000 PUT, COPY, POST, or LIST requests</strong> per month.</li>
+</ul>
+<p>Even after the 12-month free tier ends, S3 pricing for typical Telegram bots remains tiny (prices can vary by region; numbers below are for <code>us-east-1</code>):</p>
+<ul>
+<li>Data storage: <strong>~$0.023 per 1 GB/month</strong>. Bot state files usually occupy only a few megabytes (less than a cent per month).</li>
+<li>Write requests (PUT): <strong>$0.005 per 1,000 requests</strong>.</li>
+<li>Read requests (GET): <strong>$0.0004 per 1,000 requests</strong>.</li>
+</ul>
+<p>So even if your bots make, say, 10,000 writes and 50,000 reads per month after the first year (I still do not reach that across all my bots), it is about $0.07/month. That is still practically &ldquo;zero cost&rdquo; compared to renting any server.</p>
+<p>Still, in the first year the main bottleneck is the <strong>2,000 PUT request</strong> limit. If the bot saves state after every message, this limit is reached very quickly. Extra requests are billed (those same half-cent per thousand writes).</p>
+<h3 id="minimizing-s3-requests">Minimizing S3 Requests</h3>
+<p>To stay within free limits and reduce S3 calls, I use two main patterns:</p>
+<ol>
+<li>
+<p><strong>Lazy Initialization:</strong>
+The bot does not read state from S3 on every request. State is loaded <em>only</em> when a user command actually needs context checks or modifications. If a user sends a simple command like <code>/help</code>, the bot answers instantly without any S3 GET requests.</p>
+</li>
+<li>
+<p><strong>Optimistic Locking and ETag:</strong>
+When state changes in memory, the bot does not immediately write to S3. Save happens only at the end of request processing. Using optimistic locking, the bot compares the updated state with the original one.</p>
+<p>In S3, this works well with <strong>ETag</strong> (Entity Tag). ETag is a content hash (usually MD5) that S3 returns in response headers for each GET request.</p>
+<p>The workflow:</p>
+<ul>
+<li>On state read (GET), the bot stores the current file ETag.</li>
+<li>During request handling, state can be modified in memory.</li>
+<li>Before saving, the bot serializes new state to JSON and computes its hash. If the new hash equals the original one, there are no real changes (even if in-memory objects were recreated), so the PUT request is <strong>skipped</strong> to save quota.</li>
+<li>If state changed, the bot sends PUT with original ETag in <code>If-Match</code> (available in S3 under certain versioning setups, or emulated logically). This protects from race conditions when two Lambdas try to save state at the same time. The first write succeeds (ETag changes), the second gets an ETag mismatch and does not overwrite newer data, then can re-read state or skip save.</li>
+</ul>
+</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>Moving bots to a serverless stack fully paid off. Infrastructure on AWS Lambda + S3 + Terraform runs fast, does not require server maintenance, and in my case stays around ~$0 per month.</p>
+<p>AI plays a central role in this system: it routes incoming requests (create game, edit game, or regular chat), helps recognize payments from bank notifications with confidence scoring, and makes messages feel more alive through varied generation. Combined with Telegram webhook filtering (<code>allowed_updates</code>), idempotent request handling, topic support, and efficient S3 state management (lazy loading + ETag), the bot evolved from a simple &ldquo;poll button&rdquo; into an autonomous game organizer assistant.</p>
+    
+  <div>
+    <div>Tags:</div>
+    <ul>
+        <li><a href="/tags/telegram/">Telegram</a></li>
+        <li><a href="/tags/aws/">Aws</a></li>
+        <li><a href="/tags/lambda/">Lambda</a></li>
+        <li><a href="/tags/s3/">S3</a></li>
+        <li><a href="/tags/ai/">Ai</a></li>
+    </ul>
+  </div>
+
+    </div>
+    
+<div id="article-quiz" class="mt-5 mb-5" data-quiz-lang="en">
+  <hr class="mb-4">
+  <h3 class="mb-4">Test Your Knowledge</h3>
+  
+  <form id="quiz-form" data-quiz-data="{&#34;questions&#34;:[{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;1 million requests&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;100 thousand requests&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Unlimited&#34;}],&#34;question&#34;:&#34;How many free requests does AWS Lambda Free Tier provide per month?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Set the allowed_updates parameter when registering the webhook&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Configure filters in AWS API Gateway&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Enable Privacy Mode&#34;}],&#34;question&#34;:&#34;How do you make a Telegram webhook send only required events?&#34;,&#34;type&#34;:&#34;single-choice&#34;},{&#34;answers&#34;:[{&#34;correct&#34;:true,&#34;text&#34;:&#34;Lazy initialization (read only when needed)&#34;},{&#34;correct&#34;:true,&#34;text&#34;:&#34;Optimistic locking and save batching&#34;},{&#34;correct&#34;:false,&#34;text&#34;:&#34;Caching the whole S3 bucket in memory&#34;}],&#34;question&#34;:&#34;Which patterns help minimize the number of AWS S3 requests?&#34;,&#34;type&#34;:&#34;multiple-choice&#34;}]}">
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="0">
+      <h5 class="mb-3">1. How many free requests does AWS Lambda Free Tier provide per month?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="0"
+                 id="q0-a0">
+          <label class="form-check-label" for="q0-a0">
+            1 million requests
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="1"
+                 id="q0-a1">
+          <label class="form-check-label" for="q0-a1">
+            100 thousand requests
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-0" 
+                 value="2"
+                 id="q0-a2">
+          <label class="form-check-label" for="q0-a2">
+            Unlimited
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="1">
+      <h5 class="mb-3">2. How do you make a Telegram webhook send only required events?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="0"
+                 id="q1-a0">
+          <label class="form-check-label" for="q1-a0">
+            Set the allowed_updates parameter when registering the webhook
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="1"
+                 id="q1-a1">
+          <label class="form-check-label" for="q1-a1">
+            Configure filters in AWS API Gateway
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" 
+                 name="question-1" 
+                 value="2"
+                 id="q1-a2">
+          <label class="form-check-label" for="q1-a2">
+            Enable Privacy Mode
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    <div class="quiz-question mb-4 p-3 border rounded" data-question-index="2">
+      <h5 class="mb-3">3. Which patterns help minimize the number of AWS S3 requests?</h5>
+      
+      
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="0"
+                 id="q2-a0">
+          <label class="form-check-label" for="q2-a0">
+            Lazy initialization (read only when needed)
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="1"
+                 id="q2-a1">
+          <label class="form-check-label" for="q2-a1">
+            Optimistic locking and save batching
+          </label>
+        </div>
+        
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" 
+                 name="question-2" 
+                 value="2"
+                 id="q2-a2">
+          <label class="form-check-label" for="q2-a2">
+            Caching the whole S3 bucket in memory
+          </label>
+        </div>
+        
+      
+      
+      <div class="quiz-feedback mt-2" style="display: none;"></div>
+    </div>
+    
+    
+    <button type="button" class="btn btn-primary" id="check-answers">
+      Check Answers
+    </button>
+    <button type="button" class="btn btn-secondary ml-2" id="reset-quiz" style="display: none;">
+      Reset
+    </button>
+  </form>
+  
+  <div id="quiz-results" class="mt-4" style="display: none;">
+    <div class="alert" role="alert"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  try {
+    const quizContainer = document.getElementById('article-quiz');
+    const form = document.getElementById('quiz-form');
+    const checkBtn = document.getElementById('check-answers');
+    const resetBtn = document.getElementById('reset-quiz');
+    const resultsDiv = document.getElementById('quiz-results');
+    
+    if (!quizContainer || !form || !checkBtn) {
+      console.error('Quiz initialization failed: missing elements', {
+        quizContainer: !!quizContainer,
+        form: !!form,
+        checkBtn: !!checkBtn
+      });
+      return;
+    }
+    
+    const lang = quizContainer.getAttribute('data-quiz-lang') || 'en';
+    const quizDataRaw = form.getAttribute('data-quiz-data');
+    
+    if (!quizDataRaw) {
+      console.error('Quiz data not found in data attribute');
+      return;
+    }
+    
+    let quizData;
+    try {
+      quizData = JSON.parse(quizDataRaw);
+    } catch (e) {
+      console.error('Failed to parse quiz data:', e, quizDataRaw);
+      return;
+    }
+    
+    if (!quizData || !quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure:', quizData);
+      return;
+    }
+    
+    
+    console.log('Quiz data loaded:', quizData);
+  
+    function arraysEqual(a, b) {
+      if (!a || !b) return false;
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort();
+      const sortedB = [...b].sort();
+      return sortedA.every((val, i) => val === sortedB[i]);
+    }
+    
+    checkBtn.addEventListener('click', function() {
+    if (!quizData.questions || !Array.isArray(quizData.questions)) {
+      console.error('Invalid quiz data structure');
+      return;
+    }
+    
+    let correctCount = 0;
+    let totalQuestions = quizData.questions.length;
+    
+    quizData.questions.forEach((question, qIndex) => {
+      const questionDiv = form.querySelector(`[data-question-index="${qIndex}"]`);
+      if (!questionDiv) {
+        console.error('Question div not found for index:', qIndex);
+        return;
+      }
+      
+      const feedbackDiv = questionDiv.querySelector('.quiz-feedback');
+      if (!feedbackDiv) {
+        console.error('Feedback div not found for question:', qIndex);
+        return;
+      }
+      
+      if (question.type === 'multiple-choice' || question.type === 'single-choice') {
+        if (!question.answers || !Array.isArray(question.answers)) {
+          console.error('Invalid answers for question:', qIndex);
+          return;
+        }
+        
+        const inputs = questionDiv.querySelectorAll(`input[name="question-${qIndex}"]`);
+        const selectedAnswers = Array.from(inputs)
+          .filter(input => input.checked)
+          .map(input => parseInt(input.value));
+        
+        const correctAnswers = question.answers
+          .map((answer, index) => answer.correct === true ? index : -1)
+          .filter(index => index !== -1);
+        
+        const isCorrect = arraysEqual(selectedAnswers, correctAnswers);
+        
+        if (isCorrect) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-success');
+            } else if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          inputs.forEach(input => {
+            const answerIndex = parseInt(input.value);
+            const answer = question.answers[answerIndex];
+            if (!answer) return;
+            
+            if (input.checked && answer.correct !== true) {
+              input.parentElement.classList.add('text-danger');
+            } else if (!input.checked && answer.correct === true) {
+              input.parentElement.classList.add('text-warning');
+            }
+          });
+        }
+      } else if (question.type === 'text') {
+        const textarea = questionDiv.querySelector('textarea');
+        const correctAnswerDiv = questionDiv.querySelector('[data-correct-answer]');
+        
+        if (!textarea || !question.correct_answer) {
+          console.error('Invalid text question:', qIndex);
+          return;
+        }
+        
+        if (textarea.value.trim().toLowerCase() === question.correct_answer.toLowerCase()) {
+          correctCount++;
+          feedbackDiv.innerHTML = '<span class="text-success">✓ ' + (lang === 'ru' ? 'Правильно!' : 'Correct!') + '</span>';
+          feedbackDiv.style.display = 'block';
+        } else {
+          feedbackDiv.innerHTML = '<span class="text-danger">✗ ' + (lang === 'ru' ? 'Неправильно' : 'Incorrect') + '</span>';
+          feedbackDiv.style.display = 'block';
+          if (correctAnswerDiv) {
+            correctAnswerDiv.style.display = 'block';
+          }
+        }
+      }
+    });
+    
+    const percentage = Math.round((correctCount / totalQuestions) * 100);
+    const alertClass = percentage >= 70 ? 'alert-success' : percentage >= 50 ? 'alert-warning' : 'alert-danger';
+    const message = (lang === 'ru' ? 'Вы ответили правильно на ' : 'You got ') + 
+                   correctCount + (lang === 'ru' ? ' из ' : ' out of ') + 
+                   totalQuestions + (lang === 'ru' ? ' вопросов (' : ' questions (') + 
+                   percentage + '%)';
+    
+    const alertElement = resultsDiv.querySelector('.alert');
+    if (alertElement) {
+      alertElement.className = 'alert ' + alertClass;
+      alertElement.textContent = message;
+    }
+      resultsDiv.style.display = 'block';
+      checkBtn.style.display = 'none';
+      if (resetBtn) {
+        resetBtn.style.display = 'inline-block';
+      }
+    });
+    
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function() {
+        form.reset();
+        form.querySelectorAll('.quiz-feedback').forEach(el => el.style.display = 'none');
+        form.querySelectorAll('.text-success, .text-danger, .text-warning').forEach(el => {
+          el.classList.remove('text-success', 'text-danger', 'text-warning');
+        });
+        form.querySelectorAll('[data-correct-answer]').forEach(el => el.style.display = 'none');
+        resultsDiv.style.display = 'none';
+        checkBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'none';
+      });
+    }
+  } catch (error) {
+    console.error('Quiz script error:', error);
+  }
+})();
+</script>
+
+
+
+    
+    <hr class="mt-5 mb-4">
+    <h3 class="mb-4">Related Articles</h3>
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  September 11, 2026
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/telegram-bot-cloudflare-workers.html" style="text-decoration: none; color: inherit;">From AWS Lambda to Cloudflare Workers: free tiers and cold starts</a>
+            </h4>
+            
+            
+            
+            <a href="/en/post/telegram-bot-cloudflare-workers.html">
+              <img class="card-img-top mb-3 rounded"
+                   src="/en/post/telegram-bot-cloudflare-workers/featured.svg"
+                   style="max-height: 200px;"
+                   alt="From AWS Lambda to Cloudflare Workers: free tiers and cold starts"/>
+            </a>
+            
+            
+            <p class="card-text"><p>In the <a href="/en/post/telegram-bots-zero-cost-aws.html">previous article</a> I described how I fitted a Telegram volleyball organizer bot into the AWS Free Tier: Lambda + S3 + EventBridge, at about zero dollars. That setup ran for months. Then I moved the same bot to <strong>Cloudflare Workers</strong> and <strong>R2</strong> — the same Go, the same JSON state files, the same Gemini router.</p></p>
+            
+            <a href="/en/post/telegram-bot-cloudflare-workers.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/tags/aws/" class="badge">Aws</a>
+                  <a href="/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/tags/s3/" class="badge">S3</a>
+                  <a href="/tags/cloudflare/" class="badge">Cloudflare</a>
+                  <a href="/tags/workers/" class="badge">Workers</a>
+                  <a href="/tags/r2/" class="badge">R2</a>
+                  <a href="/tags/go/" class="badge">Go</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  December 20, 2024
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-telegram-bot-aws-lambda-deploy.html" style="text-decoration: none; color: inherit;">Deploying Telegram Bot to AWS Lambda with Function URL</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>This article is a continuation of <a href="/en/post/go-telegram-gemini-ai-bot.html">&ldquo;Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda&rdquo;</a> and contains detailed instructions for setting up and deploying a Telegram bot to AWS Lambda using Function URL.</p></p>
+            
+            <a href="/en/post/go-telegram-bot-aws-lambda-deploy.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/go/" class="badge">Go</a>
+                  <a href="/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/tags/aws/" class="badge">Aws</a>
+                  <a href="/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/tags/deploy/" class="badge">Deploy</a>
+                  <a href="/tags/function-url/" class="badge">Function-Url</a>
+                  <a href="/tags/cli/" class="badge">Cli</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100 bg-light rounded" style="border: none;">
+          <div class="card-body">
+            <span style="color: #aaa; font-size: 0.9em;">
+
+
+  December 19, 2024
+
+
+</span>
+            <h4 class="card-title mt-2">
+              <a href="/en/post/go-telegram-gemini-ai-bot.html" style="text-decoration: none; color: inherit;">Building an AI Telegram Bot with Go, Gemini API, and AWS Lambda</a>
+            </h4>
+            
+            
+            
+            
+            <p class="card-text"><p>In this article, we&rsquo;ll explore how to build an intelligent Telegram bot using Go that acts as a proxy between users and Google&rsquo;s Gemini API. The bot will handle two primary functions: answering user messages and generating images. While this mechanism can be significantly extended with additional capabilities like voice and video generation, we&rsquo;ll focus on these two request types for simplicity.</p></p>
+            
+            <a href="/en/post/go-telegram-gemini-ai-bot.html" class="btn btn-primary btn-sm">Read More →</a>
+                  <a href="/tags/go/" class="badge">Go</a>
+                  <a href="/tags/telegram/" class="badge">Telegram</a>
+                  <a href="/tags/gemini/" class="badge">Gemini</a>
+                  <a href="/tags/ai/" class="badge">Ai</a>
+                  <a href="/tags/aws/" class="badge">Aws</a>
+                  <a href="/tags/lambda/" class="badge">Lambda</a>
+                  <a href="/tags/bot/" class="badge">Bot</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script defer src="/discuss.js"></script>
+    <div id="discuss"></div>
+</div>
+
+</div>
+
+<div class="bg-light">&nbsp;</div>
+
+<footer>
+    <div class="container " style="padding-top: 0; padding-bottom: 10px;">
+    <div class="container">
+        <img src="/niz.svg" alt="gopher legs" style="height: 50px; vertical-align: top;"/>
+        <div style="text-align: right; vertical-align: top; display: inline-block;">
+            
+            &nbsp;
+            &nbsp;
+            &nbsp;
+            
+            
+            <a href='/ru/post/telegram-bots-zero-cost-aws.html'>
+            <span class="flag-icon flag-icon-ru"></span>
+            </a>
+            
+        </div>
+
+    </div>
+</div>
+
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+</body>
+</html>

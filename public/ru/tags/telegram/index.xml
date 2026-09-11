@@ -2,24 +2,38 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Telegram on Golang for all</title>
-    <link>http://localhost:51376/ru/tags/telegram/</link>
+    <link>https://golangforall.com/ru/tags/telegram/</link>
     <description>Recent content in Telegram on Golang for all</description>
     <generator>Hugo</generator>
     <language>ru-ru</language>
-    <lastBuildDate>Fri, 20 Dec 2024 09:00:00 +0300</lastBuildDate>
-    <atom:link href="http://localhost:51376/ru/tags/telegram/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 11 Sep 2026 23:00:00 +0300</lastBuildDate>
+    <atom:link href="https://golangforall.com/ru/tags/telegram/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>С AWS на Cloudflare Workers: сравнение бесплатных тиров и холодного старта</title>
+      <link>https://golangforall.com/ru/post/telegram-bot-cloudflare-workers.html</link>
+      <pubDate>Fri, 11 Sep 2026 23:00:00 +0300</pubDate>
+      <guid>https://golangforall.com/ru/post/telegram-bot-cloudflare-workers.html</guid>
+      <description>&lt;p&gt;В &lt;a href=&#34;https://golangforall.com/ru/post/telegram-bots-zero-cost-aws.html&#34;&gt;прошлой статье&lt;/a&gt; я рассказывал, как уложил Telegram-бота-организатора волейбольных игр в AWS Free Tier: Lambda + S3 + EventBridge и счёт около нуля долларов. Схема жила месяцами. Потом я перенёс того же бота на &lt;strong&gt;Cloudflare Workers&lt;/strong&gt; и &lt;strong&gt;R2&lt;/strong&gt; — тот же Go, те же JSON-файлы стейта, тот же Gemini.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Как я задеплоил Telegram-бота c ИИ в AWS забесплатно</title>
+      <link>https://golangforall.com/ru/post/telegram-bots-zero-cost-aws.html</link>
+      <pubDate>Sat, 28 Feb 2026 12:00:00 +0300</pubDate>
+      <guid>https://golangforall.com/ru/post/telegram-bots-zero-cost-aws.html</guid>
+      <description>&lt;p&gt;Уже больше трех лет я организую игры в нашем волейбольном комьюнити, которое живет в Telegram. Сначала мы использовали обычные встроенные опросы, но рутины становилось все больше, и я решил автоматизировать процесс. Так родился бот-организатор с искусственным интеллектом, вокруг которого и выстроена вся архитектура.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Деплой Telegram бота на AWS Lambda с Function URL</title>
-      <link>http://localhost:51376/ru/post/go-telegram-bot-aws-lambda-deploy.html</link>
+      <link>https://golangforall.com/ru/post/go-telegram-bot-aws-lambda-deploy.html</link>
       <pubDate>Fri, 20 Dec 2024 09:00:00 +0300</pubDate>
-      <guid>http://localhost:51376/ru/post/go-telegram-bot-aws-lambda-deploy.html</guid>
-      <description>&lt;p&gt;Эта статья является продолжением статьи &lt;a href=&#34;http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html&#34;&gt;&amp;ldquo;Создание AI-телеграм бота на Go с Gemini API и AWS Lambda&amp;rdquo;&lt;/a&gt; и содержит детальные инструкции по настройке и деплою Telegram бота на AWS Lambda с использованием Function URL.&lt;/p&gt;</description>
+      <guid>https://golangforall.com/ru/post/go-telegram-bot-aws-lambda-deploy.html</guid>
+      <description>&lt;p&gt;Эта статья является продолжением статьи &lt;a href=&#34;https://golangforall.com/ru/post/go-telegram-gemini-ai-bot.html&#34;&gt;&amp;ldquo;Создание AI-телеграм бота на Go с Gemini API и AWS Lambda&amp;rdquo;&lt;/a&gt; и содержит детальные инструкции по настройке и деплою Telegram бота на AWS Lambda с использованием Function URL.&lt;/p&gt;</description>
     </item>
     <item>
       <title>Создание AI-телеграм бота на Go с Gemini API и AWS Lambda</title>
-      <link>http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html</link>
+      <link>https://golangforall.com/ru/post/go-telegram-gemini-ai-bot.html</link>
       <pubDate>Thu, 19 Dec 2024 09:00:00 +0300</pubDate>
-      <guid>http://localhost:51376/ru/post/go-telegram-gemini-ai-bot.html</guid>
+      <guid>https://golangforall.com/ru/post/go-telegram-gemini-ai-bot.html</guid>
       <description>&lt;p&gt;В этой статье мы рассмотрим, как создать интеллектуального Telegram бота на Go, который выступает в роли прокси между пользователями и API Google Gemini. Бот будет выполнять две основные функции: отвечать на сообщения пользователей и генерировать изображения. Хотя этот механизм может быть существенно расширен дополнительными возможностями, такими как генерация голоса и видео, мы сосредоточимся на этих двух типах запросов для простоты.&lt;/p&gt;</description>
     </item>
   </channel>
